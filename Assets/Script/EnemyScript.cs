@@ -112,7 +112,7 @@ public class Enemy : MonoBehaviour
             if (enemy != null)
             {
                 Debug.Log("Player got hit!");
-               enemy.GetComponent<PlayerController>().TakeDamage(attackDamage);
+               //enemy.GetComponent<PlayerController>().TakeDamage(attackDamage);
             }
 
             else break;
