@@ -7,13 +7,8 @@ using UnityEngine.Rendering;
 
 public enum PlayerState
 {
-    Idle,
-    Running,
-    Jumping,
-    Falling,
-    Attacking,
-    Dashing,
-    Hurt,
+    Moving,
+    Talking,
     Dead
 }
 
@@ -52,6 +47,7 @@ public class PlayerController : MonoBehaviour
     [Header("Components")]
     [SerializeField] private Collider2D col; // collider của nhân vật
     [SerializeField] private LayerMask enemyLayers;
+    [SerializeField] private RaycastHit2D[] hits = new RaycastHit2D[4]; // Mảng để lưu trữ kết quả quét va chạm
 
     private Rigidbody2D rb;
     private Animator animator;
@@ -77,8 +73,10 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (GameManager.state == GameState.Pause) return;
+
         //Read move value
-        moveInput = moveAction.ReadValue<Vector2>();
+        if (moveAction != null) moveInput = moveAction.ReadValue<Vector2>();
         if ((hitLeftWall && moveInput.x < 0) || (hitRightWall && moveInput.x > 0)) velocity.x = 0;
         else velocity.x = moveInput.x * moveSpeed;
     }
@@ -87,11 +85,16 @@ public class PlayerController : MonoBehaviour
     {
         VerticalCollisionCheck();
         HorizonalCollisionCheck();
+
+        // Process jump buffer & coyote here (FixedUpdate) so ground checks are up-to-date
+        ProcessJumpBuffer();
+
         MoveCharacter();
     }
 
     private void MoveCharacter()
     {
+        if (currentState != PlayerState.Moving) return;
         //Gravity
         if (!isGrounded) velocity.y -= gravity * Time.fixedDeltaTime;
         else if (!isJumping) velocity.y = 0;
@@ -124,27 +127,34 @@ public class PlayerController : MonoBehaviour
         if (!isDashing) rb.MovePosition(targetPosition);
     }
 
-    // Phương thức xử lý nhảy
+    // Phương thức xử lý nhảy input: chỉ lưu thời điểm ấn để dùng jump buffer
     private void OnJump(InputAction.CallbackContext context)
     {
         lastJumpInputTime = Time.time;
-        Jump();
-        Invoke("EndJump", jumpTime);
+        // Do NOT call Jump() directly here — we process buffer in FixedUpdate after ground check.
+    }
+
+    private void ProcessJumpBuffer()
+    {
+        // If jump was pressed recently and player is within coyote time, perform jump
+        if ((Time.time - lastGroundedTime <= coyoteTime) &&
+            (Time.time - lastJumpInputTime <= jumpBufferTime) &&
+            isGrounded && !isJumping)
+        {
+            Jump();
+            lastJumpInputTime = -999f;
+        }
     }
 
     private void Jump()
     {
-        if ((Time.time - lastGroundedTime <= coyoteTime) &&
-        (Time.time - lastJumpInputTime <= jumpBufferTime) &&
-        isGrounded)
-        {
-            isJumping = true;
-            velocity.y = jumpForce;
-            animator.SetTrigger("jump");
-            SoundManager.Instance.PlaySound2D("Jump");
-            lastJumpInputTime = -999f;
-
-        }
+        isJumping = true;
+        velocity.y = jumpForce;
+        animator.SetTrigger("jump");
+        SoundManager.Instance.PlaySound2D("Jump");
+        // schedule end of jump state
+        CancelInvoke(nameof(EndJump));
+        Invoke(nameof(EndJump), jumpTime);
     }
 
     private void EndJump()
@@ -158,7 +168,7 @@ public class PlayerController : MonoBehaviour
         {
             isDashing = true;
             animator.SetTrigger("dash");
-            float dashDirection =  transform.localScale.x;
+            float dashDirection = transform.localScale.x;
             gameObject.layer = 3; // Invincible Layer
             rb.AddForce(new Vector2(dashDistance * dashDirection, 0), ForceMode2D.Impulse);
             Invoke("EndDash", 0.3f);
@@ -196,7 +206,7 @@ public class PlayerController : MonoBehaviour
             isGrounded = false;
             animator.SetBool("isGrounded", false);
         }
-    }*/   
+    }*/
 
     void IsGroundedCheck() // Dùng raycast để kiểm tra xem nhân vật có chạm đất không
     {
@@ -225,16 +235,14 @@ public class PlayerController : MonoBehaviour
     {
         Vector2 boxSize = col.bounds.size;
         boxSize.x *= 0.9f; // Giảm kích thước hộp theo chiều ngang để tránh va chạm không cần thiết
-        isGrounded = Physics2D.BoxCast(col.bounds.center, col.bounds.size, 0, Vector2.down, castDistance,
-                   LayerMask.GetMask("Ground"));
+        // Use OverlapBox for boolean ground check
+        Collider2D ground = Physics2D.OverlapBox(col.bounds.center + Vector3.down * castDistance, boxSize, 0f, LayerMask.GetMask("Ground"));
+        isGrounded = ground != null;
 
         if (isGrounded)
         {
             lastGroundedTime = Time.time;
             animator.SetBool("isGrounded", true);
-
-            // Reset velocity.y nếu đang đứng trên mặt đất
-            //if (rb.linearVelocityY < 0f) rb.linearVelocityY = 0f;
         }
         else
         {
@@ -246,34 +254,19 @@ public class PlayerController : MonoBehaviour
     {
         Vector2 boxSize = col.bounds.size;
         boxSize.y *= 0.9f; // Giảm kích thước hộp theo chiều ngang để tránh va chạm không cần thiết
-        hitRightWall = Physics2D.BoxCast(col.bounds.center, col.bounds.size, 0, Vector2.right, castDistance,
-                            LayerMask.GetMask("Ground"));
-        hitLeftWall = Physics2D.BoxCast(col.bounds.center, col.bounds.size, 0, Vector2.left, castDistance,
-                           LayerMask.GetMask("Ground"));
-        if (hitRightWall)
-        {
-            //animator.SetBool("isGrabbingWall", true);
-        }
+        bool right = Physics2D.OverlapBox(col.bounds.center + Vector3.right * castDistance, boxSize, 0f, LayerMask.GetMask("Ground"));
+        bool left = Physics2D.OverlapBox(col.bounds.center + Vector3.left * castDistance, boxSize, 0f, LayerMask.GetMask("Ground"));
 
-        else
-        {
-            //animator.SetBool("isGrabbingWall", false);
-        }
+        hitRightWall = right;
+        hitLeftWall = left;
 
-        if (hitRightWall)
-        {
-            //animator.SetBool("isGrabbingWall", true);
-        }
-
-        else
-        {
-            //animator.SetBool("isGrabbingWall", false);
-        }
+        animator.SetBool("hitWall", hitLeftWall || hitRightWall);
     }
 
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.purple;
+        if (col == null) return;
         Vector2 boxSize = col.bounds.size;
         boxSize.x *= 0.9f;
         Gizmos.DrawWireCube(col.bounds.center + Vector3.down * castDistance, boxSize);
@@ -281,23 +274,19 @@ public class PlayerController : MonoBehaviour
 
     private void OnEnable()
     {
-        moveAction.Enable();
-        jumpAction.Enable();
-        dashAction.Enable();
-        attackAction.Enable();
+        if (moveAction != null) moveAction.Enable();
+        if (jumpAction != null) { jumpAction.Enable(); jumpAction.performed += OnJump; }
+        if (dashAction != null) dashAction.Enable();
+        if (attackAction != null) attackAction.Enable();
 
-        jumpAction.performed += OnJump;
-        dashAction.performed += Dash;
-    }   
+        if (dashAction != null) dashAction.performed += Dash;
+    }
 
     private void OnDisable()
     {
-        moveAction.Disable();
-        jumpAction.Disable();
-        dashAction.Disable();
-        attackAction.Disable();
-
-        jumpAction.performed -= OnJump;
-        dashAction.performed -= Dash;
+        if (moveAction != null) moveAction.Disable();
+        if (jumpAction != null) { jumpAction.performed -= OnJump; jumpAction.Disable(); }
+        if (dashAction != null) { dashAction.performed -= Dash; dashAction.Disable(); }
+        if (attackAction != null) attackAction.Disable();
     }
 }
