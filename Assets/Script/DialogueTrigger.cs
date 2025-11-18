@@ -25,6 +25,7 @@ public class Dialogue
 public class DialogueTrigger : MonoBehaviour
 {
     public Dialogue dialogue;
+    public GameObject chatIcon;
 
     public void TriggerDialogue()
     {
@@ -35,7 +36,16 @@ public class DialogueTrigger : MonoBehaviour
     {
         if (collision.tag == "Player")
         {
-            TriggerDialogue();
+            chatIcon.SetActive(true);
+            //TriggerDialogue();
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.tag == "Player")
+        {
+            chatIcon.SetActive(false);
         }
     }
 }

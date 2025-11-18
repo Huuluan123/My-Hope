@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 
 public enum GameState
@@ -6,11 +6,12 @@ public enum GameState
     Running,
     Pause
 }
+
 public class GameManager : MonoBehaviour
 {
     public static GameState state;
     private InputAction pauseAction;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+
     void Awake()
     {
         QualitySettings.vSyncCount = 1; // Turn on VSync
@@ -24,21 +25,41 @@ public class GameManager : MonoBehaviour
         MusicManager.Instance.PlayMusic("Main Theme");
     }
 
-    private void Update()
+    private void OnEnable()
     {
-        if (pauseAction.IsPressed())
+        if (pauseAction != null)
         {
-            if (state == GameState.Running)
-            {
-                Debug.Log("Game Paused!");
-                state = GameState.Pause;
-            }
+            pauseAction.Enable();
+            pauseAction.performed += OnPausePerformed;
+        }
+    }
 
-            if (state == GameState.Pause)
-            {
-                Debug.Log("Game resumed!");
-                state = GameState.Running;
-            }
+    private void OnDisable()
+    {
+        if (pauseAction != null)
+        {
+            pauseAction.performed -= OnPausePerformed;
+            pauseAction.Disable();
+        }
+    }
+
+    // handler được gọi một lần khi action chuyển sang performed
+    private void OnPausePerformed(InputAction.CallbackContext context)
+    {
+        TogglePause();
+    }
+
+    private void TogglePause()
+    {
+        if (state == GameState.Running)
+        {
+            Debug.Log("Game Paused!");
+            state = GameState.Pause;
+        }
+        else if (state == GameState.Pause)
+        {
+            Debug.Log("Game resumed!");
+            state = GameState.Running;
         }
     }
 }

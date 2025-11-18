@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine;
@@ -62,6 +62,8 @@ public class DialogueManager : MonoBehaviour
     {
         isDialogueActive = true;
         dialogueBox.SetActive(true);
+
+        PlayerController.Instance.SetState(PlayerState.Talking); // Chuyển sang trạng thái talking
 
         lines.Clear();
 
@@ -146,6 +148,9 @@ public class DialogueManager : MonoBehaviour
     {
         isDialogueActive = false;
         dialogueBox.SetActive(false);
+
+        PlayerController.Instance.SetState(PlayerState.Moving); // Chuyển về trạng thái moving
+
         // reset current line / typing state
         currentLine = null;
         if (typingCoroutine != null)

@@ -14,6 +14,9 @@ public enum PlayerState
 
 public class PlayerController : MonoBehaviour
 {
+    [Header("Components")]
+    public static PlayerController Instance; // Biến Singleton
+
     // Các biến có thể điều chỉnh trong Unity Editor
     [Header("Stats")]
     [SerializeField] private float moveSpeed;
@@ -61,6 +64,8 @@ public class PlayerController : MonoBehaviour
     // Lệnh này được gọi khi script được khởi tạo
     void Awake()
     {
+        if (Instance == null) Instance = this;
+
         moveAction = InputSystem.actions.FindAction("Move");
         jumpAction = InputSystem.actions.FindAction("Jump");
         dashAction = InputSystem.actions.FindAction("Dash");
@@ -71,9 +76,23 @@ public class PlayerController : MonoBehaviour
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
     }
 
+    //Set trạng thái của người chơi
+    public void SetState(PlayerState newState)
+    {
+        currentState = newState;
+    }
+
     void Update()
     {
         if (GameManager.state == GameState.Pause) return;
+
+        if (currentState != PlayerState.Moving)
+        {
+            moveInput = Vector2.zero; // Xóa input di chuyển
+            velocity.x = 0;           // Dừng di chuyển ngang
+            animator.SetBool("isRunning", false); // Tắt animation chạy
+            return; // Bỏ qua phần còn lại của Update
+        }
 
         //Read move value
         if (moveAction != null) moveInput = moveAction.ReadValue<Vector2>();
@@ -130,6 +149,7 @@ public class PlayerController : MonoBehaviour
     // Phương thức xử lý nhảy input: chỉ lưu thời điểm ấn để dùng jump buffer
     private void OnJump(InputAction.CallbackContext context)
     {
+        if (currentState != PlayerState.Moving) return;
         lastJumpInputTime = Time.time;
         // Do NOT call Jump() directly here — we process buffer in FixedUpdate after ground check.
     }
@@ -164,6 +184,7 @@ public class PlayerController : MonoBehaviour
 
     private void Dash(InputAction.CallbackContext context)
     {
+        if (currentState != PlayerState.Moving) return;
         if (!isDashing)
         {
             isDashing = true;
