@@ -149,7 +149,7 @@ public class DialogueManager : MonoBehaviour
         isDialogueActive = false;
         dialogueBox.SetActive(false);
 
-        PlayerController.Instance.SetState(PlayerState.Moving); // Chuyển về trạng thái moving
+        PlayerController.Instance.SetState(PlayerState.Running); // Chuyển về trạng thái moving
 
         // reset current line / typing state
         currentLine = null;

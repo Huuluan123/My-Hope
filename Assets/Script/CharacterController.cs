@@ -7,7 +7,9 @@ using UnityEngine.Rendering;
 
 public enum PlayerState
 {
-    Moving,
+    Idle,
+    Running,
+    OnAir,
     Talking,
     Dead
 }
@@ -52,6 +54,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private LayerMask enemyLayers;
     [SerializeField] private RaycastHit2D[] hits = new RaycastHit2D[4]; // Mảng để lưu trữ kết quả quét va chạm
 
+    private DialogueTrigger currentDialogueTrigger; // Biến tham chiếu đến NPC hiện tại
     private Rigidbody2D rb;
     private Animator animator;
 
@@ -82,11 +85,30 @@ public class PlayerController : MonoBehaviour
         currentState = newState;
     }
 
+    public bool CanMove
+    {
+        get
+        {
+            return currentState == PlayerState.Idle ||
+                   currentState == PlayerState.Running ||
+                   currentState == PlayerState.OnAir;
+        }
+    }
+
+    public bool CanJump
+    {
+        get
+        {
+            return currentState == PlayerState.Idle ||
+                   currentState == PlayerState.Running;
+        }
+    }
+
     void Update()
     {
         if (GameManager.state == GameState.Pause) return;
 
-        if (currentState != PlayerState.Moving)
+        if (!CanMove)
         {
             moveInput = Vector2.zero; // Xóa input di chuyển
             velocity.x = 0;           // Dừng di chuyển ngang
@@ -96,6 +118,7 @@ public class PlayerController : MonoBehaviour
 
         //Read move value
         if (moveAction != null) moveInput = moveAction.ReadValue<Vector2>();
+
         if ((hitLeftWall && moveInput.x < 0) || (hitRightWall && moveInput.x > 0)) velocity.x = 0;
         else velocity.x = moveInput.x * moveSpeed;
     }
@@ -109,14 +132,15 @@ public class PlayerController : MonoBehaviour
         ProcessJumpBuffer();
 
         MoveCharacter();
+        UpdatePhysicsState();
     }
 
     private void MoveCharacter()
     {
-        if (currentState != PlayerState.Moving) return;
+        if (!CanMove) return;
         //Gravity
-        if (!isGrounded) velocity.y -= gravity * Time.fixedDeltaTime;
-        else if (!isJumping) velocity.y = 0;
+        if (currentState == PlayerState.OnAir) velocity.y -= gravity * Time.fixedDeltaTime;
+        else velocity.y = 0;
 
         //Calculate new position
         Vector2 moveDelta = velocity * Time.fixedDeltaTime;
@@ -149,8 +173,26 @@ public class PlayerController : MonoBehaviour
     // Phương thức xử lý nhảy input: chỉ lưu thời điểm ấn để dùng jump buffer
     private void OnJump(InputAction.CallbackContext context)
     {
-        if (currentState != PlayerState.Moving) return;
-        lastJumpInputTime = Time.time;
+        if (!CanMove && currentState != PlayerState.Talking) return;
+
+        if (context.performed)
+        {
+            // --- LOGIC MỚI: KIỂM TRA HỘI THOẠI ---
+
+            // Nếu đang đứng yên (Idle) VÀ đang có NPC bên cạnh (currentDialogueTrigger != null)
+            // Bạn có thể thêm điều kiện && isGrounded nếu muốn chắc chắn phải chạm đất mới nói được
+            if (currentState == PlayerState.Idle && currentDialogueTrigger != null)
+            {
+                currentDialogueTrigger.TriggerDialogue();
+
+                // Dừng lại ở đây, KHÔNG thực hiện code nhảy bên dưới
+                return;
+            }
+            // -------------------------------------
+
+            // Nếu không thỏa mãn điều kiện trên thì thực hiện nhảy bình thường
+            lastJumpInputTime = Time.time;
+        }
         // Do NOT call Jump() directly here — we process buffer in FixedUpdate after ground check.
     }
 
@@ -159,7 +201,7 @@ public class PlayerController : MonoBehaviour
         // If jump was pressed recently and player is within coyote time, perform jump
         if ((Time.time - lastGroundedTime <= coyoteTime) &&
             (Time.time - lastJumpInputTime <= jumpBufferTime) &&
-            isGrounded && !isJumping)
+            CanJump)
         {
             Jump();
             lastJumpInputTime = -999f;
@@ -168,21 +210,17 @@ public class PlayerController : MonoBehaviour
 
     private void Jump()
     {
-        isJumping = true;
+        currentState = PlayerState.OnAir;
         velocity.y = jumpForce;
         animator.SetTrigger("jump");
         SoundManager.Instance.PlaySound2D("Jump");
-        // schedule end of jump state
-        CancelInvoke(nameof(EndJump));
-        Invoke(nameof(EndJump), jumpTime);
+        
+        lastGroundedTime = -999f;
+        isGrounded = false;
+
     }
 
-    private void EndJump()
-    {
-        isJumping = false;
-    }
-
-    private void Dash(InputAction.CallbackContext context)
+    /*private void Dash(InputAction.CallbackContext context)
     {
         if (currentState != PlayerState.Moving) return;
         if (!isDashing)
@@ -201,7 +239,7 @@ public class PlayerController : MonoBehaviour
         isDashing = false;
         rb.linearVelocity = Vector2.zero;
         gameObject.layer = 8; // Player Layer
-    }
+    }*/
 
     private void Die()
     {
@@ -209,48 +247,29 @@ public class PlayerController : MonoBehaviour
         animator.SetBool("isDead", true);
     }
 
-    // Lệnh này để kiểm tra va chạm với mặt đất
-    /*void OnCollisionEnter2D(Collision2D collision)
+    private void UpdatePhysicsState()
     {
-        if (collision.gameObject.CompareTag("Ground"))
-        {
-            Debug.Log("Touch ground!");
-            isGrounded = true;
-            animator.SetBool("isGrounded", true);
-        }
-    }*/
+        // Nếu đang bận việc riêng (Talking/Dead) thì không can thiệp
+        if (currentState == PlayerState.Talking || currentState == PlayerState.Dead) return;
 
-    /*void OnCollisionExit2D(Collision2D collision)
-    {
-        if (collision.gameObject.CompareTag("Ground"))
+        if (isGrounded && velocity.y <= 0.1f)
         {
-            isGrounded = false;
-            animator.SetBool("isGrounded", false);
+            // Nếu chạm đất: quyết định xem là Running hay Idle
+            if (moveInput.x != 0)
+            {
+                currentState = PlayerState.Running;
+            }
+            else
+            {
+                currentState = PlayerState.Idle;
+            }
         }
-    }*/
-
-    void IsGroundedCheck() // Dùng raycast để kiểm tra xem nhân vật có chạm đất không
-    {
-        isGrounded = Physics2D.Raycast(transform.position, Vector2.down, 1f, LayerMask.GetMask("Ground"));
-        if (isGrounded)
-        {
-            animator.SetBool("isGrounded", true);
-        }
-
         else
         {
-            animator.SetBool("isGrounded", false);
+            // Nếu không chạm đất -> OnAir
+            currentState = PlayerState.OnAir;
         }
     }
-
-    /*private void OnCollisionExit2D(Collision2D collision)
-    {
-        if (collision.gameObject.CompareTag("Ground"))
-        {
-            isGrounded = false;
-            animator.SetBool("isGrounded", false);
-        }
-    }*/
 
     void VerticalCollisionCheck()
     {
@@ -258,7 +277,8 @@ public class PlayerController : MonoBehaviour
         boxSize.x *= 0.9f; // Giảm kích thước hộp theo chiều ngang để tránh va chạm không cần thiết
         // Use OverlapBox for boolean ground check
         Collider2D ground = Physics2D.OverlapBox(col.bounds.center + Vector3.down * castDistance, boxSize, 0f, LayerMask.GetMask("Ground"));
-        isGrounded = ground != null;
+
+        isGrounded = (ground != null);
 
         if (isGrounded)
         {
@@ -284,6 +304,22 @@ public class PlayerController : MonoBehaviour
         animator.SetBool("hitWall", hitLeftWall || hitRightWall);
     }
 
+    // Hàm để DialogueTrigger gọi khi người chơi đi vào vùng
+    public void SetCurrentTrigger(DialogueTrigger trigger)
+    {
+        currentDialogueTrigger = trigger;
+    }
+
+    // Hàm để DialogueTrigger gọi khi người chơi đi ra vùng
+    public void ClearCurrentTrigger(DialogueTrigger trigger)
+    {
+        // Chỉ xóa nếu cái đang lưu chính là cái vừa đi ra (tránh lỗi khi các vùng chồng nhau)
+        if (currentDialogueTrigger == trigger)
+        {
+            currentDialogueTrigger = null;
+        }
+    }
+
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.purple;
@@ -300,14 +336,14 @@ public class PlayerController : MonoBehaviour
         if (dashAction != null) dashAction.Enable();
         if (attackAction != null) attackAction.Enable();
 
-        if (dashAction != null) dashAction.performed += Dash;
+        //if (dashAction != null) dashAction.performed += Dash;
     }
 
     private void OnDisable()
     {
         if (moveAction != null) moveAction.Disable();
         if (jumpAction != null) { jumpAction.performed -= OnJump; jumpAction.Disable(); }
-        if (dashAction != null) { dashAction.performed -= Dash; dashAction.Disable(); }
+        //if (dashAction != null) { dashAction.performed -= Dash; dashAction.Disable(); }
         if (attackAction != null) attackAction.Disable();
     }
 }
