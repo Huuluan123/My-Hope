@@ -25,6 +25,16 @@ public class GameManager : MonoBehaviour
         MusicManager.Instance.PlayMusic("Main Theme");
     }
 
+    private void Update()
+    {
+        if (state == GameState.Running) {
+            Time.timeScale = 1f;
+        }
+        else if (state == GameState.Pause) {
+            Time.timeScale = 0f;
+        }
+    }
+
     private void OnEnable()
     {
         if (pauseAction != null)
