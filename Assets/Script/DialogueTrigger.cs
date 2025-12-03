@@ -1,67 +1,43 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-
-[System.Serializable]
-public class DialogueCharacter
-{
-    public string name;
-    public Sprite icon;
-}
-
-[System.Serializable]
-public class DialogueLine
-{
-    public DialogueCharacter character;
-    [TextArea(3, 10)]
-    public string line;
-}
-
-[System.Serializable]
-public class Dialogue
-{
-    public List<DialogueLine> dialogueLines = new List<DialogueLine>();
-}
+﻿using UnityEngine;
 
 public class DialogueTrigger : MonoBehaviour
 {
-    public Dialogue dialogue;
+    [Header("Ink JSON")]
+    [Tooltip("Kéo file .json (được Ink biên dịch) vào đây")]
+    public TextAsset inkJSON;
+
+    [Header("Visual")]
     public GameObject chatIcon;
+
+    private void Start()
+    {
+        if (chatIcon != null) chatIcon.SetActive(false);
+    }
 
     public void TriggerDialogue()
     {
-        DialogueManager.Instance.StartDialogue(dialogue);
-        if (chatIcon != null) chatIcon.SetActive(false); // hide chat icon
+        // Gửi file Ink sang cho Manager xử lý
+        DialogueManager.Instance.StartDialogue(inkJSON);
+
+        if (chatIcon != null) chatIcon.SetActive(false);
     }
 
+    // ... (Giữ nguyên phần OnTriggerEnter2D / Exit2D gọi PlayerController như cũ)
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.tag == "Player")
+        if (collision.CompareTag("Player"))
         {
-            chatIcon.SetActive(true);
-            //TriggerDialogue();
-        }
-
-        // 2. QUAN TRỌNG: Gửi chính script này (this) sang cho PlayerController
-        // Để Player biết rằng "À, tôi đang đứng cạnh cái ông NPC này đây"
-        if (PlayerController.Instance != null)
-        {
-            // <--- ĐÂY LÀ DÒNG BẠN CẦN THÊM
-            PlayerController.Instance.SetCurrentTrigger(this);
+            if (chatIcon != null) chatIcon.SetActive(true);
+            if (PlayerController.Instance != null) PlayerController.Instance.SetCurrentTrigger(this);
         }
     }
 
     private void OnTriggerExit2D(Collider2D collision)
     {
-        if (collision.tag == "Player")
+        if (collision.CompareTag("Player"))
         {
-            chatIcon.SetActive(false);
-        }
-
-        // 2. QUAN TRỌNG: Báo cho Player biết đã đi ra xa rồi
-        if (PlayerController.Instance != null)
-        {
-            // <--- ĐÂY LÀ DÒNG BẠN CẦN THÊM
-            PlayerController.Instance.ClearCurrentTrigger(this);
+            if (chatIcon != null) chatIcon.SetActive(false);
+            if (PlayerController.Instance != null) PlayerController.Instance.ClearCurrentTrigger(this);
         }
     }
 }

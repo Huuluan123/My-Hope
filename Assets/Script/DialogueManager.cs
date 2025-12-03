@@ -1,163 +1,161 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.UI;
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 using UnityEngine.InputSystem;
+using Ink.Runtime;
+
+[System.Serializable]
+public struct CharacterProfile
+{
+    public string characterId; // Ví dụ: "player", "npc1"
+    public string displayName; // Tên hiển thị: "Người chơi", "Trưởng làng"
+    public Sprite icon;        // Ảnh đại diện
+}
 
 public class DialogueManager : MonoBehaviour
 {
     public static DialogueManager Instance;
 
+    [Header("UI Components")]
+    public GameObject dialogueBox;
     public Image characterIcon;
     public TextMeshProUGUI characterName;
     public TextMeshProUGUI dialogueArea;
 
-    public GameObject dialogueBox;
-
-    private Queue<DialogueLine> lines;
-
-    public bool isDialogueActive = false;
-
+    [Header("Config")]
     public float typingSpeed = 0.02f;
+    [Tooltip("Danh sách nhân vật để tra cứu từ Ink Tags")]
+    public List<CharacterProfile> characterProfiles;
 
-    public Animator animator;
-
-    private InputAction nextLineAction;
-    private DialogueLine currentLine;
-    private Coroutine typingCoroutine;
+    // Biến lõi của Ink
+    private Story currentStory;
+    private bool isDialogueActive = false;
     private bool isTyping = false;
+    private Coroutine typingCoroutine;
+
+    // Input
+    private InputAction nextLineAction;
 
     private void Awake()
     {
-        if (Instance == null)
-            Instance = this;
-
-        lines = new Queue<DialogueLine>();
-
-        // Try to find the "Jump" action from the project's Input System actions asset.
-        // If you prefer, you can expose an InputAction via inspector instead.
-        nextLineAction = InputSystem.actions.FindAction("Jump");
+        if (Instance == null) Instance = this;
+        nextLineAction = InputSystem.actions.FindAction("Jump"); // Dùng nút Jump để next câu
     }
 
     private void OnEnable()
     {
-        if (nextLineAction != null)
-        {
-            nextLineAction.Enable();
-            nextLineAction.performed += OnNextLineInput;
-        }
+        nextLineAction.Enable();
+        nextLineAction.performed += OnNextLineInput;
     }
 
     private void OnDisable()
     {
-        if (nextLineAction != null)
-        {
-            nextLineAction.performed -= OnNextLineInput;
-            nextLineAction.Disable();
-        }
+        nextLineAction.performed -= OnNextLineInput;
+        nextLineAction.Disable();
     }
 
-    public void StartDialogue(Dialogue dialogue)
+    // --- BẮT ĐẦU HỘI THOẠI ---
+    public void StartDialogue(TextAsset inkJSON)
     {
+        currentStory = new Story(inkJSON.text); // Khởi tạo Story từ file JSON
         isDialogueActive = true;
         dialogueBox.SetActive(true);
 
-        PlayerController.Instance.SetState(PlayerState.Talking); // Chuyển sang trạng thái talking
+        // Khóa di chuyển Player
+        PlayerController.Instance.SetState(PlayerState.Talking);
 
-        lines.Clear();
-
-        foreach (DialogueLine dialogueLine in dialogue.dialogueLines)
-        {
-            lines.Enqueue(dialogueLine);
-        }
-
-        // Show first line immediately
-        DisplayNextDialogueLine();
+        ContinueStory();
     }
 
-    // Called by input (Jump) when dialogue is active
+    // --- XỬ LÝ INPUT ---
     private void OnNextLineInput(InputAction.CallbackContext context)
     {
         if (!isDialogueActive) return;
 
+        // Nếu đang gõ chữ dở thì hiện full luôn
         if (isTyping)
         {
-            // Finish current typing immediately
-            StopTypingAndShowFull();
+            StopAllCoroutines();
+            dialogueArea.text = currentStory.currentText; // Lấy text hiện tại từ Ink
+            isTyping = false;
         }
         else
         {
-            DisplayNextDialogueLine();
+            // Nếu đã gõ xong thì sang câu tiếp theo
+            ContinueStory();
         }
     }
 
-    public void DisplayNextDialogueLine()
+    // --- LOGIC CHÍNH CỦA INK ---
+    private void ContinueStory()
     {
-        if (lines.Count == 0)
+        // 1. Kiểm tra xem còn dòng thoại nào không
+        if (currentStory.canContinue)
         {
+            // Lấy dòng text tiếp theo
+            string text = currentStory.Continue();
+
+            // Xử lý Tags (để hiện tên/ảnh nhân vật)
+            HandleTags(currentStory.currentTags);
+
+            // Chạy hiệu ứng gõ chữ
+            if (typingCoroutine != null) StopCoroutine(typingCoroutine);
+            typingCoroutine = StartCoroutine(TypeSentence(text));
+        }
+        else
+        {
+            // Hết truyện -> Kết thúc
             EndDialogue();
-            return;
         }
-
-        currentLine = lines.Dequeue();
-
-        characterIcon.sprite = currentLine.character.icon;
-        characterName.text = currentLine.character.name;
-
-        // Stop any existing typing coroutine before starting a new one
-        if (typingCoroutine != null)
-        {
-            StopCoroutine(typingCoroutine);
-            typingCoroutine = null;
-        }
-
-        typingCoroutine = StartCoroutine(TypeSentence(currentLine));
     }
 
-    IEnumerator TypeSentence(DialogueLine dialogueLine)
+    // --- XỬ LÝ TAGS (Ví dụ: #speaker:player) ---
+    private void HandleTags(List<string> currentTags)
+    {
+        foreach (string tag in currentTags)
+        {
+            string[] splitTag = tag.Split(':');
+            if (splitTag.Length != 2) continue;
+
+            string key = splitTag[0].Trim();
+            string value = splitTag[1].Trim();
+
+            if (key == "speaker")
+            {
+                // Tìm profile trong list dựa trên value (ID)
+                CharacterProfile profile = characterProfiles.Find(x => x.characterId == value);
+
+                // Nếu tìm thấy thì cập nhật UI
+                if (!string.IsNullOrEmpty(profile.characterId))
+                {
+                    characterName.text = profile.displayName;
+                    characterIcon.sprite = profile.icon;
+                }
+            }
+            // Bạn có thể thêm các tag khác: #audio:laugh, #anim:wave,...
+        }
+    }
+
+    IEnumerator TypeSentence(string sentence)
     {
         isTyping = true;
         dialogueArea.text = "";
-        foreach (char letter in dialogueLine.line.ToCharArray())
+        foreach (char letter in sentence.ToCharArray())
         {
             dialogueArea.text += letter;
             yield return new WaitForSeconds(typingSpeed);
         }
         isTyping = false;
-        typingCoroutine = null;
     }
 
-    private void StopTypingAndShowFull()
-    {
-        if (typingCoroutine != null)
-        {
-            StopCoroutine(typingCoroutine);
-            typingCoroutine = null;
-        }
-
-        if (currentLine != null)
-        {
-            dialogueArea.text = currentLine.line;
-        }
-
-        isTyping = false;
-    }
-
-    void EndDialogue()
+    private void EndDialogue()
     {
         isDialogueActive = false;
         dialogueBox.SetActive(false);
 
-        PlayerController.Instance.SetState(PlayerState.Running); // Chuyển về trạng thái moving
-
-        // reset current line / typing state
-        currentLine = null;
-        if (typingCoroutine != null)
-        {
-            StopCoroutine(typingCoroutine);
-            typingCoroutine = null;
-        }
-        isTyping = false;
+        // Trả lại quyền điều khiển cho Player
+        PlayerController.Instance.SetState(PlayerState.Idle);
     }
 }

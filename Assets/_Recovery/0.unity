@@ -1555,20 +1555,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6653a86cf256aa4ca14e5d3f0b7ee53, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DialogueTrigger
-  dialogue:
-    dialogueLines:
-    - character:
-        name: Alex
-        icon: {fileID: 21300000, guid: 5aceec1f90308fb4dad15098769efd1a, type: 3}
-      line: Hello, my brother
-    - character:
-        name: Alex
-        icon: {fileID: 21300000, guid: 5aceec1f90308fb4dad15098769efd1a, type: 3}
-      line: May i have some oats?
-    - character:
-        name: Alex
-        icon: {fileID: 21300000, guid: 5aceec1f90308fb4dad15098769efd1a, type: 3}
-      line: Okay, thanks.
+  inkJSON: {fileID: 4900000, guid: 2b368bf21a5882142b9aa0c7eb49502a, type: 3}
   chatIcon: {fileID: 39519406}
 --- !u!212 &833356759
 SpriteRenderer:
@@ -4442,13 +4429,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b609a0f9ed80aa7428f947973d8fa116, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DialogueManager
+  dialogueBox: {fileID: 1960618756}
   characterIcon: {fileID: 4751821}
   characterName: {fileID: 1135212528}
   dialogueArea: {fileID: 218409488}
-  dialogueBox: {fileID: 1960618756}
-  isDialogueActive: 0
   typingSpeed: 0.02
-  animator: {fileID: 0}
+  characterProfiles:
+  - characterId: Hope
+    displayName: Hope
+    icon: {fileID: 21300000, guid: 6b96ec7ca7942124085a56c5682b86ac, type: 3}
+  - characterId: Tutorial
+    displayName: Guide
+    icon: {fileID: 21300000, guid: 18d081f1bf03e474d96a3d6c6558a720, type: 3}
+  - characterId: Boy
+    displayName: Boy
+    icon: {fileID: 21300000, guid: 075f630ca0cef5a44905c072d69141ab, type: 3}
 --- !u!1 &2095247279
 GameObject:
   m_ObjectHideFlags: 0
