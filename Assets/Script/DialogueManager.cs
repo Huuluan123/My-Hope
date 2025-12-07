@@ -107,7 +107,7 @@ public class DialogueManager : MonoBehaviour
         else
         {
             // Hết truyện -> Kết thúc
-            EndDialogue();
+            StartCoroutine(EndDialogue());
         }
     }
 
@@ -150,12 +150,13 @@ public class DialogueManager : MonoBehaviour
         isTyping = false;
     }
 
-    private void EndDialogue()
+    IEnumerator EndDialogue()
     {
         isDialogueActive = false;
         dialogueBox.SetActive(false);
 
         // Trả lại quyền điều khiển cho Player
+        yield return new WaitForSeconds(0.5f);
         PlayerController.Instance.SetState(PlayerState.Idle);
     }
 }
