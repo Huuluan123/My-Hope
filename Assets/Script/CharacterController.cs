@@ -30,6 +30,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float coyoteTime = 0.1f;
     [SerializeField] private float jumpBufferTime = 0.1f;
     [SerializeField] private float gravity = -40f;
+    [SerializeField] private float maxFallSpeed = -25f;
     [SerializeField] private float lastGroundedTime;
     [SerializeField] private float lastJumpInputTime;
     [SerializeField] private float castDistance = 0.01f;
@@ -142,14 +143,16 @@ public class PlayerController : MonoBehaviour
     private void MoveCharacter()
     {
         if (!CanMove) return;
-        velocity.y += gravity * Time.fixedDeltaTime;
+        if (velocity.y > maxFallSpeed) velocity.y += gravity * Time.fixedDeltaTime;
         UpdateRayCastOrigin();
-        if (velocity.y != 0) VerticalCollisionCheck();
         if (velocity.x != 0) HorizonalCollisionCheck();
+        UpdateRayCastOriginWithOffset(velocity.x * Time.fixedDeltaTime); // Cập nhật vị trí tia với offset di chuyển ngang
+        if (velocity.y != 0) VerticalCollisionCheck();
 
         //Calculate new position
         Vector3 moveAmount = velocity * Time.fixedDeltaTime;
         Vector3 targetPosition = (Vector3)rb.position + moveAmount;
+        rb.MovePosition(targetPosition);
 
         // Flip character
         if (moveInput.x != 0)
@@ -171,8 +174,6 @@ public class PlayerController : MonoBehaviour
         {
             animator.SetBool("isRunning", false);
         }
-
-        rb.MovePosition(targetPosition);
     }
 
     // Phương thức xử lý nhảy input: chỉ lưu thời điểm ấn để dùng jump buffer
@@ -252,11 +253,11 @@ public class PlayerController : MonoBehaviour
         {
             Vector2 rayOrigin = (directionY == -1) ? rayCastOrigins.bottomLeft : rayCastOrigins.topLeft;
 
-            rayOrigin += Vector2.right * (verticalRaySpacing * i + velocity.x * Time.fixedDeltaTime);
+            rayOrigin += Vector2.right * (verticalRaySpacing * i);
 
             RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.up * directionY, rayLength, collisionMask);
 
-            Debug.DrawRay(rayOrigin, Vector2.up * directionY * rayLength, Color.red);
+            //Debug.DrawRay(rayOrigin, Vector2.up * directionY * rayLength, Color.red);
 
             if (hit)
             {
@@ -328,6 +329,15 @@ public class PlayerController : MonoBehaviour
         rayCastOrigins.bottomRight = new Vector2(bounds.max.x, bounds.min.y);
     }
 
+    void UpdateRayCastOriginWithOffset(float offsetX)
+    {
+        UpdateRayCastOrigin(); // Cập nhật lại vị trí hiện tại trước
+        rayCastOrigins.bottomLeft += Vector2.right * offsetX;
+        rayCastOrigins.bottomRight += Vector2.right * offsetX;
+        rayCastOrigins.topLeft += Vector2.right * offsetX;
+        rayCastOrigins.topRight += Vector2.right * offsetX;
+    }
+
     void CalculateRaySpacing()
     {
         Bounds bounds = col.bounds;
@@ -339,6 +349,31 @@ public class PlayerController : MonoBehaviour
 
         horizontalRaySpacing = bounds.size.y / (horizontalRayCount - 1);
         verticalRaySpacing = bounds.size.x / (verticalRayCount - 1);
+    }
+
+    // Hàm để giải quyết việc nhân vật bị lồng vào vật thể
+    void ResolveOverlap()
+    {
+        // Kiểm tra xem Collider của nhân vật có đang lồng vào cái gì không
+        Collider2D[] results = new Collider2D[5];
+        ContactFilter2D filter = new ContactFilter2D();
+        filter.SetLayerMask(collisionMask);
+        filter.useTriggers = false;
+
+        int count = col.Overlap(filter, results);
+
+        for (int i = 0; i < count; i++)
+        {
+            ColliderDistance2D diff = col.Distance(results[i]);
+            if (diff.isOverlapped)
+            {
+                // diff.normal * diff.distance sẽ là vector ngắn nhất để đẩy bạn ra ngoài
+                transform.position += (Vector3)(diff.normal * Mathf.Abs(diff.distance));
+
+                // Reset vận tốc về 0 nếu bị kẹt để tránh tích lũy lực
+                velocity = Vector2.zero;
+            }
+        }
     }
 
     // Hàm để DialogueTrigger gọi khi người chơi đi vào vùng
