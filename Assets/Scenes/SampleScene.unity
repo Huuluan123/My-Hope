@@ -444,9 +444,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 675924993}
-  - component: {fileID: 675924996}
   - component: {fileID: 675924995}
   - component: {fileID: 675924994}
+  - component: {fileID: 675924997}
+  - component: {fileID: 675924996}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -525,7 +526,7 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 675924992}
-  m_BodyType: 0
+  m_BodyType: 1
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
@@ -553,65 +554,26 @@ MonoBehaviour:
   m_GameObject: {fileID: 675924992}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f3a68f747430fe7439f57d16ddcd0b2c, type: 3}
+  m_Script: {fileID: 11500000, guid: 2ae92041699c2a94d8b125db7332668d, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  rayDistance: 0.5
-  attackDamage: 40
-  attackRange: 0.74
-  attackSpeed: 0.7
-  attackPoint: {fileID: 144142078}
-  moveSpeed: 5
-  jumpForce: 10
-  dashDistance: 10
-  isFacingRight: 1
-  currentHealth: 0
-  maxHealth: 100
-  enemyHit: {fileID: 0}
-  attackTime: 0
-  enemyLayers:
+  m_EditorClassIdentifier: Assembly-CSharp::Controller2D
+  collisionMask:
     serializedVersion: 2
-    m_Bits: 128
-  moveAction:
-    m_Name: Move
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: 8ca040fa-7602-46d5-88c8-afd119f388a2
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings: []
-    m_Flags: 0
-  jumpAction:
-    m_Name: Jump
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: 62f70821-1323-45b8-adbe-7ec2b85b5952
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings: []
-    m_Flags: 0
-  dashAction:
-    m_Name: Dash
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: 78891ce5-352f-4d0b-878e-e2f6d7548095
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings: []
-    m_Flags: 0
-  attackAction:
-    m_Name: Attack
-    m_Type: 0
-    m_ExpectedControlType: 
-    m_Id: 186b69ae-b161-40b7-bfc4-4dcdf36eb5c3
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings: []
-    m_Flags: 0
-  moveInput: {x: 0, y: 0}
-  isAttacking: 0
-  isDashing: 0
-  isGrounded: 0
+    m_Bits: 64
+  horizontalRayCount: 4
+  verticalRayCount: 4
+--- !u!114 &675924997
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 675924992}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9512b83f907de5640860cd7e2cbf9ffb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Player2D
 --- !u!1 &1048349238
 GameObject:
   m_ObjectHideFlags: 0
@@ -1228,7 +1190,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1134630047
 Transform:
   m_ObjectHideFlags: 0
@@ -1276,7 +1238,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!95 &1136985315
 Animator:
   serializedVersion: 7
@@ -1301,6 +1263,7 @@ Animator:
   m_WriteDefaultValuesOnDisable: 0
 --- !u!212 &1136985316
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -1346,6 +1309,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_Sprite: {fileID: 8231058446179839085, guid: 1914d95466e3d4341a618c35a56d5f82, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -1355,7 +1319,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!4 &1136985317
 Transform:
@@ -1811,6 +1774,7 @@ TilemapCollider2D:
   m_UseDelaunayMesh: 0
 --- !u!483693784 &2095247284
 TilemapRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -1856,6 +1820,7 @@ TilemapRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
   m_MaxChunkCount: 16
@@ -1863,7 +1828,6 @@ TilemapRenderer:
   m_SortOrder: 0
   m_Mode: 0
   m_DetectChunkCullingBounds: 0
-  m_MaskInteraction: 0
 --- !u!1839735485 &2095247285
 Tilemap:
   m_ObjectHideFlags: 0
@@ -2359,6 +2323,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &6163814209369982697
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -2404,6 +2369,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_Sprite: {fileID: -6211648682532063752, guid: ae72133dacba6ec4eb33ecde48f50e56, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -2413,7 +2379,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!1 &8564027111542980161
 GameObject:

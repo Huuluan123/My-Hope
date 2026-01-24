@@ -5,6 +5,8 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 
+// Đang làm dở tới bước bê Vertical Collision từ Controller2D sang Char Controller
+
 public enum PlayerState
 {
     Idle,
@@ -23,15 +25,20 @@ public class PlayerController : MonoBehaviour
     [Header("Stats")]
     [SerializeField] private float moveSpeed;
     [SerializeField] private float jumpForce = 10f;
-    [SerializeField] private float dashDistance = 10f;
 
     [Header("Gameplay attributes")]
     [SerializeField] private float coyoteTime = 0.1f;
     [SerializeField] private float jumpBufferTime = 0.1f;
-    [SerializeField] private float gravity = 40f;
+    [SerializeField] private float gravity = -40f;
+    [SerializeField] private float maxFallSpeed = -25f;
     [SerializeField] private float lastGroundedTime;
     [SerializeField] private float lastJumpInputTime;
     [SerializeField] private float castDistance = 0.01f;
+    [SerializeField] private const float skinWidth = 0.015f;
+    [SerializeField] private int verticalRayCount = 8;
+    [SerializeField] private int horizontalRayCount = 8;
+    float verticalRaySpacing;
+    float horizontalRaySpacing;
 
     [Header("Movement and control")]
     // Biến để lưu trữ giá trị di chuyển
@@ -45,38 +52,40 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private bool isJumping;
 
     [Space]
-    [SerializeField] private Vector2 velocity;
+    [SerializeField] private Vector3 velocity;
     [SerializeField] private float acceleration;
     [SerializeField] private float jumpTime;
 
     [Header("Components")]
     [SerializeField] private Collider2D col; // collider của nhân vật
-    [SerializeField] private LayerMask enemyLayers;
+    [SerializeField] private LayerMask collisionMask;
+    [SerializeField] private RayCastOrigin rayCastOrigins;
     [SerializeField] private RaycastHit2D[] hits = new RaycastHit2D[4]; // Mảng để lưu trữ kết quả quét va chạm
 
     private DialogueTrigger currentDialogueTrigger; // Biến tham chiếu đến NPC hiện tại
     private Rigidbody2D rb;
     private Animator animator;
 
-    [Header("Input system")]
-    public InputAction moveAction;
-    public InputAction jumpAction;
-    public InputAction dashAction;
-    public InputAction attackAction;
+    private CharacterInput input;
 
-    // Lệnh này được gọi khi script được khởi tạo
     void Awake()
     {
         if (Instance == null) Instance = this;
 
-        moveAction = InputSystem.actions.FindAction("Move");
-        jumpAction = InputSystem.actions.FindAction("Jump");
-        dashAction = InputSystem.actions.FindAction("Dash");
-        attackAction = InputSystem.actions.FindAction("Attack");
+        // Lấy hoặc thêm component CharacterInput
+        input = GetComponent<CharacterInput>();
+        if (input == null) input = gameObject.AddComponent<CharacterInput>();
+
         rb = GetComponent<Rigidbody2D>();
+        col = GetComponent<BoxCollider2D>();
         animator = GetComponentInChildren<Animator>();
 
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+    }
+
+    void Start()
+    {
+        CalculateRaySpacing();
     }
 
     //Set trạng thái của người chơi
@@ -110,24 +119,20 @@ public class PlayerController : MonoBehaviour
 
         if (!CanMove)
         {
-            moveInput = Vector2.zero; // Xóa input di chuyển
-            velocity.x = 0;           // Dừng di chuyển ngang
-            animator.SetBool("isRunning", false); // Tắt animation chạy
-            return; // Bỏ qua phần còn lại của Update
+            moveInput = Vector2.zero;
+            velocity.x = 0;
+            animator.SetBool("isRunning", false);
+            return;
         }
 
-        //Read move value
-        if (moveAction != null) moveInput = moveAction.ReadValue<Vector2>();
+        // Read move value from CharacterInput
+        moveInput = (input != null) ? input.MoveInput : Vector2.zero;
 
-        if ((hitLeftWall && moveInput.x < 0) || (hitRightWall && moveInput.x > 0)) velocity.x = 0;
-        else velocity.x = moveInput.x * moveSpeed;
+        velocity.x = moveInput.x * moveSpeed;
     }
 
     void FixedUpdate()
     {
-        VerticalCollisionCheck();
-        HorizonalCollisionCheck();
-
         // Process jump buffer & coyote here (FixedUpdate) so ground checks are up-to-date
         ProcessJumpBuffer();
 
@@ -138,13 +143,16 @@ public class PlayerController : MonoBehaviour
     private void MoveCharacter()
     {
         if (!CanMove) return;
-        //Gravity
-        if (currentState == PlayerState.OnAir) velocity.y -= gravity * Time.fixedDeltaTime;
-        else velocity.y = 0;
+        if (velocity.y > maxFallSpeed) velocity.y += gravity * Time.fixedDeltaTime;
+        UpdateRayCastOrigin();
+        if (velocity.x != 0) HorizonalCollisionCheck();
+        UpdateRayCastOriginWithOffset(velocity.x * Time.fixedDeltaTime); // Cập nhật vị trí tia với offset di chuyển ngang
+        if (velocity.y != 0) VerticalCollisionCheck();
 
         //Calculate new position
-        Vector2 moveDelta = velocity * Time.fixedDeltaTime;
-        Vector2 targetPosition = rb.position + moveDelta;
+        Vector3 moveAmount = velocity * Time.fixedDeltaTime;
+        Vector3 targetPosition = (Vector3)rb.position + moveAmount;
+        rb.MovePosition(targetPosition);
 
         // Flip character
         if (moveInput.x != 0)
@@ -166,8 +174,6 @@ public class PlayerController : MonoBehaviour
         {
             animator.SetBool("isRunning", false);
         }
-
-        if (!isDashing) rb.MovePosition(targetPosition);
     }
 
     // Phương thức xử lý nhảy input: chỉ lưu thời điểm ấn để dùng jump buffer
@@ -177,10 +183,7 @@ public class PlayerController : MonoBehaviour
 
         if (context.performed)
         {
-            // --- LOGIC MỚI: KIỂM TRA HỘI THOẠI ---
-
-            // Nếu đang đứng yên (Idle) VÀ đang có NPC bên cạnh (currentDialogueTrigger != null)
-            // Bạn có thể thêm điều kiện && isGrounded nếu muốn chắc chắn phải chạm đất mới nói được
+            // Check if can talk to NPC
             if (currentState == PlayerState.Idle && currentDialogueTrigger != null)
             {
                 currentDialogueTrigger.TriggerDialogue();
@@ -188,12 +191,9 @@ public class PlayerController : MonoBehaviour
                 // Dừng lại ở đây, KHÔNG thực hiện code nhảy bên dưới
                 return;
             }
-            // -------------------------------------
 
-            // Nếu không thỏa mãn điều kiện trên thì thực hiện nhảy bình thường
             lastJumpInputTime = Time.time;
         }
-        // Do NOT call Jump() directly here — we process buffer in FixedUpdate after ground check.
     }
 
     private void ProcessJumpBuffer()
@@ -218,33 +218,6 @@ public class PlayerController : MonoBehaviour
         lastGroundedTime = -999f;
         isGrounded = false;
 
-    }
-
-    /*private void Dash(InputAction.CallbackContext context)
-    {
-        if (currentState != PlayerState.Moving) return;
-        if (!isDashing)
-        {
-            isDashing = true;
-            animator.SetTrigger("dash");
-            float dashDirection = transform.localScale.x;
-            gameObject.layer = 3; // Invincible Layer
-            rb.AddForce(new Vector2(dashDistance * dashDirection, 0), ForceMode2D.Impulse);
-            Invoke("EndDash", 0.3f);
-        }
-    }
-
-    private void EndDash()
-    {
-        isDashing = false;
-        rb.linearVelocity = Vector2.zero;
-        gameObject.layer = 8; // Player Layer
-    }*/
-
-    private void Die()
-    {
-        gameObject.layer = 3;
-        animator.SetBool("isDead", true);
     }
 
     private void UpdatePhysicsState()
@@ -273,35 +246,134 @@ public class PlayerController : MonoBehaviour
 
     void VerticalCollisionCheck()
     {
-        Vector2 boxSize = col.bounds.size;
-        boxSize.x *= 0.9f; // Giảm kích thước hộp theo chiều ngang để tránh va chạm không cần thiết
-        // Use OverlapBox for boolean ground check
-        Collider2D ground = Physics2D.OverlapBox(col.bounds.center + Vector3.down * castDistance, boxSize, 0f, LayerMask.GetMask("Ground"));
+        float directionY = Mathf.Sign(velocity.y);
+        float rayLength = Mathf.Abs(velocity.y * Time.fixedDeltaTime) + skinWidth;
 
-        isGrounded = (ground != null);
+        for (int i = 0; i < verticalRayCount; i++)
+        {
+            Vector2 rayOrigin = (directionY == -1) ? rayCastOrigins.bottomLeft : rayCastOrigins.topLeft;
 
-        if (isGrounded)
-        {
-            lastGroundedTime = Time.time;
-            animator.SetBool("isGrounded", true);
-        }
-        else
-        {
-            animator.SetBool("isGrounded", false);
+            rayOrigin += Vector2.right * (verticalRaySpacing * i);
+
+            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.up * directionY, rayLength, collisionMask);
+
+            //Debug.DrawRay(rayOrigin, Vector2.up * directionY * rayLength, Color.red);
+
+            if (hit)
+            {
+                // Cho phép nhảy xuyên qua (One Way Platform) nếu cần - Logic đơn giản
+                // if (hit.collider.CompareTag("OneWay") && directionY == 1) continue;
+
+                velocity.y = (hit.distance - skinWidth) * directionY / Time.fixedDeltaTime; // Tính lại vận tốc thực dựa trên quãng đường còn lại
+                rayLength = hit.distance; // Thu ngắn tia lại để không check xuyên qua vật cản gần nhất
+
+                if (directionY == -1) // Đang rơi xuống
+                {
+                    isGrounded = true;
+                    lastGroundedTime = Time.time;
+                    animator.SetBool("isGrounded", true);
+                }
+                else // Đang nhảy lên đụng trần
+                {
+                    velocity.y = 0; // Tùy chọn: Đụng trần thì dừng hẳn lực nảy
+                }
+            }
         }
     }
 
     void HorizonalCollisionCheck()
     {
-        Vector2 boxSize = col.bounds.size;
-        boxSize.y *= 0.9f; // Giảm kích thước hộp theo chiều ngang để tránh va chạm không cần thiết
-        bool right = Physics2D.OverlapBox(col.bounds.center + Vector3.right * castDistance, boxSize, 0f, LayerMask.GetMask("Ground"));
-        bool left = Physics2D.OverlapBox(col.bounds.center + Vector3.left * castDistance, boxSize, 0f, LayerMask.GetMask("Ground"));
+        float directionX = Mathf.Sign(velocity.x);
+        float rayLength = Mathf.Abs(velocity.x * Time.fixedDeltaTime) + skinWidth;
 
-        hitRightWall = right;
-        hitLeftWall = left;
+        for (int i = 0; i < horizontalRayCount; i++)
+        {
+            Vector2 rayOrigin = (directionX == -1) ? rayCastOrigins.bottomLeft : rayCastOrigins.bottomRight;
 
-        animator.SetBool("hitWall", hitLeftWall || hitRightWall);
+            // SỬA LỖI: Bỏ velocity.y ra, chỉ giữ spacing
+            rayOrigin += Vector2.up * (horizontalRaySpacing * i);
+
+            RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.right * directionX, rayLength, collisionMask);
+
+            Debug.DrawRay(rayOrigin, Vector2.right * directionX * rayLength, Color.red);
+
+            if (hit)
+            {
+                // Nếu khoảng cách quá gần (bằng 0), nghĩa là đang kẹt trong tường -> bỏ qua
+                if (hit.distance == 0) continue;
+
+                float slopeAngle = Vector2.Angle(hit.normal, Vector2.up);
+
+                // Ở đây bạn có thể thêm logic leo dốc (Slope) nếu góc < maxSlopeAngle
+
+                // Nếu không phải dốc (tường đứng), chặn di chuyển
+                velocity.x = (hit.distance - skinWidth) * directionX / Time.fixedDeltaTime;
+                rayLength = hit.distance;
+
+                // Cập nhật trạng thái chạm tường cho Animation
+                if (directionX == -1) hitLeftWall = true;
+                if (directionX == 1) hitRightWall = true;
+            }
+        }
+    }
+
+    void UpdateRayCastOrigin()
+    {
+        Bounds bounds = col.bounds;
+        // Quan trọng: Thu nhỏ bounds lại để tia bắn từ bên trong cơ thể ra ngoài
+        bounds.Expand(skinWidth * -2);
+
+        rayCastOrigins.topLeft = new Vector2(bounds.min.x, bounds.max.y);
+        rayCastOrigins.topRight = new Vector2(bounds.max.x, bounds.max.y);
+        rayCastOrigins.bottomLeft = new Vector2(bounds.min.x, bounds.min.y);
+        rayCastOrigins.bottomRight = new Vector2(bounds.max.x, bounds.min.y);
+    }
+
+    void UpdateRayCastOriginWithOffset(float offsetX)
+    {
+        UpdateRayCastOrigin(); // Cập nhật lại vị trí hiện tại trước
+        rayCastOrigins.bottomLeft += Vector2.right * offsetX;
+        rayCastOrigins.bottomRight += Vector2.right * offsetX;
+        rayCastOrigins.topLeft += Vector2.right * offsetX;
+        rayCastOrigins.topRight += Vector2.right * offsetX;
+    }
+
+    void CalculateRaySpacing()
+    {
+        Bounds bounds = col.bounds;
+        bounds.Expand(skinWidth * -2);
+
+        // Clamp đúng biến cho từng loại
+        horizontalRayCount = Mathf.Clamp(horizontalRayCount, 2, int.MaxValue);
+        verticalRayCount = Mathf.Clamp(verticalRayCount, 2, int.MaxValue); // Đã sửa từ horizontalRayCount thành verticalRayCount
+
+        horizontalRaySpacing = bounds.size.y / (horizontalRayCount - 1);
+        verticalRaySpacing = bounds.size.x / (verticalRayCount - 1);
+    }
+
+    // Hàm để giải quyết việc nhân vật bị lồng vào vật thể
+    void ResolveOverlap()
+    {
+        // Kiểm tra xem Collider của nhân vật có đang lồng vào cái gì không
+        Collider2D[] results = new Collider2D[5];
+        ContactFilter2D filter = new ContactFilter2D();
+        filter.SetLayerMask(collisionMask);
+        filter.useTriggers = false;
+
+        int count = col.Overlap(filter, results);
+
+        for (int i = 0; i < count; i++)
+        {
+            ColliderDistance2D diff = col.Distance(results[i]);
+            if (diff.isOverlapped)
+            {
+                // diff.normal * diff.distance sẽ là vector ngắn nhất để đẩy bạn ra ngoài
+                transform.position += (Vector3)(diff.normal * Mathf.Abs(diff.distance));
+
+                // Reset vận tốc về 0 nếu bị kẹt để tránh tích lũy lực
+                velocity = Vector2.zero;
+            }
+        }
     }
 
     // Hàm để DialogueTrigger gọi khi người chơi đi vào vùng
@@ -322,28 +394,23 @@ public class PlayerController : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.purple;
-        if (col == null) return;
-        Vector2 boxSize = col.bounds.size;
-        boxSize.x *= 0.9f;
-        Gizmos.DrawWireCube(col.bounds.center + Vector3.down * castDistance, boxSize);
+        Gizmos.color = Color.red;
     }
 
     private void OnEnable()
     {
-        if (moveAction != null) moveAction.Enable();
-        if (jumpAction != null) { jumpAction.Enable(); jumpAction.performed += OnJump; }
-        if (dashAction != null) dashAction.Enable();
-        if (attackAction != null) attackAction.Enable();
-
-        //if (dashAction != null) dashAction.performed += Dash;
+        // Đăng ký với CharacterInput
+        if (input != null) input.JumpPerformed += OnJump;
     }
 
     private void OnDisable()
     {
-        if (moveAction != null) moveAction.Disable();
-        if (jumpAction != null) { jumpAction.performed -= OnJump; jumpAction.Disable(); }
-        //if (dashAction != null) { dashAction.performed -= Dash; dashAction.Disable(); }
-        if (attackAction != null) attackAction.Disable();
+        if (input != null) input.JumpPerformed -= OnJump;
+    }
+
+    struct RayCastOrigin
+    {
+        public Vector2 topLeft, topRight;
+        public Vector2 bottomLeft, bottomRight;
     }
 }
