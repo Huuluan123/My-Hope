@@ -1103,7 +1103,7 @@ Transform:
   m_GameObject: {fileID: 274061456}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -37.88, y: 1.6200001, z: -10}
+  m_LocalPosition: {x: -38.38, y: 0.3000002, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1876,7 +1876,7 @@ Transform:
   m_GameObject: {fileID: 654680749}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -94.35, y: 26.960001, z: -10}
+  m_LocalPosition: {x: -94.85, y: 25.640001, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3757,7 +3757,7 @@ Transform:
   m_GameObject: {fileID: 1261906042}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -14.990002, y: 1.6200001, z: -10}
+  m_LocalPosition: {x: -15.490002, y: 0.3000002, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4310,7 +4310,7 @@ Transform:
   m_GameObject: {fileID: 1694173118}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -7.76, y: -2.04, z: 0}
+  m_LocalPosition: {x: -8.26, y: -3.36, z: 0}
   m_LocalScale: {x: 1.5, y: 1.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -4334,9 +4334,9 @@ MonoBehaviour:
   coyoteTime: 0.1
   jumpBufferTime: 0.1
   gravity: -40
+  maxFallSpeed: -25
   lastGroundedTime: -999
   lastJumpInputTime: -999
-  castDistance: 0.01
   verticalRayCount: 8
   horizontalRayCount: 8
   currentState: 0
@@ -5233,7 +5233,7 @@ CompositeCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_GeometryType: 0
+  m_GeometryType: 1
   m_GenerationType: 0
   m_EdgeRadius: 0
   m_ColliderPaths:
