@@ -67,6 +67,7 @@ public class PlayerController : MonoBehaviour
 
     private CharacterInput input;
 
+    #region Unity Callbacks
     void Awake()
     {
         if (Instance == null) Instance = this;
@@ -111,9 +112,10 @@ public class PlayerController : MonoBehaviour
         ProcessJumpBuffer();
 
         MoveCharacter();
-        //ResolveOverlap();
+        ResolveOverlap();
         UpdatePhysicsState();
     }
+    #endregion
 
     #region Movement Handling
 
@@ -345,7 +347,7 @@ public class PlayerController : MonoBehaviour
                 {
                     // Chỉ đẩy phần dư ra ngoài skinWidth
                     float errorCorrection = Mathf.Abs(diff.distance) - skinWidth;
-                    transform.position += (Vector3)(diff.normal * errorCorrection);
+                    transform.position += (Vector3)(diff.normal * -errorCorrection);
                     rb.position = (Vector2)transform.position;
                 }
             }
