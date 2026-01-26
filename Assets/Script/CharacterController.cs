@@ -33,7 +33,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float maxFallSpeed = -25f;
     [SerializeField] private float lastGroundedTime;
     [SerializeField] private float lastJumpInputTime;
-    [SerializeField] private float castDistance = 0.01f;
     [SerializeField] private const float skinWidth = 0.015f;
     [SerializeField] private int verticalRayCount = 8;
     [SerializeField] private int horizontalRayCount = 8;
@@ -68,6 +67,7 @@ public class PlayerController : MonoBehaviour
 
     private CharacterInput input;
 
+    #region Unity Callbacks
     void Awake()
     {
         if (Instance == null) Instance = this;
@@ -86,31 +86,6 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         CalculateRaySpacing();
-    }
-
-    //Set trạng thái của người chơi
-    public void SetState(PlayerState newState)
-    {
-        currentState = newState;
-    }
-
-    public bool CanMove
-    {
-        get
-        {
-            return currentState == PlayerState.Idle ||
-                   currentState == PlayerState.Running ||
-                   currentState == PlayerState.OnAir;
-        }
-    }
-
-    public bool CanJump
-    {
-        get
-        {
-            return currentState == PlayerState.Idle ||
-                   currentState == PlayerState.Running;
-        }
     }
 
     void Update()
@@ -137,8 +112,12 @@ public class PlayerController : MonoBehaviour
         ProcessJumpBuffer();
 
         MoveCharacter();
+        ResolveOverlap();
         UpdatePhysicsState();
     }
+    #endregion
+
+    #region Movement Handling
 
     private void MoveCharacter()
     {
@@ -220,6 +199,34 @@ public class PlayerController : MonoBehaviour
 
     }
 
+    #endregion
+
+    #region State Machine
+    //Set trạng thái của người chơi
+    public void SetState(PlayerState newState)
+    {
+        currentState = newState;
+    }
+
+    public bool CanMove
+    {
+        get
+        {
+            return currentState == PlayerState.Idle ||
+                   currentState == PlayerState.Running ||
+                   currentState == PlayerState.OnAir;
+        }
+    }
+
+    public bool CanJump
+    {
+        get
+        {
+            return currentState == PlayerState.Idle ||
+                   currentState == PlayerState.Running;
+        }
+    }
+
     private void UpdatePhysicsState()
     {
         // Nếu đang bận việc riêng (Talking/Dead) thì không can thiệp
@@ -243,7 +250,9 @@ public class PlayerController : MonoBehaviour
             currentState = PlayerState.OnAir;
         }
     }
+    #endregion
 
+    #region Collision Handling
     void VerticalCollisionCheck()
     {
         float directionY = Mathf.Sign(velocity.y);
@@ -257,7 +266,7 @@ public class PlayerController : MonoBehaviour
 
             RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.up * directionY, rayLength, collisionMask);
 
-            //Debug.DrawRay(rayOrigin, Vector2.up * directionY * rayLength, Color.red);
+            Debug.DrawRay(rayOrigin, Vector2.up * directionY * rayLength, Color.red);
 
             if (hit)
             {
@@ -317,6 +326,36 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    // Hàm để giải quyết việc nhân vật bị lồng vào vật thể
+    void ResolveOverlap()
+    {
+        Collider2D[] results = new Collider2D[5];
+        ContactFilter2D filter = new ContactFilter2D();
+        filter.SetLayerMask(collisionMask);
+        filter.useTriggers = false;
+
+        int count = col.Overlap(filter, results);
+
+        for (int i = 0; i < count; i++)
+        {
+            ColliderDistance2D diff = col.Distance(results[i]);
+            if (diff.isOverlapped)
+            {
+                float overlapThreshold = skinWidth + 0.01f;
+
+                if (Mathf.Abs(diff.distance) > overlapThreshold)
+                {
+                    // Chỉ đẩy phần dư ra ngoài skinWidth
+                    float errorCorrection = Mathf.Abs(diff.distance) - skinWidth;
+                    transform.position += (Vector3)(diff.normal * -errorCorrection);
+                    rb.position = (Vector2)transform.position;
+                }
+            }
+        }
+    }
+    #endregion
+
+    #region Raycast Origin Setup
     void UpdateRayCastOrigin()
     {
         Bounds bounds = col.bounds;
@@ -350,32 +389,9 @@ public class PlayerController : MonoBehaviour
         horizontalRaySpacing = bounds.size.y / (horizontalRayCount - 1);
         verticalRaySpacing = bounds.size.x / (verticalRayCount - 1);
     }
+    #endregion
 
-    // Hàm để giải quyết việc nhân vật bị lồng vào vật thể
-    void ResolveOverlap()
-    {
-        // Kiểm tra xem Collider của nhân vật có đang lồng vào cái gì không
-        Collider2D[] results = new Collider2D[5];
-        ContactFilter2D filter = new ContactFilter2D();
-        filter.SetLayerMask(collisionMask);
-        filter.useTriggers = false;
-
-        int count = col.Overlap(filter, results);
-
-        for (int i = 0; i < count; i++)
-        {
-            ColliderDistance2D diff = col.Distance(results[i]);
-            if (diff.isOverlapped)
-            {
-                // diff.normal * diff.distance sẽ là vector ngắn nhất để đẩy bạn ra ngoài
-                transform.position += (Vector3)(diff.normal * Mathf.Abs(diff.distance));
-
-                // Reset vận tốc về 0 nếu bị kẹt để tránh tích lũy lực
-                velocity = Vector2.zero;
-            }
-        }
-    }
-
+    #region Dialouge Handling
     // Hàm để DialogueTrigger gọi khi người chơi đi vào vùng
     public void SetCurrentTrigger(DialogueTrigger trigger)
     {
@@ -391,7 +407,9 @@ public class PlayerController : MonoBehaviour
             currentDialogueTrigger = null;
         }
     }
+    #endregion
 
+    #region Callback Fuctions
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
@@ -407,10 +425,13 @@ public class PlayerController : MonoBehaviour
     {
         if (input != null) input.JumpPerformed -= OnJump;
     }
+    #endregion
 
+    #region structs
     struct RayCastOrigin
     {
         public Vector2 topLeft, topRight;
         public Vector2 bottomLeft, bottomRight;
     }
+    #endregion
 }
