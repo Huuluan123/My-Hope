@@ -36,19 +36,21 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private const float skinWidth = 0.015f;
     [SerializeField] private int verticalRayCount = 8;
     [SerializeField] private int horizontalRayCount = 8;
+    [SerializeField] private float wallSlideSpeed = 2f; // Tốc độ trượt xuống chậm
+    [SerializeField] private float wallClimbSpeed = 4f; // Tốc độ leo lên/xuống
     float verticalRaySpacing;
     float horizontalRaySpacing;
+    private bool isWallSliding;
+    private bool isWallClimbing;
+    private int wallDirX; // Hướng tường (1: bên phải, -1: bên trái)
 
     [Header("Movement and control")]
     // Biến để lưu trữ giá trị di chuyển
     [SerializeField] private PlayerState currentState;
     [SerializeField] private Vector2 moveInput;
-    [SerializeField] private bool isDashing;
-    [SerializeField] private bool hitLeftWall;
-    [SerializeField] private bool hitRightWall;
-    [SerializeField] private bool hitCelling;
     [SerializeField] private bool isGrounded; // Biến kiểm tra nhân vật có đang chạm đất không
-    [SerializeField] private bool isJumping;
+    private bool hitLeftWall;
+    private bool hitRightWall;
 
     [Space]
     [SerializeField] private Vector3 velocity;
@@ -56,10 +58,10 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float jumpTime;
 
     [Header("Components")]
-    [SerializeField] private Collider2D col; // collider của nhân vật
+    private Collider2D col; // collider của nhân vật
     [SerializeField] private LayerMask collisionMask;
-    [SerializeField] private RayCastOrigin rayCastOrigins;
-    [SerializeField] private RaycastHit2D[] hits = new RaycastHit2D[4]; // Mảng để lưu trữ kết quả quét va chạm
+    private RayCastOrigin rayCastOrigins;
+    private RaycastHit2D[] hits = new RaycastHit2D[4]; // Mảng để lưu trữ kết quả quét va chạm
 
     private DialogueTrigger currentDialogueTrigger; // Biến tham chiếu đến NPC hiện tại
     private Rigidbody2D rb;
@@ -124,6 +126,11 @@ public class PlayerController : MonoBehaviour
         if (!CanMove) return;
         if (velocity.y > maxFallSpeed) velocity.y += gravity * Time.fixedDeltaTime;
         UpdateRayCastOrigin();
+        if (isWallSliding)
+        {
+            // Giới hạn tốc độ rơi khi trượt tường
+            velocity.y = Mathf.Max(velocity.y, -wallSlideSpeed);
+        }
         if (velocity.x != 0) HorizonalCollisionCheck();
         UpdateRayCastOriginWithOffset(velocity.x * Time.fixedDeltaTime); // Cập nhật vị trí tia với offset di chuyển ngang
         if (velocity.y != 0) VerticalCollisionCheck();
@@ -299,7 +306,6 @@ public class PlayerController : MonoBehaviour
         {
             Vector2 rayOrigin = (directionX == -1) ? rayCastOrigins.bottomLeft : rayCastOrigins.bottomRight;
 
-            // SỬA LỖI: Bỏ velocity.y ra, chỉ giữ spacing
             rayOrigin += Vector2.up * (horizontalRaySpacing * i);
 
             RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.right * directionX, rayLength, collisionMask);
@@ -312,13 +318,22 @@ public class PlayerController : MonoBehaviour
                 if (hit.distance == 0) continue;
 
                 float slopeAngle = Vector2.Angle(hit.normal, Vector2.up);
-
-                // Ở đây bạn có thể thêm logic leo dốc (Slope) nếu góc < maxSlopeAngle
-
-                // Nếu không phải dốc (tường đứng), chặn di chuyển
                 velocity.x = (hit.distance - skinWidth) * directionX / Time.fixedDeltaTime;
                 rayLength = hit.distance;
 
+                //Phát hiện tường
+                wallDirX = (directionX == 1) ? 1 : -1;
+                // Trạng thái trượt tường: Đang chạm tường, đang rơi và người chơi đang ấn phím hướng vào tường
+                bool isPressingAgainstWall = (moveInput.x > 0 && wallDirX == 1) || (moveInput.x < 0 && wallDirX == -1);
+
+                if (!isGrounded && (hitLeftWall || hitRightWall) && velocity.y < 0 && isPressingAgainstWall)
+                {
+                    isWallSliding = true;
+                }
+                else
+                {
+                    isWallSliding = false;
+                }
                 // Cập nhật trạng thái chạm tường cho Animation
                 if (directionX == -1) hitLeftWall = true;
                 if (directionX == 1) hitRightWall = true;
