@@ -1103,7 +1103,7 @@ Transform:
   m_GameObject: {fileID: 274061456}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -37.940002, y: -3.0799997, z: -10}
+  m_LocalPosition: {x: -38.35, y: -1.1200001, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1876,7 +1876,7 @@ Transform:
   m_GameObject: {fileID: 654680749}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -94.409996, y: 22.26, z: -10}
+  m_LocalPosition: {x: -94.81999, y: 24.220001, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3757,7 +3757,7 @@ Transform:
   m_GameObject: {fileID: 1261906042}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -15.050001, y: -3.0799997, z: -10}
+  m_LocalPosition: {x: -15.459999, y: -1.1200001, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4310,7 +4310,7 @@ Transform:
   m_GameObject: {fileID: 1694173118}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -7.82, y: -6.74, z: 0}
+  m_LocalPosition: {x: -8.23, y: -4.78, z: 0}
   m_LocalScale: {x: 1.5, y: 1.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -4339,18 +4339,21 @@ MonoBehaviour:
   lastJumpInputTime: -999
   verticalRayCount: 8
   horizontalRayCount: 8
+  isWallSliding: 0
+  isWallClimbing: 0
+  wallSlideSpeed: 2.1
+  wallClimbSpeed: 4
+  wallJumpForce: {x: 15, y: 25}
+  maxStamina: 100
+  climbStaminaDrain: 20
+  holdStaminaDrain: 5
+  currentStamina: 0
   currentState: 0
   moveInput: {x: 0, y: 0}
-  isDashing: 0
-  hitLeftWall: 0
-  hitRightWall: 0
-  hitCelling: 0
   isGrounded: 0
-  isJumping: 0
   velocity: {x: 0, y: 0, z: 0}
   acceleration: 0
   jumpTime: 0
-  col: {fileID: 1694173120}
   collisionMask:
     serializedVersion: 2
     m_Bits: 64
@@ -4398,6 +4401,15 @@ MonoBehaviour:
     m_Type: 0
     m_ExpectedControlType: 
     m_Id: a13ff0a2-e713-4070-aa8c-e504ee003111
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
+  grabAction:
+    m_Name: Grab
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 903ae963-2cc6-4f04-882a-1c46be023809
     m_Processors: 
     m_Interactions: 
     m_SingletonActionBindings: []
@@ -5009,7 +5021,7 @@ Transform:
   m_GameObject: {fileID: 1979499929}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.85, z: 0}
+  m_LocalPosition: {x: 0, y: 0.32, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
