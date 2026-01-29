@@ -8,16 +8,19 @@ public class CharacterInput : MonoBehaviour
     public InputAction jumpAction;
     public InputAction dashAction;
     public InputAction attackAction;
+    public InputAction grabAction;
 
     public event Action<InputAction.CallbackContext> JumpPerformed;
     public event Action<InputAction.CallbackContext> JumpCanceled;
     public event Action<InputAction.CallbackContext> DashPerformed;
     public event Action<InputAction.CallbackContext> AttackPerformed;
+    public event Action<InputAction.CallbackContext> GrabPerformed;
 
     private Action<InputAction.CallbackContext> jumpPerformedHandler;
     private Action<InputAction.CallbackContext> jumpCanceledHandler;
     private Action<InputAction.CallbackContext> dashPerformedHandler;
     private Action<InputAction.CallbackContext> attackPerformedHandler;
+    private Action<InputAction.CallbackContext> grabPerformedHandler;
 
     void Awake()
     {
@@ -25,9 +28,11 @@ public class CharacterInput : MonoBehaviour
         jumpAction = InputSystem.actions.FindAction("Jump");
         dashAction = InputSystem.actions.FindAction("Dash");
         attackAction = InputSystem.actions.FindAction("Attack");
+        grabAction = InputSystem.actions.FindAction("Grab");
     }
 
     public Vector2 MoveInput => moveAction != null ? moveAction.ReadValue<Vector2>() : Vector2.zero;
+    public bool IsGrabbing => grabAction != null && grabAction.IsPressed();
 
     void OnEnable()
     {
@@ -55,6 +60,13 @@ public class CharacterInput : MonoBehaviour
             attackPerformedHandler = ctx => AttackPerformed?.Invoke(ctx);
             attackAction.performed += attackPerformedHandler;
         }
+
+        if (grabAction != null)
+        {
+            grabAction.Enable();
+            grabPerformedHandler = ctx => GrabPerformed?.Invoke(ctx);
+            grabAction.performed += grabPerformedHandler;
+        }
     }
 
     void OnDisable()
@@ -78,6 +90,12 @@ public class CharacterInput : MonoBehaviour
         {
             if (attackPerformedHandler != null) attackAction.performed -= attackPerformedHandler;
             attackAction.Disable();
+        }
+
+        if (grabAction != null)
+        {
+            if (grabPerformedHandler != null) grabAction.performed -= grabPerformedHandler;
+            grabAction.Disable();
         }
     }
 }
