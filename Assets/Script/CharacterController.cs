@@ -76,11 +76,13 @@ public class PlayerController : MonoBehaviour
 
     private CharacterInput input;
 
+    /* ---------- Events -------------- */
     public event Action OnJumpPerformed;
     public event Action OnLanded;
     public event Action<bool> OnRunChanged;
     public event Action<bool> OnWallGrabChanged;
     public event Action<bool> OnClimbChanged;
+    public event Action<bool> OnGroundedChanged;
 
     #region Unity Callbacks
     void Awake()
@@ -363,9 +365,10 @@ public class PlayerController : MonoBehaviour
         bool isClimbing = (currentState == PlayerState.Climbing && Mathf.Abs(moveInput.y) > 0.1f);
         OnClimbChanged?.Invoke(isClimbing);
 
-        // 3. Xử lý Event Chạy (Tiện tay làm luôn cho đủ bộ)
+        // 3. Xử lý Event Chạy và Cập nhật trạng thái chạm đất cho Animation
         bool isRunning = (currentState == PlayerState.Running);
         OnRunChanged?.Invoke(isRunning);
+        OnGroundedChanged?.Invoke(isGrounded);
     }
     #endregion
 

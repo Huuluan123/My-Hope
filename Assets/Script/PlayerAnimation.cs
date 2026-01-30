@@ -29,6 +29,7 @@ public class PlayerAnimation : MonoBehaviour
         controller.OnRunChanged += SetRunState;
         controller.OnWallGrabChanged += SetWallGrab;
         controller.OnClimbChanged += SetClimb;
+        controller.OnGroundedChanged += SetGrounded;
     }
 
     // --- HỦY ĐĂNG KÝ (BẮT BUỘC ĐỂ TRÁNH LỖI MEMORY LEAK) ---
@@ -42,6 +43,7 @@ public class PlayerAnimation : MonoBehaviour
         controller.OnRunChanged -= SetRunState;
         controller.OnWallGrabChanged -= SetWallGrab;
         controller.OnClimbChanged -= SetClimb;
+        controller.OnGroundedChanged -= SetGrounded;
     }
 
     // --- CÁC HÀM XỬ LÝ (Sẽ được gọi tự động khi Event kích hoạt) ---
@@ -54,8 +56,13 @@ public class PlayerAnimation : MonoBehaviour
 
     private void PlayLand()
     {
-        animator.SetBool(IsGrounded, true);
         // Có thể thêm code: Tạo hiệu ứng nén nhân vật (Squash), bụi tiếp đất
+        // SoundManager.Instance.PlaySound("Land");
+    }
+
+    private void SetGrounded(bool isGrounded)
+    {
+        animator.SetBool(IsGrounded, isGrounded);
     }
 
     private void SetRunState(bool isRunning)
