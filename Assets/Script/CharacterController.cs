@@ -4,6 +4,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
+using System;
 
 public enum PlayerState
 {
@@ -72,9 +73,14 @@ public class PlayerController : MonoBehaviour
 
     private DialogueTrigger currentDialogueTrigger; // Biến tham chiếu đến NPC hiện tại
     private Rigidbody2D rb;
-    private Animator animator;
 
     private CharacterInput input;
+
+    public event Action OnJumpPerformed;
+    public event Action OnLanded;
+    public event Action<bool> OnRunChanged;
+    public event Action<bool> OnWallGrabChanged;
+    public event Action<bool> OnClimbChanged;
 
     #region Unity Callbacks
     void Awake()
@@ -87,7 +93,6 @@ public class PlayerController : MonoBehaviour
 
         rb = GetComponent<Rigidbody2D>();
         col = GetComponent<BoxCollider2D>();
-        animator = GetComponentInChildren<Animator>();
 
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
     }
@@ -105,7 +110,6 @@ public class PlayerController : MonoBehaviour
         {
             moveInput = Vector2.zero;
             velocity.x = 0;
-            animator.SetBool("isRunning", false);
             return;
         }
 
@@ -123,6 +127,7 @@ public class PlayerController : MonoBehaviour
         MoveCharacter();
         ResolveOverlap();
         UpdatePhysicsState();
+        HandleAnimationEvents();
     }
     #endregion
 
@@ -164,7 +169,6 @@ public class PlayerController : MonoBehaviour
         // Flip character
         if (moveInput.x != 0)
         {
-            animator.SetBool("isRunning", true);
 
             if (moveInput.x > 0)
             {
@@ -175,11 +179,6 @@ public class PlayerController : MonoBehaviour
             {
                 transform.localScale = new Vector3(-Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
             }
-        }
-
-        if (moveInput.x == 0)
-        {
-            animator.SetBool("isRunning", false);
         }
     }
 
@@ -237,12 +236,13 @@ public class PlayerController : MonoBehaviour
         }
         currentState = PlayerState.OnAir;
         velocity.y = jumpForce;
-        animator.SetTrigger("jump");
         SoundManager.Instance.PlaySound2D("Jump");
 
         lastGroundedTime = -999f;
         isGrounded = false;
         isWallClimbing = false; // Ngắt trạng thái leo ngay khi nhảy
+
+        OnJumpPerformed?.Invoke();
     }
 
     private void HandleWallClimbingPhysics() // Gọi trong MoveCharacter()
@@ -342,10 +342,30 @@ public class PlayerController : MonoBehaviour
         {
             // Cập nhật trạng thái trượt tường cho Animation
             if (isWallSliding)
+            {
                 currentState = PlayerState.Sliding;
+            }
             else
+            {
                 currentState = PlayerState.OnAir;
+            }
         }
+    }
+
+    private void HandleAnimationEvents()
+    {
+        // 1. Xử lý Event Bám tường (Sliding hoặc Climbing đều là đang bám)
+        bool isGrabbing = (currentState == PlayerState.Sliding || currentState == PlayerState.Climbing);
+        OnWallGrabChanged?.Invoke(isGrabbing);
+
+        // 2. Xử lý Event Leo trèo (Chỉ khi đang Climbing VÀ có di chuyển tay)
+        // Lưu ý: Dùng Mathf.Abs > 0.1f để tránh lỗi rung tay cầm (stick drift) nếu có
+        bool isClimbing = (currentState == PlayerState.Climbing && Mathf.Abs(moveInput.y) > 0.1f);
+        OnClimbChanged?.Invoke(isClimbing);
+
+        // 3. Xử lý Event Chạy (Tiện tay làm luôn cho đủ bộ)
+        bool isRunning = (currentState == PlayerState.Running);
+        OnRunChanged?.Invoke(isRunning);
     }
     #endregion
 
@@ -354,6 +374,8 @@ public class PlayerController : MonoBehaviour
     {
         float directionY = Mathf.Sign(velocity.y);
         float rayLength = Mathf.Abs(velocity.y * Time.fixedDeltaTime) + skinWidth;
+
+        if (directionY == -1) isGrounded = false;
 
         for (int i = 0; i < verticalRayCount; i++)
         {
@@ -375,9 +397,9 @@ public class PlayerController : MonoBehaviour
 
                 if (directionY == -1) // Đang rơi xuống
                 {
+                    if (!isGrounded) OnLanded?.Invoke();
                     isGrounded = true;
                     lastGroundedTime = Time.time;
-                    animator.SetBool("isGrounded", true);
                 }
                 else // Đang nhảy lên đụng trần
                 {
@@ -455,7 +477,15 @@ public class PlayerController : MonoBehaviour
                 {
                     // Chỉ đẩy phần dư ra ngoài skinWidth
                     float errorCorrection = Mathf.Abs(diff.distance) - skinWidth;
-                    transform.position += (Vector3)(diff.normal * -errorCorrection);
+                    Vector2 separationVector = diff.normal * -errorCorrection;
+
+                    // Nếu là tường đứng (Normal chủ yếu theo phương ngang), khóa trục Y lại
+                    if (Mathf.Abs(diff.normal.y) < 0.5f)
+                    {
+                        separationVector.y = 0;
+                    }
+
+                    transform.position += (Vector3)separationVector;
                     rb.position = (Vector2)transform.position;
                 }
             }
