@@ -46,6 +46,7 @@ public class PlayerController : MonoBehaviour
     private int wallDirX; // Hướng tường (1: bên phải, -1: bên trái)
     [SerializeField] private float wallSlideSpeed = 2f; // Tốc độ trượt xuống chậm
     [SerializeField] private float wallClimbSpeed = 4f; // Tốc độ leo lên/xuống
+    [SerializeField] private float wallClimbDownSpeed = 8f; // Tốc độ trượt tường nhanh khi bám
     [SerializeField] private Vector2 wallJumpForce = new Vector2(15f, 25f); // Lực nhảy tường (X, Y)
     [SerializeField] private float maxStamina = 100f;
     [SerializeField] private float climbStaminaDrain = 20f; // Tốn thể lực khi leo
@@ -57,8 +58,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private PlayerState currentState;
     [SerializeField] private Vector2 moveInput;
     [SerializeField] private bool isGrounded; // Biến kiểm tra nhân vật có đang chạm đất không
-    private bool hitLeftWall;
-    private bool hitRightWall;
+    [SerializeField] private bool hitLeftWall;
+    [SerializeField] private bool hitRightWall;
 
     [Space]
     [SerializeField] private Vector3 velocity;
@@ -153,7 +154,7 @@ public class PlayerController : MonoBehaviour
         }
 
         UpdateRayCastOrigin();
-        if (velocity.x != 0) HorizonalCollisionCheck();
+        HorizonalCollisionCheck(); // Luôn bắn tia để phát hiện tường
 
         if (isWallSliding && !isWallClimbing)
         {
@@ -250,7 +251,21 @@ public class PlayerController : MonoBehaviour
     private void HandleWallClimbingPhysics() // Gọi trong MoveCharacter()
     {
         // 1. Áp dụng vận tốc leo dựa trên input Y
-        velocity.y = moveInput.y * wallClimbSpeed;
+        if (moveInput.y > 0)
+        {
+            // Đang bấm LÊN -> Dùng tốc độ leo lên
+            velocity.y = moveInput.y * wallClimbSpeed;
+        }
+        else if (moveInput.y < 0)
+        {
+            // Đang bấm XUỐNG -> Dùng tốc độ trượt xuống nhanh (Fast Drop)
+            velocity.y = moveInput.y * wallClimbDownSpeed;
+        }
+        else
+        {
+            // Không bấm gì -> Đứng yên trên tường
+            velocity.y = 0;
+        }
 
         // 2. Trừ thể lực
         float drain = (moveInput.y != 0) ? climbStaminaDrain : holdStaminaDrain;
@@ -270,11 +285,12 @@ public class PlayerController : MonoBehaviour
         // Điều kiện: Đang giữ phím Grab + Chạm tường + Không ở mặt đất + Còn thể lực
         bool isTouchingWall = hitLeftWall || hitRightWall;
 
-        if (input.IsGrabbing && isTouchingWall && !isGrounded && currentStamina > 0)
+        if (input.IsGrabbing && isTouchingWall && currentStamina > 0)
         {
             currentState = PlayerState.Climbing;
             isWallClimbing = true;
             isWallSliding = false; // Ưu tiên leo hơn trượt
+            velocity.x = 0; // Dừng di chuyển khi bám tường
         }
         else
         {
@@ -362,7 +378,7 @@ public class PlayerController : MonoBehaviour
 
         // 2. Xử lý Event Leo trèo (Chỉ khi đang Climbing VÀ có di chuyển tay)
         // Lưu ý: Dùng Mathf.Abs > 0.1f để tránh lỗi rung tay cầm (stick drift) nếu có
-        bool isClimbing = (currentState == PlayerState.Climbing && Mathf.Abs(moveInput.y) > 0.1f);
+        bool isClimbing = (currentState == PlayerState.Climbing && moveInput.y > 0.1f);
         OnClimbChanged?.Invoke(isClimbing);
 
         // 3. Xử lý Event Chạy và Cập nhật trạng thái chạm đất cho Animation
@@ -414,15 +430,37 @@ public class PlayerController : MonoBehaviour
 
     void HorizonalCollisionCheck()
     {
-        float directionX = Mathf.Sign(velocity.x);
+        float directionX;
+
+        if (velocity.x != 0)
+        {
+            directionX = Mathf.Sign(velocity.x);
+        }
+        else
+        {
+            // Khi đứng yên (velocity = 0), ta lấy hướng theo Input
+            if (moveInput.x != 0)
+            {
+                directionX = Mathf.Sign(moveInput.x);
+            }
+            else
+            {
+                // Nếu không bấm gì cả, lấy hướng mặt hiện tại của nhân vật
+                directionX = Mathf.Sign(transform.localScale.x);
+            }
+        }
+
         float rayLength = Mathf.Abs(velocity.x * Time.fixedDeltaTime) + skinWidth;
+        // Nếu đứng yên thì vẫn bắn tia.
+        if (Mathf.Abs(velocity.x) < skinWidth)
+        {
+            rayLength = 2 * skinWidth;
+        }
 
         for (int i = 0; i < horizontalRayCount; i++)
         {
             Vector2 rayOrigin = (directionX == -1) ? rayCastOrigins.bottomLeft : rayCastOrigins.bottomRight;
-
             rayOrigin += Vector2.up * (horizontalRaySpacing * i);
-
             RaycastHit2D hit = Physics2D.Raycast(rayOrigin, Vector2.right * directionX, rayLength, collisionMask);
 
             Debug.DrawRay(rayOrigin, Vector2.right * directionX * rayLength, Color.red);
@@ -432,9 +470,17 @@ public class PlayerController : MonoBehaviour
                 // Nếu khoảng cách quá gần (bằng 0), nghĩa là đang kẹt trong tường -> bỏ qua
                 if (hit.distance == 0) continue;
 
-                //float slopeAngle = Vector2.Angle(hit.normal, Vector2.up);
-                velocity.x = (hit.distance - skinWidth) * directionX / Time.fixedDeltaTime;
-                rayLength = hit.distance;
+                // Chỉ cập nhật vận tốc nếu thực sự đang di chuyển
+                if (velocity.x != 0)
+                {
+                    //float slopeAngle = Vector2.Angle(hit.normal, Vector2.up);
+                    velocity.x = (hit.distance - skinWidth) * directionX / Time.fixedDeltaTime;
+                    rayLength = hit.distance;
+                }
+
+                // Cập nhật trạng thái va chạm tường
+                if (directionX == -1) hitLeftWall = true;
+                if (directionX == 1) hitRightWall = true;
 
                 //Phát hiện tường
                 wallDirX = (directionX == 1) ? 1 : -1;
@@ -444,17 +490,7 @@ public class PlayerController : MonoBehaviour
                 if (!isGrounded && velocity.y < 0 && isPressingAgainstWall)
                 {
                     isWallSliding = true;
-                    // Thêm dòng này để đảm bảo vận tốc trượt được áp dụng ngay lập tức trong frame này nếu cần
-                    // (Tùy chọn, nhưng giúp mượt hơn)
-                    //if (velocity.y < -wallSlideSpeed)
-                    //{
-                    //    velocity.y = -wallSlideSpeed;
-                    //}
                 }
-
-                // Cập nhật biến va chạm
-                if (directionX == -1) hitLeftWall = true;
-                if (directionX == 1) hitRightWall = true;
             }
         }
     }
