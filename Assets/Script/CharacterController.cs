@@ -23,18 +23,19 @@ public class PlayerController : MonoBehaviour
     public static PlayerController Instance; // Biến Singleton
 
     // Các biến có thể điều chỉnh trong Unity Editor
-    [Header("Stats")]
+    [Header("Movement stats")]
     [SerializeField] private float moveSpeed;
     [SerializeField] private float jumpForce = 10f;
-
-    [Header("Gameplay attributes")]
+    [SerializeField][Range(0f, 1f)] private float variableJumpHeightMultiplier = 0.5f;
     [SerializeField] private float coyoteTime = 0.1f;
     [SerializeField] private float jumpBufferTime = 0.1f;
-    [SerializeField] private float gravity = -40f;
     [SerializeField] private float maxFallSpeed = -25f;
     [SerializeField] private float lastGroundedTime;
     [SerializeField] private float lastJumpInputTime;
+
+    [Header("Jump Settings")]
     [SerializeField] private const float skinWidth = 0.015f;
+    [SerializeField] private float gravity = -40f;
     [SerializeField] private int verticalRayCount = 8;
     [SerializeField] private int horizontalRayCount = 8;
     float verticalRaySpacing;
@@ -202,6 +203,16 @@ public class PlayerController : MonoBehaviour
             }
 
             lastJumpInputTime = Time.time;
+        }
+    }
+
+    private void OnJumpCanceled(InputAction.CallbackContext context)
+    {
+        // Chỉ thực hiện khi đang bay lên (velocity.y > 0)
+        // Không áp dụng khi đang rơi hoặc đang đứng yên
+        if (velocity.y > 0)
+        {
+            velocity.y = velocity.y * variableJumpHeightMultiplier;
         }
     }
 
@@ -595,12 +606,20 @@ public class PlayerController : MonoBehaviour
     private void OnEnable()
     {
         // Đăng ký với CharacterInput
-        if (input != null) input.JumpPerformed += OnJump;
+        if (input != null)
+        {
+            input.JumpPerformed += OnJump;
+            input.JumpCanceled += OnJumpCanceled;
+        }
     }
 
     private void OnDisable()
     {
-        if (input != null) input.JumpPerformed -= OnJump;
+        if (input != null)
+        {
+            input.JumpPerformed -= OnJump;
+            input.JumpCanceled -= OnJumpCanceled;
+        }
     }
     #endregion
 
