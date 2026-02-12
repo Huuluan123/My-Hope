@@ -37,6 +37,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float maxFallSpeed = -25f;
     [SerializeField] private float lastGroundedTime;
     [SerializeField] private float lastJumpInputTime;
+    [SerializeField] private float acceleration = 50f; // Gia tốc tăng (Càng lớn càng nhanh đạt tốc độ tối đa)
+    [SerializeField] private float deceleration = 50f; // Gia tốc giảm (Càng lớn càng phanh gấp)
+    [SerializeField] private float airDeceleration = 10f; // Ma sát trên không (Thấp hơn để bay lượn mượt hơn)
 
     [Header("Jump Settings")]
     [SerializeField] private const float skinWidth = 0.015f;
@@ -78,7 +81,6 @@ public class PlayerController : MonoBehaviour
 
     [Space]
     [SerializeField] private Vector3 velocity;
-    [SerializeField] private float acceleration;
     [SerializeField] private float jumpTime;
 
     [Header("Components")]
@@ -137,7 +139,7 @@ public class PlayerController : MonoBehaviour
             moveInput = (input != null) ? input.MoveInput : Vector2.zero;
 
             if (CanMove)
-                velocity.x = moveInput.x * moveSpeed;
+                CalculateHorizontalMovement();
             else
                 velocity.x = 0;
         }
@@ -215,6 +217,41 @@ public class PlayerController : MonoBehaviour
                 transform.localScale = new Vector3(-Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
             }
         }
+    }
+
+    private void CalculateHorizontalMovement()
+    {
+        // 1. Tính vận tốc mục tiêu (Target Velocity)
+        float targetSpeed = moveInput.x * moveSpeed;
+
+        // 2. Chọn gia tốc phù hợp (Gia tốc tăng hay Gia tốc giảm?)
+        float currentAccel;
+
+        // Nếu người chơi thả tay ra (moveInput == 0) -> Cần Giảm tốc
+        if (Mathf.Abs(targetSpeed) < 0.01f)
+        {
+            // Kiểm tra xem đang ở dưới đất hay trên trời để chọn ma sát
+            currentAccel = isGrounded ? deceleration : airDeceleration;
+        }
+        else
+        {
+            // Nếu có Input, kiểm tra xem đang Tăng tốc hay Đang quay đầu
+            // Nếu Input cùng hướng với vận tốc hiện tại -> Tăng tốc
+            // Nếu Input ngược hướng (đang chạy trái mà bấm phải) -> Dùng Deceleration để phanh gấp rồi mới chạy tiếp
+            if (Mathf.Sign(targetSpeed) == Mathf.Sign(velocity.x) && Mathf.Abs(targetSpeed) > Mathf.Abs(velocity.x))
+            {
+                currentAccel = acceleration;
+            }
+            else
+            {
+                // Đang quay đầu hoặc đang chạy nhanh hơn tốc độ tối đa (do ngoại lực)
+                currentAccel = deceleration;
+            }
+        }
+
+        // 3. Áp dụng công thức MoveTowards
+        // Nó sẽ thay đổi velocity.x tiến về targetSpeed một lượng bằng (currentAccel * Time.deltaTime)
+        velocity.x = Mathf.MoveTowards(velocity.x, targetSpeed, currentAccel * Time.deltaTime);
     }
 
     #region Jump Handling
