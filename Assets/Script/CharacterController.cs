@@ -65,9 +65,8 @@ public class PlayerController : MonoBehaviour
 
     [Header("Corner Correction")]
     [SerializeField] private float cornerCorrectionSpeed = 0.1f; // Khoảng cách đẩy lên mỗi frame (Pixel perfect)
-
-    [Header("Input Locking")]
-    private float disableInputTimer; // Biến đếm thời gian khóa input
+    [SerializeField] private float ceilingTolerance = 0.15f; // Độ rộng tối đa của góc có thể lách qua (Tùy theo chiều rộng nhân vật)
+    [SerializeField] private float ceilingNudgeAmount = 0.2f;
 
     [Header("Movement and control")]
     // Biến để lưu trữ giá trị di chuyển
@@ -181,17 +180,20 @@ public class PlayerController : MonoBehaviour
             HorizonalCollisionCheck();
         }
 
-        //else if (currentState != PlayerState.LedgeClimbing) // Chỉ Debug khi không phải LedgeClimb cho đỡ rối
-        //{
-        //    Debug.Log("Corner corrected!");
-        //}
-
         if (isWallSliding && !isWallClimbing)
         {
             velocity.y = -wallSlideSpeed;
         }
 
         UpdateRayCastOriginWithOffset(velocity.x * Time.fixedDeltaTime); // Cập nhật vị trí tia với offset di chuyển ngang
+        if (velocity.y > 0)
+        {
+            if (CorrectCeiling(velocity))
+            {
+                // Cập nhật lại vị trí raycast nếu có sửa góc trần
+                UpdateRayCastOriginWithOffset(velocity.x * Time.fixedDeltaTime);
+            }
+        }
         if (velocity.y != 0) VerticalCollisionCheck();
 
         //Calculate new position
@@ -667,6 +669,50 @@ public class PlayerController : MonoBehaviour
         return false;
     }
 
+    bool CorrectCeiling(Vector2 moveVelocity)
+    {
+        // Chỉ xử lý khi đang bay lên
+        if (moveVelocity.y <= 0) return false;
+
+        // Độ dài tia: Bắn dài hơn vận tốc một chút để dự đoán trước va chạm
+        float rayLength = Mathf.Abs(moveVelocity.y * Time.fixedDeltaTime) + skinWidth * 2;
+
+        // Kiểm tra góc trái
+        Vector2 outerLeft = rayCastOrigins.topLeft;
+        // Inner: Thụt vào trong một đoạn tolerance
+        Vector2 innerLeft = rayCastOrigins.topLeft + Vector2.right * ceilingTolerance;
+
+        RaycastHit2D hitOuterLeft = Physics2D.Raycast(outerLeft, Vector2.up, rayLength, collisionMask);
+        RaycastHit2D hitInnerLeft = Physics2D.Raycast(innerLeft, Vector2.up, rayLength, collisionMask);
+
+        // LOGIC: Vai trúng (Outer Hit) nhưng Đầu lọt (Inner Miss) => Đẩy sang PHẢI
+        if (hitOuterLeft && !hitInnerLeft)
+        {
+            // Dịch chuyển tức thời
+            transform.position += Vector3.right * ceilingNudgeAmount;
+            rb.position = transform.position; // Đồng bộ Rigidbody
+            return true;
+        }
+
+        // Kiểm tra góc phải
+        Vector2 outerRight = rayCastOrigins.topRight;
+        Vector2 innerRight = rayCastOrigins.topRight + Vector2.left * ceilingTolerance;
+
+        RaycastHit2D hitOuterRight = Physics2D.Raycast(outerRight, Vector2.up, rayLength, collisionMask);
+        RaycastHit2D hitInnerRight = Physics2D.Raycast(innerRight, Vector2.up, rayLength, collisionMask);
+
+        // LOGIC: Vai trúng (Outer Hit) nhưng Đầu lọt (Inner Miss) => Đẩy sang TRÁI
+        if (hitOuterRight && !hitInnerRight)
+        {
+            // Dịch chuyển tức thời
+            transform.position += Vector3.left * ceilingNudgeAmount;
+            rb.position = transform.position;
+            return true;
+        }
+
+        return false;
+    }
+
     // Hàm để giải quyết việc nhân vật bị lồng vào vật thể
     void ResolveOverlap()
     {
@@ -781,27 +827,12 @@ public class PlayerController : MonoBehaviour
 
         Vector2 originTop = (direction == 1) ? new Vector2(bounds.max.x, bounds.max.y) : new Vector2(bounds.min.x, bounds.max.y);
 
-        // --- VẼ TIA LEDGE CLIMB ---
+        DrawLedgeClimbRays(originTop, direction);
 
-        // Độ dài tia (Copy từ logic CheckForLedge của bạn: skinWidth * 3)
-        // Bạn nên đưa skinWidth * 3 ra thành biến riêng để dễ chỉnh, ví dụ: ledgeCheckDistance
-        float rayLength = skinWidth * 4; // Tôi để dài hơn xíu cho dễ nhìn trong Gizmos
+        Vector2 topLeft = new Vector2(bounds.min.x, bounds.max.y);
+        Vector2 topRight = new Vector2(bounds.max.x, bounds.max.y);
+        DrawCeilingCorrectionRays(topLeft, topRight);
 
-        // A. Tia Đỉnh Đầu (Head Ray) - Cần PHẢI THOÁNG (Màu Xanh Lá)
-        Gizmos.color = Color.green;
-        Vector2 headRayEnd = originTop + (Vector2.right * direction * rayLength);
-        Gizmos.DrawLine(originTop, headRayEnd);
-
-        // B. Tia Thân (Body Ray) - Cần PHẢI CHẠM (Màu Đỏ)
-        Gizmos.color = Color.red;
-        Vector2 bodyOrigin = originTop + (Vector2.down * ledgeRayOffset);
-        Vector2 bodyRayEnd = bodyOrigin + (Vector2.right * direction * rayLength);
-        Gizmos.DrawLine(bodyOrigin, bodyRayEnd);
-
-        // Đánh dấu điểm gốc bắn tia để dễ nhìn
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawSphere(originTop, 0.02f);
-        Gizmos.DrawSphere(bodyOrigin, 0.02f);
     }
 
     private void OnEnable()
@@ -822,6 +853,64 @@ public class PlayerController : MonoBehaviour
             input.JumpCanceled -= OnJumpCanceled;
         }
     }
+
+    #region Custom Draw
+    void DrawLedgeClimbRays(Vector2 originTop, float direction)
+    {
+        float rayLength = skinWidth * 4;
+
+        // A. Tia Đỉnh Đầu (Head Ray) - Cần PHẢI THOÁNG (Màu Xanh Lá)
+        Gizmos.color = Color.green;
+        Vector2 headRayEnd = originTop + (Vector2.right * direction * rayLength);
+        Gizmos.DrawLine(originTop, headRayEnd);
+
+        // B. Tia Thân (Body Ray) - Cần PHẢI CHẠM (Màu Đỏ)
+        Gizmos.color = Color.red;
+        Vector2 bodyOrigin = originTop + (Vector2.down * ledgeRayOffset);
+        Vector2 bodyRayEnd = bodyOrigin + (Vector2.right * direction * rayLength);
+        Gizmos.DrawLine(bodyOrigin, bodyRayEnd);
+
+        // Đánh dấu điểm gốc bắn tia để dễ nhìn
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawSphere(originTop, 0.02f);
+        Gizmos.DrawSphere(bodyOrigin, 0.02f);
+    }
+
+    void DrawCeilingCorrectionRays(Vector2 topLeft, Vector2 topRight)
+    {
+        // Độ dài tia hiển thị (chỉ dùng cho Gizmos để dễ nhìn)
+        float ceilRayLength = skinWidth * 5;
+
+        // 1. GÓC TRÁI
+        Vector2 outerLeft = topLeft;
+        Vector2 innerLeft = topLeft + Vector2.right * ceilingTolerance;
+
+        // Vẽ tia Outer Left (Xanh lá - Tia mép ngoài, mong muốn TRÚNG)
+        Gizmos.color = Color.green;
+        Gizmos.DrawLine(outerLeft, outerLeft + Vector2.up * ceilRayLength);
+        Gizmos.DrawSphere(outerLeft, 0.015f);
+
+        // Vẽ tia Inner Left (Đỏ - Tia lùi vào trong, mong muốn TRƯỢT)
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(innerLeft, innerLeft + Vector2.up * ceilRayLength);
+        Gizmos.DrawSphere(innerLeft, 0.015f);
+
+
+        // 2. GÓC PHẢI
+        Vector2 outerRight = topRight;
+        Vector2 innerRight = topRight + Vector2.left * ceilingTolerance;
+
+        // Vẽ tia Outer Right (Xanh lá)
+        Gizmos.color = Color.green;
+        Gizmos.DrawLine(outerRight, outerRight + Vector2.up * ceilRayLength);
+        Gizmos.DrawSphere(outerRight, 0.015f);
+
+        // Vẽ tia Inner Right (Đỏ)
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(innerRight, innerRight + Vector2.up * ceilRayLength);
+        Gizmos.DrawSphere(innerRight, 0.015f);
+    }
+    #endregion
     #endregion
 
     #region structs
