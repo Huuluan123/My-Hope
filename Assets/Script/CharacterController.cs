@@ -53,10 +53,13 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private bool isWallSliding;
     [SerializeField] private bool isWallClimbing;
     private int wallDirX; // Hướng tường (1: bên phải, -1: bên trái)
+
     [SerializeField] private float wallSlideSpeed = 2f; // Tốc độ trượt xuống chậm
     [SerializeField] private float wallClimbSpeed = 4f; // Tốc độ leo lên/xuống
     [SerializeField] private float wallClimbDownSpeed = 8f; // Tốc độ trượt tường nhanh khi bám
     [SerializeField] private Vector2 wallJumpForce = new Vector2(15f, 25f); // Lực nhảy tường (X, Y)
+    [SerializeField] private float wallClimbJumpForceY = 20f; // Nhảy leo thẳng lên (Chỉ cần lực Y)
+
     [SerializeField] private float maxStamina = 100f;
     [SerializeField] private float climbStaminaDrain = 20f; // Tốn thể lực khi leo
     [SerializeField] private float holdStaminaDrain = 5f;   // Tốn ít hơn khi chỉ bám yên
@@ -219,6 +222,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    // Tính toán vận tốc ngang
     private void CalculateHorizontalMovement()
     {
         // 1. Tính vận tốc mục tiêu (Target Velocity)
@@ -287,44 +291,82 @@ public class PlayerController : MonoBehaviour
 
     private void ProcessJumpBuffer()
     {
-        // If jump was pressed recently and player is within coyote time, perform jump
-        if ((Time.time - lastGroundedTime <= coyoteTime) &&
-            (Time.time - lastJumpInputTime <= jumpBufferTime) &&
-            CanJump)
+        // Nếu người chơi vừa bấm nhảy trong khoảng thời gian cho phép
+        if (Time.time - lastJumpInputTime <= jumpBufferTime && CanJump)
         {
-            Jump();
-            lastJumpInputTime = -999f;
+            // ƯU TIÊN 1: NHẢY THƯỜNG (Từ mặt đất)
+            // Kể cả khi đang sát tường nhưng chân vẫn chạm đất thì tính là nhảy thường
+            if (Time.time - lastGroundedTime <= coyoteTime)
+            {
+                Jump(false, 0, false);
+                lastJumpInputTime = -999f; // Hủy buffer
+            }
+            // ƯU TIÊN 2: NHẢY TƯỜNG (Trên không + Sát tường)
+            else if (hitLeftWall || hitRightWall)
+            {
+                int currentWallDir = hitLeftWall ? -1 : 1;
+
+                // Kiểm tra xem người chơi có đang bấm nút NGƯỢC hướng với tường không?
+                // (VD: Tường bên trái (-1) mà đang bấm sang phải (1) -> isHoldingAway = true)
+                bool isHoldingInputAwayFromWall = (moveInput.x != 0 && Mathf.Sign(moveInput.x) != currentWallDir);
+
+                // NẾU: Đang trạng thái bám tường (Climbing) VÀ KHÔNG bấm ngược hướng
+                if (isWallClimbing && !isHoldingInputAwayFromWall)
+                {
+                    // Thực hiện Nhảy dọc tường (Wall Climb Jump)
+                    Jump(true, currentWallDir, true);
+                }
+                else
+                {
+                    // Các trường hợp khác: Đang rơi, trượt, hoặc ấn ngược hướng
+                    // Thực hiện Nhảy bật ra (Wall Leap)
+                    Jump(true, currentWallDir, false);
+                }
+
+                lastJumpInputTime = -999f;
+            }
         }
     }
 
-    private void Jump()
+    private void Jump(bool isWallJump, int wallDir, bool isClimbJump)
     {
         // Wall Jump
-        if (isWallSliding || isWallClimbing)
+        if (isWallJump)
         {
-            // Nhảy bật ngược hướng tường
-            // wallDirX là 1 (phải) -> nhảy sang trái (-1)
-            // wallDirX là -1 (trái) -> nhảy sang phải (1)
-            velocity.x = -wallDirX * wallJumpForce.x;
-            velocity.y = wallJumpForce.y;
+            if (isClimbJump)
+            {
+                // Wall Climb Jump
+                velocity.x = -wallDir * 1.5f;
+                velocity.y = wallClimbJumpForceY;
 
-            // Giảm Stamina một chút khi Wall Jump (tùy chọn)
-            currentStamina -= 10f;
+                currentStamina -= 15f; // Celeste trừ nhiều thể lực hơn cho cú nhảy này
+                Debug.Log("Wall Climb Jump (Up)!");
+            }
+            else
+            {
+                velocity.x = -wallDir * wallJumpForce.x;
+                velocity.y = wallJumpForce.y;
+
+                //currentStamina -= 10f;
+                Debug.Log("Wall Leap Jump!");
+            }
         }
         else
         // ---------------------------------
         {
-            // Nhảy thường (Normal Jump)
+            // Normal Jump
             velocity.y = jumpForce;
         }
-        currentState = PlayerState.OnAir;
-        velocity.y = jumpForce;
-        SoundManager.Instance.PlaySound2D("Jump");
 
-        lastGroundedTime = -999f;
+        // Cập nhật trạng thái
+        currentState = PlayerState.OnAir;
         isGrounded = false;
         isWallClimbing = false; // Ngắt trạng thái leo ngay khi nhảy
+        isWallSliding = false;
 
+        lastGroundedTime = -999f; // Reset ground time
+
+        SoundManager.Instance.PlaySound2D("Jump");
         OnJumpPerformed?.Invoke();
     }
     #endregion
@@ -464,7 +506,8 @@ public class PlayerController : MonoBehaviour
             return currentState == PlayerState.Idle ||
                    currentState == PlayerState.Sliding ||
                    currentState == PlayerState.Climbing ||
-                   currentState == PlayerState.Running;
+                   currentState == PlayerState.Running ||
+                   currentState == PlayerState.OnAir;
         }
     }
 
