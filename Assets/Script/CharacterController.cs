@@ -54,11 +54,16 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private bool isWallClimbing;
     private int wallDirX; // Hướng tường (1: bên phải, -1: bên trái)
 
+    [Space]
+
     [SerializeField] private float wallSlideSpeed = 2f; // Tốc độ trượt xuống chậm
     [SerializeField] private float wallClimbSpeed = 4f; // Tốc độ leo lên/xuống
     [SerializeField] private float wallClimbDownSpeed = 8f; // Tốc độ trượt tường nhanh khi bám
     [SerializeField] private Vector2 wallJumpForce = new Vector2(15f, 25f); // Lực nhảy tường (X, Y)
     [SerializeField] private float wallClimbJumpForceY = 20f; // Nhảy leo thẳng lên (Chỉ cần lực Y)
+    private float climbJumpCooldownTimer;
+
+    [Space]
 
     [SerializeField] private float maxStamina = 100f;
     [SerializeField] private float climbStaminaDrain = 20f; // Tốn thể lực khi leo
@@ -130,10 +135,15 @@ public class PlayerController : MonoBehaviour
     {
         if (GameManager.state == GameState.Pause) return;
 
+        // Giảm timer cấm bám tường (nếu lớn hơn 0)
+        if (climbJumpCooldownTimer > 0)
+        {
+            climbJumpCooldownTimer -= Time.deltaTime;
+        }
+
         if (IsInputDisabled)
         {
             moveInput = Vector2.zero;
-            //Debug.Log("Input disabled");
         }
 
         else
@@ -207,7 +217,7 @@ public class PlayerController : MonoBehaviour
         rb.MovePosition(targetPosition);
 
         // Flip character
-        if (moveInput.x != 0)
+        if (moveInput.x != 0 && !isWallClimbing && currentState != PlayerState.LedgeClimbing)
         {
 
             if (moveInput.x > 0)
@@ -225,6 +235,13 @@ public class PlayerController : MonoBehaviour
     // Tính toán vận tốc ngang
     private void CalculateHorizontalMovement()
     {
+        // Khoá di chuyển ngang khi đang leo tường.
+        if (isWallClimbing || currentState == PlayerState.LedgeClimbing)
+        {
+            velocity.x = 0;
+            return; // Thoát hàm ngay, không chạy logic bên dưới
+        }
+
         // 1. Tính vận tốc mục tiêu (Target Velocity)
         float targetSpeed = moveInput.x * moveSpeed;
 
@@ -311,7 +328,7 @@ public class PlayerController : MonoBehaviour
                 bool isHoldingInputAwayFromWall = (moveInput.x != 0 && Mathf.Sign(moveInput.x) != currentWallDir);
 
                 // NẾU: Đang trạng thái bám tường (Climbing) VÀ KHÔNG bấm ngược hướng
-                if (isWallClimbing && !isHoldingInputAwayFromWall)
+                if (input.IsGrabbing && !isHoldingInputAwayFromWall && currentStamina > 0)
                 {
                     // Thực hiện Nhảy dọc tường (Wall Climb Jump)
                     Jump(true, currentWallDir, true);
@@ -336,11 +353,11 @@ public class PlayerController : MonoBehaviour
             if (isClimbJump)
             {
                 // Wall Climb Jump
-                velocity.x = -wallDir * 1.5f;
+                velocity.x = 0;
                 velocity.y = wallClimbJumpForceY;
 
                 currentStamina -= 15f; // Celeste trừ nhiều thể lực hơn cho cú nhảy này
-                Debug.Log("Wall Climb Jump (Up)!");
+                climbJumpCooldownTimer = 0.2f;
             }
             else
             {
@@ -348,7 +365,7 @@ public class PlayerController : MonoBehaviour
                 velocity.y = wallJumpForce.y;
 
                 //currentStamina -= 10f;
-                Debug.Log("Wall Leap Jump!");
+ 
             }
         }
         else
@@ -407,6 +424,13 @@ public class PlayerController : MonoBehaviour
 
     private void CheckWallGrab() // Gọi trong FixedUpdate() hoặc UpdatePhysicsState()
     {
+        // Nếu đang trong thời gian Cooldown sau khi nhảy dọc tường -> Cấm bám
+        if (climbJumpCooldownTimer > 0)
+        {
+            isWallClimbing = false;
+            return;
+        }
+
         // Điều kiện: Đang giữ phím Grab + Chạm tường + Không ở mặt đất + Còn thể lực
         bool isTouchingWall = hitLeftWall || hitRightWall;
 
@@ -472,8 +496,6 @@ public class PlayerController : MonoBehaviour
 
         OnClimbChanged?.Invoke(false);
         OnJumpPerformed?.Invoke();
-
-        //Debug.Log("Ledge Climb performed! " + velocity);
     }
     #endregion
 
@@ -642,7 +664,11 @@ public class PlayerController : MonoBehaviour
     {
         float directionX;
 
-        if (velocity.x != 0)
+        if (isWallClimbing)
+        {
+            directionX = wallDirX;
+        }
+        else if (velocity.x != 0)
         {
             directionX = Mathf.Sign(velocity.x);
         }
