@@ -10603,6 +10603,14 @@ PrefabInstance:
       value: 0.25
       objectReference: {fileID: 0}
     - target: {fileID: 4090278362527798425, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
+      propertyPath: climbHopForce.x
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4090278362527798425, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
+      propertyPath: climbHopForce.y
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 4090278362527798425, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
       propertyPath: wallJumpForce.x
       value: 15
       objectReference: {fileID: 0}

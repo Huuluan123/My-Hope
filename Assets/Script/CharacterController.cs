@@ -15,7 +15,6 @@ public enum PlayerState
     Climbing,
 
     /* Nhóm khoá input */
-    LedgeClimbing,
     Talking,
     Dead,
     ScriptedMove
@@ -70,9 +69,10 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float holdStaminaDrain = 5f;   // Tốn ít hơn khi chỉ bám yên
     [SerializeField] private float currentStamina;
 
-    [Header("Ledge Climb Settings")]
-    [SerializeField] private Vector2 ledgeClimbForce = new Vector2(5f, 10f);
-    [SerializeField] private float ledgeRayOffset = 0.2f;
+    [Header("Climb hop Settings")]
+    [SerializeField] private Vector2 climbHopForce = new Vector2(10f, 15f); // Lực đẩy lên sàn (X nhỏ, Y lớn)
+    [SerializeField] private float climbHopNoInputTime = 0.2f; // Thời gian khóa Input ngang để nhân vật lọt vào sàn
+    private float climbHopInputTimer; // Timer đếm ngược
 
     [Header("Corner Correction")]
     [SerializeField] private float cornerCorrectionSpeed = 0.1f; // Khoảng cách đẩy lên mỗi frame (Pixel perfect)
@@ -135,6 +135,11 @@ public class PlayerController : MonoBehaviour
     {
         if (GameManager.state == GameState.Pause) return;
 
+        if (climbHopInputTimer > 0)
+        {
+            climbHopInputTimer -= Time.deltaTime;
+        }
+
         // Giảm timer cấm bám tường (nếu lớn hơn 0)
         if (climbJumpCooldownTimer > 0)
         {
@@ -176,6 +181,8 @@ public class PlayerController : MonoBehaviour
     {
         if (!CanMove) return;
 
+        UpdateRayCastOrigin();
+
         hitLeftWall = false;
         hitRightWall = false;
         isWallSliding = false;
@@ -189,8 +196,7 @@ public class PlayerController : MonoBehaviour
             if (velocity.y > maxFallSpeed) velocity.y += gravity * Time.fixedDeltaTime;
         }
 
-        UpdateRayCastOrigin();
-        if (currentState != PlayerState.LedgeClimbing && !CorrectCorner(velocity))
+        if (!CorrectCorner(velocity))
         {
             HorizonalCollisionCheck();
         }
@@ -217,7 +223,7 @@ public class PlayerController : MonoBehaviour
         rb.MovePosition(targetPosition);
 
         // Flip character
-        if (moveInput.x != 0 && !isWallClimbing && currentState != PlayerState.LedgeClimbing)
+        if (moveInput.x != 0 && !isWallClimbing)
         {
 
             if (moveInput.x > 0)
@@ -236,10 +242,17 @@ public class PlayerController : MonoBehaviour
     private void CalculateHorizontalMovement()
     {
         // Khoá di chuyển ngang khi đang leo tường.
-        if (isWallClimbing || currentState == PlayerState.LedgeClimbing)
+        if (isWallClimbing)
         {
             velocity.x = 0;
             return; // Thoát hàm ngay, không chạy logic bên dưới
+        }
+
+        if (climbHopInputTimer > 0)
+        {
+            // Ép nhân vật di chuyển theo hướng Hop (để chắc chắn leo lọt vào sàn)
+            // Hoặc đơn giản là giữ nguyên velocity.x hiện tại do quán tính
+            return;
         }
 
         // 1. Tính vận tốc mục tiêu (Target Velocity)
@@ -451,51 +464,51 @@ public class PlayerController : MonoBehaviour
 
     private void CheckForLedge()
     {
-        // Chỉ kiểm tra khi đang bấm LÊN
-        if (moveInput.y <= 0) return;
+        // Chỉ kiểm tra khi đang bám tường hoặc trượt tường
+        if (!isWallClimbing && !isWallSliding) return;
 
-        // Xác định hướng và gốc bắn tia
-        Vector2 origin = (wallDirX == 1) ? rayCastOrigins.topRight : rayCastOrigins.topLeft;
+        // Logic Raycast kiểm tra mép (như bạn đã làm với Gizmos)
+        float rayLength = skinWidth * 2;
+        Vector2 originTop = (wallDirX == 1) ? rayCastOrigins.topRight : rayCastOrigins.topLeft;
 
-        // Độ dài tia: Đủ dài để chạm tường (skinWidth * 2 là đủ an toàn)
-        float rayLength = skinWidth * 3;
+        // Bắn tia ngay trên đỉnh đầu
+        Vector2 rayPos = originTop + Vector2.up * 0.1f; // Nhích lên 1 xíu
+        RaycastHit2D hitLedge = Physics2D.Raycast(rayPos, Vector2.right * wallDirX, rayLength, collisionMask);
 
-        // 1. TIA ĐỈNH ĐẦU (Head Ray)
-        // Bắn thẳng sang ngang
-        RaycastHit2D hitHead = Physics2D.Raycast(origin, Vector2.right * wallDirX, rayLength, collisionMask);
-        Debug.DrawRay(origin, Vector2.right * wallDirX * rayLength, Color.yellow); // Màu vàng để debug
-
-        // 2. TIA THÂN (Body Ray)
-        // Hạ thấp xuống một chút (ledgeRayOffset) để kiểm tra thân
-        Vector2 bodyOrigin = origin + Vector2.down * ledgeRayOffset;
-        RaycastHit2D hitBody = Physics2D.Raycast(bodyOrigin, Vector2.right * wallDirX, rayLength, collisionMask);
-        Debug.DrawRay(bodyOrigin, Vector2.right * wallDirX * rayLength, Color.blue); // Màu xanh
-
-        if (!hitHead && hitBody)
+        // NẾU: Đang bám tường (hitBody trúng) NHƯNG Trên đầu lại thoáng (hitLedge trượt)
+        // VÀ: Người chơi đang bấm LÊN (Input.y > 0) hoặc đang leo lên
+        if (!hitLedge && velocity.y >= 0) // Celeste còn check Input.MoveY != 1 (xuống)
         {
-            PerformLedgeClimb();
+            PerformClimbHop();
         }
     }
 
-    private void PerformLedgeClimb()
+    private void PerformClimbHop()
     {
-        // Chuyển trạng thái
-        currentState = PlayerState.LedgeClimbing;
+        // 1. Xác định hướng đẩy (Vào trong tường)
+        // Nếu bám tường phải (wallDirX = 1) -> Cần đẩy sang trái? KHÔNG!
+        // Climb Hop là leo LÊN sàn, nên ta cần đẩy sâu vào hướng của tường.
+        // Ví dụ: Tường bên Phải -> Đẩy sang Phải + Lên Trên.
+        int hopDirection = wallDirX;
 
-        // Cập nhật thông số
+        // 2. Gán vận tốc vật lý (Tạo cú nhảy tự động)
+        velocity.x = hopDirection * climbHopForce.x;
+        velocity.y = climbHopForce.y;
+
+        // 3. Chuyển trạng thái về OnAir (Để hệ thống vật lý tự lo phần còn lại)
+        currentState = PlayerState.OnAir;
         isWallClimbing = false;
         isWallSliding = false;
+        isGrounded = false;
 
-        //Gán vector di chuyển
-        velocity.x = wallDirX * ledgeClimbForce.x;
-        velocity.y = ledgeClimbForce.y;
+        // 4. Khóa Input ngang trong 0.2s
+        // Để người chơi không lỡ tay bấm ngược lại làm nhân vật rớt xuống
+        climbHopInputTimer = climbHopNoInputTime;
 
-        // Reset va chạm và gọi event
-        hitLeftWall = false;
-        hitRightWall = false;
+        // 5. Reset các trạng thái khác
+        lastGroundedTime = -999f;
 
-        OnClimbChanged?.Invoke(false);
-        OnJumpPerformed?.Invoke();
+        //Debug.Log("Climb Hop Performed!");
     }
     #endregion
 
@@ -516,8 +529,7 @@ public class PlayerController : MonoBehaviour
                    currentState == PlayerState.Running ||
                    currentState == PlayerState.OnAir ||
                    currentState == PlayerState.Sliding ||
-                   currentState == PlayerState.Climbing ||
-                   currentState == PlayerState.LedgeClimbing;
+                   currentState == PlayerState.Climbing;
         }
     }
 
@@ -538,8 +550,7 @@ public class PlayerController : MonoBehaviour
     {
         get
         {
-            return currentState == PlayerState.LedgeClimbing ||
-                   currentState == PlayerState.Talking ||
+            return currentState == PlayerState.Talking ||
                    currentState == PlayerState.Dead ||
                    currentState == PlayerState.ScriptedMove;
         }
@@ -549,21 +560,6 @@ public class PlayerController : MonoBehaviour
     {
         // Nếu đang bận việc riêng (Talking/Dead) thì không can thiệp
         if (currentState == PlayerState.Talking || currentState == PlayerState.Dead) return;
-
-        if (currentState == PlayerState.LedgeClimbing)
-        {
-            if (isGrounded)
-            {
-                // Chạm đất -> Xong việc -> Về Idle
-                currentState = PlayerState.Idle;
-            }
-            else if (velocity.y < 0) // Rơi xuống
-            {
-                currentState = PlayerState.OnAir;
-            }
-
-            return; // Không kiểm tra các trạng thái tiếp theo
-        }
 
         if (isGrounded)
         {
@@ -933,7 +929,7 @@ public class PlayerController : MonoBehaviour
 
         Vector2 originTop = (direction == 1) ? new Vector2(bounds.max.x, bounds.max.y) : new Vector2(bounds.min.x, bounds.max.y);
 
-        DrawLedgeClimbRays(originTop, direction);
+        DrawClimbHopRays(originTop, direction);
 
         Vector2 topLeft = new Vector2(bounds.min.x, bounds.max.y);
         Vector2 topRight = new Vector2(bounds.max.x, bounds.max.y);
@@ -961,25 +957,39 @@ public class PlayerController : MonoBehaviour
     }
 
     #region Custom Draw
-    void DrawLedgeClimbRays(Vector2 originTop, float direction)
+    void DrawClimbHopRays(Vector2 originTop, float direction)
     {
-        float rayLength = skinWidth * 4;
+        // 1. Cấu hình giống hệt logic CheckForLedge
+        // Nếu bạn đã đưa 0.1f ra biến riêng thì thay vào đây nhé
+        float verticalOffset = 0.1f;
+        float rayLength = skinWidth * 2; // Độ dài tia check mép
 
-        // A. Tia Đỉnh Đầu (Head Ray) - Cần PHẢI THOÁNG (Màu Xanh Lá)
-        Gizmos.color = Color.green;
-        Vector2 headRayEnd = originTop + (Vector2.right * direction * rayLength);
-        Gizmos.DrawLine(originTop, headRayEnd);
+        // Vị trí bắn tia: Đỉnh đầu + nhích lên một chút
+        Vector2 rayOrigin = originTop + (Vector2.up * verticalOffset);
+        Vector2 rayDirection = Vector2.right * direction;
+        Vector2 rayEnd = rayOrigin + (rayDirection * rayLength);
 
-        // B. Tia Thân (Body Ray) - Cần PHẢI CHẠM (Màu Đỏ)
-        Gizmos.color = Color.red;
-        Vector2 bodyOrigin = originTop + (Vector2.down * ledgeRayOffset);
-        Vector2 bodyRayEnd = bodyOrigin + (Vector2.right * direction * rayLength);
-        Gizmos.DrawLine(bodyOrigin, bodyRayEnd);
+        // 2. Kiểm tra thử va chạm (Simulation) để chọn màu Gizmos
+        // Lưu ý: Gizmos chạy trong Editor mode nên ta dùng Physics2D.Raycast để mô phỏng
+        RaycastHit2D hit = Physics2D.Raycast(rayOrigin, rayDirection, rayLength, collisionMask);
 
-        // Đánh dấu điểm gốc bắn tia để dễ nhìn
+        if (hit)
+        {
+            // Trúng tường => Chưa đến mép => Màu ĐỎ
+            Gizmos.color = Color.red;
+        }
+        else
+        {
+            // Không trúng tường => Đã đến mép (Thoáng) => Màu XANH (Sẵn sàng Hop)
+            Gizmos.color = Color.green;
+        }
+
+        // 3. Vẽ tia
+        Gizmos.DrawLine(rayOrigin, rayEnd);
+
+        // 4. Vẽ điểm gốc để dễ căn chỉnh Offset
         Gizmos.color = Color.yellow;
-        Gizmos.DrawSphere(originTop, 0.02f);
-        Gizmos.DrawSphere(bodyOrigin, 0.02f);
+        Gizmos.DrawSphere(rayOrigin, 0.015f);
     }
 
     void DrawCeilingCorrectionRays(Vector2 topLeft, Vector2 topRight)
