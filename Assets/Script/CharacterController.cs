@@ -91,6 +91,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Vector3 velocity;
     [SerializeField] private float jumpTime;
 
+    public Vector2 Velocity
+    {
+        get { return velocity; }
+    }
+
     [Header("Components")]
     private Collider2D col; // collider của nhân vật
     [SerializeField] private LayerMask collisionMask;
