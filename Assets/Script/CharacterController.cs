@@ -513,6 +513,7 @@ public class PlayerController : MonoBehaviour
         // 5. Reset các trạng thái khác
         lastGroundedTime = -999f;
 
+        OnJumpPerformed?.Invoke();
         //Debug.Log("Climb Hop Performed!");
     }
     #endregion
