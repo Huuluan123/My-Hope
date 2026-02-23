@@ -11,11 +11,21 @@ public class PlayerAnimation : MonoBehaviour
     private static readonly int IsGrounded = Animator.StringToHash("isGrounded");
     private static readonly int IsWallGrabbing = Animator.StringToHash("isWallGrabbing");
     private static readonly int IsClimbing = Animator.StringToHash("isClimbing");
+    private static readonly int YVelocity = Animator.StringToHash("yVelocity");
 
     private void Awake()
     {
         animator = GetComponentInChildren<Animator>();
         controller = GetComponent<PlayerController>();
+    }
+
+    private void Update()
+    {
+        if (controller != null)
+        {
+            // Cập nhật giá trị velocity.y vào Animator
+            animator.SetFloat(YVelocity, controller.Velocity.y);
+        }
     }
 
     // --- ĐĂNG KÝ LẮNG NGHE (QUAN TRỌNG NHẤT) ---

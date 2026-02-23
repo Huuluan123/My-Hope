@@ -91,6 +91,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Vector3 velocity;
     [SerializeField] private float jumpTime;
 
+    public Vector2 Velocity
+    {
+        get { return velocity; }
+    }
+
     [Header("Components")]
     private Collider2D col; // collider của nhân vật
     [SerializeField] private LayerMask collisionMask;
@@ -508,6 +513,7 @@ public class PlayerController : MonoBehaviour
         // 5. Reset các trạng thái khác
         lastGroundedTime = -999f;
 
+        OnJumpPerformed?.Invoke();
         //Debug.Log("Climb Hop Performed!");
     }
     #endregion
