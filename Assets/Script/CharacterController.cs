@@ -14,6 +14,9 @@ public enum PlayerState
     Sliding,
     Climbing,
 
+    GrappleFreeze,
+    Grappling,
+
     /* Nhóm khoá input */
     Talking,
     Dead,
@@ -68,6 +71,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float climbStaminaDrain = 20f; // Tốn thể lực khi leo
     [SerializeField] private float holdStaminaDrain = 5f;   // Tốn ít hơn khi chỉ bám yên
     [SerializeField] private float currentStamina;
+
+    [Header("Grappling Hand")]
+    [SerializeField] private RobotHand robotHand;
+    [SerializeField] private float pullSpeed = 30f;
+    [SerializeField] private float grappleInputWindow = 0.05f; // Cửa sổ chờ Input (0.05s)
+    private Vector2 grappleTarget;
 
     [Header("Climb hop Settings")]
     [SerializeField] private Vector2 climbHopForce = new Vector2(10f, 15f); // Lực đẩy lên sàn (X nhỏ, Y lớn)
@@ -184,6 +193,40 @@ public class PlayerController : MonoBehaviour
 
     private void MoveCharacter()
     {
+        // Xử lí đóng băng chờ Input khi phóng tay móc (Grapple)
+        if (currentState == PlayerState.GrappleFreeze)
+        {
+            velocity = Vector3.zero;
+            return; // Đứng yên tuyệt đối trên không
+        }
+
+        // Xử lí kéo tới mục tiêu khi đang bị móc (Grappling)
+        if (currentState == PlayerState.Grappling)
+        {
+            velocity = Vector3.zero; // Không dùng vận tốc rớt/di chuyển thông thường
+
+            if (grappleTarget != Vector2.zero)
+            {
+                // Dịch chuyển nhân vật lao vút tới mục tiêu
+                transform.position = Vector2.MoveTowards(transform.position, grappleTarget, pullSpeed * Time.fixedDeltaTime);
+                rb.position = transform.position;
+
+                // Nếu chạm tay
+                if (Vector2.Distance(transform.position, grappleTarget) < 0.6f)
+                {
+                    // Chuyển ngay sang bám tường
+                    currentState = PlayerState.Climbing;
+                    isWallClimbing = true;
+                    isWallSliding = false;
+                    isGrounded = false;
+
+                    grappleTarget = Vector2.zero; // Xóa mục tiêu
+                    if (robotHand != null) robotHand.FinishGrapple(); // Gọi tay thu hồi lại
+                }
+            }
+            return; // Dừng hàm, KHÔNG chạy các code trọng lực và Raycast bên dưới
+        }
+
         if (!CanMove) return;
 
         UpdateRayCastOrigin();
@@ -383,7 +426,7 @@ public class PlayerController : MonoBehaviour
                 velocity.y = wallJumpForce.y;
 
                 //currentStamina -= 10f;
- 
+
             }
         }
         else
@@ -518,6 +561,70 @@ public class PlayerController : MonoBehaviour
     }
     #endregion
 
+    #region Grabbling Handling
+    private void OnGrappleInput(InputAction.CallbackContext context)
+    {
+        // Chặn nếu đang bận, đang dừng hình, hoặc đang bị kéo
+        if (!CanMove || currentState == PlayerState.GrappleFreeze || currentState == PlayerState.Grappling) return;
+
+        if (context.performed)
+        {
+            StartCoroutine(PerformGrappleWithLeniency());
+        }
+    }
+
+    private IEnumerator PerformGrappleWithLeniency()
+    {
+        // 1. ĐÓNG BĂNG VẬT LÝ VÀ CHUYỂN TRẠNG THÁI
+        currentState = PlayerState.GrappleFreeze;
+        velocity = Vector3.zero; // Dừng toàn bộ vận tốc (trọng lực, quán tính)
+
+        // 2. CHỜ 0.05s ĐỂ NGƯỜI CHƠI NHẬP HƯỚNG
+        yield return new WaitForSecondsRealtime(grappleInputWindow);
+
+        // 3. ĐỌC HƯỚNG BẮN
+        Vector2 shootDir = Vector2.zero;
+
+        // Nếu có bấm phím điều hướng (Analog hoặc D-pad)
+        if (Mathf.Abs(moveInput.x) > 0.1f || Mathf.Abs(moveInput.y) > 0.1f)
+        {
+            // Ép hướng về 8 hướng cơ bản (Lên, Xuống, Trái, Phải và 4 góc chéo)
+            shootDir = new Vector2(Mathf.Sign(moveInput.x) * Mathf.Ceil(Mathf.Abs(moveInput.x)),
+                                   Mathf.Sign(moveInput.y) * Mathf.Ceil(Mathf.Abs(moveInput.y))).normalized;
+        }
+        else
+        {
+            // Mặc định bắn ngang theo hướng mặt nhân vật đang nhìn
+            shootDir = new Vector2(Mathf.Sign(transform.localScale.x), 0);
+        }
+
+        // 4. PHÓNG TAY VÀ KHÓA CHỜ
+        currentState = PlayerState.Grappling;
+        if (robotHand != null)
+        {
+            robotHand.Shoot(shootDir, this);
+        }
+    }
+
+    // RobotHand gọi hàm này khi nó cắm trúng vách tường
+    public void StartPullingToHand(Vector2 targetPos, Transform wallHit)
+    {
+        grappleTarget = targetPos;
+        // Tự động nhận diện vách tường nằm bên nào để nhân vật úp mặt vào tường chuẩn xác
+        wallDirX = (grappleTarget.x > transform.position.x) ? 1 : -1;
+    }
+
+    // RobotHand gọi hàm này khi cắm trượt (bay hết cỡ không trúng gì)
+    public void CancelGrapple()
+    {
+        // Hủy trạng thái Grapple để nhân vật rơi xuống lại
+        if (currentState == PlayerState.Grappling || currentState == PlayerState.GrappleFreeze)
+        {
+            currentState = PlayerState.OnAir;
+            grappleTarget = Vector2.zero;
+        }
+    }
+    #endregion
     #endregion
 
     #region State Machine
@@ -565,7 +672,8 @@ public class PlayerController : MonoBehaviour
     private void UpdatePhysicsState()
     {
         // Nếu đang bận việc riêng (Talking/Dead) thì không can thiệp
-        if (currentState == PlayerState.Talking || currentState == PlayerState.Dead) return;
+        if (currentState == PlayerState.Talking || currentState == PlayerState.Dead
+            || currentState == PlayerState.Grappling || currentState == PlayerState.GrappleFreeze) return;
 
         if (isGrounded)
         {
@@ -950,6 +1058,7 @@ public class PlayerController : MonoBehaviour
         {
             input.JumpPerformed += OnJump;
             input.JumpCanceled += OnJumpCanceled;
+            input.GrapplePerformed += OnGrappleInput;
         }
     }
 
@@ -959,6 +1068,7 @@ public class PlayerController : MonoBehaviour
         {
             input.JumpPerformed -= OnJump;
             input.JumpCanceled -= OnJumpCanceled;
+            input.GrapplePerformed -= OnGrappleInput;
         }
     }
 
