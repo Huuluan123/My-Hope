@@ -444,7 +444,7 @@ public class PlayerController : MonoBehaviour
 
         lastGroundedTime = -999f; // Reset ground time
 
-        SoundManager.Instance.PlaySound2D("Jump");
+        SoundManager.Instance.PlaySound("Jump");
         OnJumpPerformed?.Invoke();
     }
     #endregion
