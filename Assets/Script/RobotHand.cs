@@ -27,6 +27,8 @@ public class RobotHand : MonoBehaviour
     // Hàm này được Player gọi khi ấn nút bắn
     public void Shoot(Vector2 direction, PlayerController controller)
     {
+        if (GameManager.state == GameState.Pause) return;
+
         playerController = controller;
         targetDirection = direction.normalized;
         startPos = launchPosition.position;
@@ -70,6 +72,8 @@ public class RobotHand : MonoBehaviour
 
     void Update()
     {
+        if (GameManager.state == GameState.Pause) return;
+
         // Luôn cập nhật điểm đầu của dây xích là vị trí Player
         lineRenderer.SetPosition(0, launchPosition.position);
         lineRenderer.SetPosition(1, transform.position);
