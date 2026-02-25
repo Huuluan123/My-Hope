@@ -214,10 +214,13 @@ public class PlayerController : MonoBehaviour
                 // Nếu chạm tay
                 if (Vector2.Distance(transform.position, grappleTarget) < 0.6f)
                 {
+                    // Đẩy người chơi về phía tường để bám
+                    transform.position = new Vector3(transform.position.x + (wallDirX * 0.3f), transform.position.y, transform.position.z);
+                    rb.position = transform.position;
                     // Chuyển ngay sang bám tường
-                    currentState = PlayerState.Climbing;
-                    isWallClimbing = true;
-                    isWallSliding = false;
+                    currentState = PlayerState.OnAir;
+                    //isWallClimbing = true;
+                    //isWallSliding = false;
                     isGrounded = false;
 
                     grappleTarget = Vector2.zero; // Xóa mục tiêu
@@ -589,13 +592,22 @@ public class PlayerController : MonoBehaviour
         if (Mathf.Abs(moveInput.x) > 0.1f || Mathf.Abs(moveInput.y) > 0.1f)
         {
             // Ép hướng về 8 hướng cơ bản (Lên, Xuống, Trái, Phải và 4 góc chéo)
-            shootDir = new Vector2(Mathf.Sign(moveInput.x) * Mathf.Ceil(Mathf.Abs(moveInput.x)),
-                                   Mathf.Sign(moveInput.y) * Mathf.Ceil(Mathf.Abs(moveInput.y))).normalized;
+            shootDir = new Vector2(Mathf.Sign(moveInput.x) * Mathf.Round(Mathf.Abs(moveInput.x)),
+                                   Mathf.Sign(moveInput.y) * Mathf.Round(Mathf.Abs(moveInput.y))).normalized;
         }
         else
         {
             // Mặc định bắn ngang theo hướng mặt nhân vật đang nhìn
             shootDir = new Vector2(Mathf.Sign(transform.localScale.x), 0);
+        }
+
+        // Ép nhân vật quay mặt theo hướng bắn
+        if (shootDir.x != 0)
+        {
+            Vector3 playerScale = transform.localScale;
+            // Ép Scale X của nhân vật mang dấu của hướng bắn (Trái = âm, Phải = dương)
+            playerScale.x = Mathf.Abs(playerScale.x) * Mathf.Sign(shootDir.x);
+            transform.localScale = playerScale;
         }
 
         // 4. PHÓNG TAY VÀ KHÓA CHỜ
