@@ -1383,12 +1383,12 @@ GameObject:
   m_Component:
   - component: {fileID: 519420032}
   - component: {fileID: 519420031}
-  - component: {fileID: 519420029}
   - component: {fileID: 519420030}
   - component: {fileID: 519420033}
   - component: {fileID: 519420034}
   - component: {fileID: 519420035}
   - component: {fileID: 519420036}
+  - component: {fileID: 519420037}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1396,14 +1396,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!81 &519420029
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 519420028}
-  m_Enabled: 1
 --- !u!114 &519420030
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1594,6 +1586,20 @@ MonoBehaviour:
   m_CropFrameX: 0
   m_CropFrameY: 0
   m_StretchFill: 0
+--- !u!114 &519420037
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86c6556701af9e04380698b89f691b6e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FMODUnity::FMODUnity.StudioListener
+  nonRigidbodyVelocity: 0
+  attenuationObject: {fileID: 0}
 --- !u!1 &586488743
 GameObject:
   m_ObjectHideFlags: 0
@@ -2407,9 +2413,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 985772724}
-  - component: {fileID: 985772723}
   - component: {fileID: 985772722}
-  - component: {fileID: 985772726}
   - component: {fileID: 985772725}
   m_Layer: 0
   m_Name: Audio Manager
@@ -2430,27 +2434,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a5e5285038e00aa40a2fe3f18de1ce3c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SoundManager
-  sfxLibrary: {fileID: 985772723}
-  sfx2DSource: {fileID: 101367783}
---- !u!114 &985772723
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 985772721}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4559901e8fc49f54d86d5cf8e6240ba9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SoundLibrary
-  soundEffects:
-  - groupID: Jump
-    clips:
-    - {fileID: 8300000, guid: 7bacd442175a8ab409ab143ce25ef62e, type: 3}
-  - groupID: Attack
-    clips:
-    - {fileID: 8300000, guid: 7d3626d5ce7fdd34badabf03270f6cb9, type: 3}
+  sfxTracks:
+  - soundName: Jump
+    fmodEvent:
+      Guid:
+        Data1: 1830629132
+        Data2: 1341351872
+        Data3: 579543440
+        Data4: -840926661
+      Path: event:/Jump
 --- !u!4 &985772724
 Transform:
   m_ObjectHideFlags: 0
@@ -2480,23 +2472,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 69949bb2a20fedf4bb132077a533e397, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MusicManager
-  musicLibrary: {fileID: 985772726}
-  musicSource: {fileID: 1841511657}
---- !u!114 &985772726
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 985772721}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bd60b635f56310941a12b17707d44fac, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MusicLibrary
-  tracks:
+  musicTracks:
   - trackName: Main Theme
-    clip: {fileID: 8300000, guid: 3f1e020c80c3dd147b4775c0f2222015, type: 3}
+    fmodEvent:
+      Guid:
+        Data1: -866324017
+        Data2: 1149849954
+        Data3: -1233752661
+        Data4: 287241532
+      Path: event:/Main Theme
 --- !u!1 &1048349238
 GameObject:
   m_ObjectHideFlags: 0
@@ -4365,7 +4349,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0.49899992, y: -0.112999916, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 1}
+  m_LocalScale: {x: -0.5, y: 0.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1694173121}
@@ -4551,7 +4535,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a959f104153ff8c4788ffee97157a7ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RobotHand
-  flySpeed: 25
+  flySpeed: 30
   maxDistance: 5
   wallLayer:
     serializedVersion: 2
