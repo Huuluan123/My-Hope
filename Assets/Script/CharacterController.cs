@@ -105,6 +105,9 @@ public class PlayerController : MonoBehaviour
         get { return velocity; }
     }
 
+    [Header("Cutscene Settings")]
+    public float autoWalkSpeed = 4f;
+
     [Header("Components")]
     private Collider2D col; // collider của nhân vật
     [SerializeField] private LayerMask collisionMask;
@@ -339,6 +342,55 @@ public class PlayerController : MonoBehaviour
         velocity.x = Mathf.MoveTowards(velocity.x, targetSpeed, currentAccel * Time.deltaTime);
     }
 
+    // Hàm gọi Player tự động đi đến vị trí và quay mặt
+    public void MoveToAndFace(Transform targetPos, Transform lookAtTarget, Action onComplete)
+    {
+        StartCoroutine(AutoWalkRoutine(targetPos, lookAtTarget, onComplete));
+    }
+
+    private IEnumerator AutoWalkRoutine(Transform targetPos, Transform lookAtTarget, Action onComplete)
+    {
+        //KHÓA INPUT (Ngăn người chơi bấm nút lúc đang đi tới chỗ NPC)
+        currentState = PlayerState.ScriptedMove; 
+
+        // Dừng các lực vật lý quán tính (nếu có)
+        if (rb != null) rb.linearVelocity = Vector2.zero;
+
+        // Chạy vòng lặp cho đến khi khoảng cách X < 0.05
+        while (Mathf.Abs(transform.position.x - targetPos.position.x) > 0.05f)
+        {
+            // Hướng đi sang trái hay phải
+            float dirX = Mathf.Sign(targetPos.position.x - transform.position.x);
+
+            // Di chuyển
+            Vector3 nextPos = new Vector3(targetPos.position.x, transform.position.y, transform.position.z);
+            transform.position = Vector3.MoveTowards(transform.position, nextPos, autoWalkSpeed * Time.deltaTime);
+
+            // Xoay mặt theo hướng đi
+            Vector3 scale = transform.localScale;
+            scale.x = Mathf.Abs(scale.x) * dirX;
+            transform.localScale = scale;
+
+            OnRunChanged?.Invoke(true); // Báo hiệu đang chạy cho Animation
+
+            yield return null; // Đợi frame tiếp theo
+        }
+
+        OnRunChanged?.Invoke(false); // Báo hiệu dừng chạy cho Animation
+
+        // 3. ĐẾN NƠI -> QUAY MẶT VÀO NPC
+        float faceDir = Mathf.Sign(lookAtTarget.position.x - transform.position.x);
+        if (faceDir != 0)
+        {
+            Vector3 finalScale = transform.localScale;
+            finalScale.x = Mathf.Abs(finalScale.x) * faceDir;
+            transform.localScale = finalScale;
+        }
+
+        // 4. BÁO HIỆU XONG VIỆC BẰNG CALLBACK
+        onComplete?.Invoke();
+    }
+
     #region Jump Handling
     // Phương thức xử lý nhảy input: chỉ lưu thời điểm ấn để dùng jump buffer
     private void OnJump(InputAction.CallbackContext context)
@@ -347,15 +399,6 @@ public class PlayerController : MonoBehaviour
 
         if (context.performed)
         {
-            // Check if can talk to NPC
-            if (currentState == PlayerState.Idle && currentDialogueTrigger != null)
-            {
-                currentDialogueTrigger.TriggerDialogue();
-
-                // Dừng lại ở đây, KHÔNG thực hiện code nhảy bên dưới
-                return;
-            }
-
             lastJumpInputTime = Time.time;
         }
     }
@@ -572,6 +615,14 @@ public class PlayerController : MonoBehaviour
 
         if (context.performed)
         {
+            // Check if can talk to NPC
+            if (currentState == PlayerState.Idle && currentDialogueTrigger != null)
+            {
+                currentDialogueTrigger.TriggerDialogue();
+
+                // Dừng lại ở đây, KHÔNG thực hiện code nhảy bên dưới
+                return;
+            }
             StartCoroutine(PerformGrappleWithLeniency());
         }
     }

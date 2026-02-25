@@ -14,7 +14,7 @@ public class GameManager : MonoBehaviour
 
     void Awake()
     {
-        QualitySettings.vSyncCount = 1; // Turn on VSync
+        //QualitySettings.vSyncCount = 1; // Turn on VSync
         Application.targetFrameRate = 165; // FPS cap
         state = GameState.Running;
         pauseAction = InputSystem.actions.FindAction("Pause");
