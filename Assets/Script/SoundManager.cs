@@ -1,13 +1,19 @@
 using UnityEngine;
+using FMODUnity;
 
 public class SoundManager : MonoBehaviour
 {
     public static SoundManager Instance;
 
-    [SerializeField]
-    private SoundLibrary sfxLibrary;
-    [SerializeField]
-    private AudioSource sfx2DSource;
+    [System.Serializable]
+    public struct SoundTrack
+    {
+        public string soundName;
+        public EventReference fmodEvent;
+    }
+
+    [Header("FMOD SFX Settings")]
+    [SerializeField] private SoundTrack[] sfxTracks;
 
     private void Awake()
     {
@@ -22,21 +28,41 @@ public class SoundManager : MonoBehaviour
         }
     }
 
-    public void PlaySound3D(AudioClip clip, Vector3 pos)
+    private EventReference GetEventReference(string soundName)
     {
-        if (clip != null)
+        foreach (var track in sfxTracks)
         {
-            AudioSource.PlayClipAtPoint(clip, pos);
+            if (track.soundName == soundName)
+            {
+                return track.fmodEvent;
+            }
+        }
+
+        Debug.LogWarning("FMOD SoundManager: Không tìm thấy SFX tên -> " + soundName);
+        return new EventReference();
+    }
+
+    // ---------------------------------------------------
+    // GỘP CHUNG THÀNH PlaySound BẰNG METHOD OVERLOADING
+    // ---------------------------------------------------
+
+    // Dùng cho âm thanh 2D (UI, Nhạc báo hiệu, Tiếng lồng tiếng...)
+    public void PlaySound(string soundName)
+    {
+        EventReference evt = GetEventReference(soundName);
+        if (!evt.IsNull)
+        {
+            RuntimeManager.PlayOneShot(evt);
         }
     }
 
-    public void PlaySound3D(string soundName, Vector3 pos)
+    // Dùng cho âm thanh 3D (Tiếng bước chân, tiếng đập phá, tiếng bắn tay...)
+    public void PlaySound(string soundName, Vector3 position)
     {
-        PlaySound3D(sfxLibrary.GetClipFromName(soundName), pos);
-    }
-
-    public void PlaySound2D(string soundName)
-    {
-        sfx2DSource.PlayOneShot(sfxLibrary.GetClipFromName(soundName));
+        EventReference evt = GetEventReference(soundName);
+        if (!evt.IsNull)
+        {
+            RuntimeManager.PlayOneShot(evt, position);
+        }
     }
 }

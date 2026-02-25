@@ -6,19 +6,19 @@ public class CharacterInput : MonoBehaviour
 {
     public InputAction moveAction;
     public InputAction jumpAction;
-    public InputAction dashAction;
+    public InputAction grappleAction;
     public InputAction attackAction;
     public InputAction grabAction;
 
     public event Action<InputAction.CallbackContext> JumpPerformed;
     public event Action<InputAction.CallbackContext> JumpCanceled;
-    public event Action<InputAction.CallbackContext> DashPerformed;
+    public event Action<InputAction.CallbackContext> GrapplePerformed;
     public event Action<InputAction.CallbackContext> AttackPerformed;
     public event Action<InputAction.CallbackContext> GrabPerformed;
 
     private Action<InputAction.CallbackContext> jumpPerformedHandler;
     private Action<InputAction.CallbackContext> jumpCanceledHandler;
-    private Action<InputAction.CallbackContext> dashPerformedHandler;
+    private Action<InputAction.CallbackContext> grapplePerformedHandler;
     private Action<InputAction.CallbackContext> attackPerformedHandler;
     private Action<InputAction.CallbackContext> grabPerformedHandler;
 
@@ -26,7 +26,7 @@ public class CharacterInput : MonoBehaviour
     {
         moveAction = InputSystem.actions.FindAction("Move");
         jumpAction = InputSystem.actions.FindAction("Jump");
-        dashAction = InputSystem.actions.FindAction("Dash");
+        grappleAction = InputSystem.actions.FindAction("Grapple");
         attackAction = InputSystem.actions.FindAction("Attack");
         grabAction = InputSystem.actions.FindAction("Grab");
     }
@@ -47,11 +47,11 @@ public class CharacterInput : MonoBehaviour
             jumpAction.canceled += jumpCanceledHandler;
         }
 
-        if (dashAction != null)
+        if (grappleAction != null)
         {
-            dashAction.Enable();
-            dashPerformedHandler = ctx => DashPerformed?.Invoke(ctx);
-            dashAction.performed += dashPerformedHandler;
+            grappleAction.Enable();
+            grapplePerformedHandler = ctx => GrapplePerformed?.Invoke(ctx);
+            grappleAction.performed += grapplePerformedHandler;
         }
 
         if (attackAction != null)
@@ -80,10 +80,10 @@ public class CharacterInput : MonoBehaviour
             jumpAction.Disable();
         }
 
-        if (dashAction != null)
+        if (grappleAction != null)
         {
-            if (dashPerformedHandler != null) dashAction.performed -= dashPerformedHandler;
-            dashAction.Disable();
+            if (grapplePerformedHandler != null) grappleAction.performed -= grapplePerformedHandler;
+            grappleAction.Disable();
         }
 
         if (attackAction != null)
