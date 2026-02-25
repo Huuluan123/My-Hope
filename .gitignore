@@ -23,3 +23,7 @@ UserSettings/
 # OS
 .DS_Store
 Thumbs.db
+
+# Ignore FMOD and Unity log files
+*.log
+fmod_editor.log
