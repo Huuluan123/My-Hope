@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class RobotHand : MonoBehaviour
 {
+    private Vector3 baseScale;
+
     [Header("Settings")]
     public float flySpeed = 40f;
     public float maxDistance = 10f;
@@ -22,6 +24,7 @@ public class RobotHand : MonoBehaviour
     {
         lineRenderer = GetComponent<LineRenderer>();
         transform.SetParent(null); // Tách khỏi Player để không di chuyển theo khi Player bay đến
+        baseScale = new Vector3(Mathf.Abs(transform.localScale.x), Mathf.Abs(transform.localScale.y), transform.localScale.z);
     }
 
     // Hàm này được Player gọi khi ấn nút bắn
@@ -29,44 +32,41 @@ public class RobotHand : MonoBehaviour
     {
         if (GameManager.state == GameState.Pause) return;
 
+        // Bật Active ngay đầu tiên để Awake() chạy và lấy baseScale (nếu chưa lấy)
+        gameObject.SetActive(true);
+
         playerController = controller;
         targetDirection = direction.normalized;
         startPos = launchPosition.position;
 
         transform.position = startPos;
 
-        // 1. Tính toán góc xoay cho 8 hướng
+        // 1. Tính toán góc xoay đơn giản dựa trên Vector đã được Controller làm tròn chuẩn
         float angle = Mathf.Atan2(targetDirection.y, targetDirection.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0, 0, angle);
 
-        // 2. Sửa lỗi lộn ngược (Upside Down) khi bắn sang trái
-        Vector3 handScale = transform.localScale;
-
-        // Đảm bảo trục X luôn dương để tránh lật kép
-        handScale.x = Mathf.Abs(handScale.x);
+        // 2. Xử lý lật hình (Tránh lỗi lộn ngược tay khi bắn sang nửa bên trái)
+        Vector3 handScale = baseScale;
+        handScale.x = Mathf.Abs(handScale.x); // Luôn giữ X dương
 
         if (targetDirection.x < 0)
         {
-            // Bắn sang nửa bên TRÁI (chéo trái lên, chéo trái xuống, thẳng trái)
-            // Lúc này góc xoay là 135, 180, -135 độ khiến ảnh bị lộn ngược.
-            // -> Ta lật trục Y lại để bù trừ.
-            handScale.y = -Mathf.Abs(handScale.y);
+            // Bắn sang trái -> lật trục Y lại để bù trừ cho góc xoay
+            handScale.y = -baseScale.y;
         }
         else
         {
-            // Bắn sang nửa bên PHẢI (hoặc bắn thẳng lên/xuống khi x = 0)
-            // Góc xoay bình thường, giữ nguyên trục Y.
+            // Bắn sang phải/lên/xuống -> giữ nguyên trục Y
             handScale.y = Mathf.Abs(handScale.y);
         }
 
         transform.localScale = handScale;
 
-        // 3. Kích hoạt bay
+        // 3. Kích hoạt trạng thái bay
         isFlying = true;
         isAttached = false;
         isReturning = false;
 
-        gameObject.SetActive(true);
         lineRenderer.positionCount = 2;
     }
 

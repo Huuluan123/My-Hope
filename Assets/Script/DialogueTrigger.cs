@@ -3,11 +3,15 @@
 public class DialogueTrigger : MonoBehaviour
 {
     [Header("Ink JSON")]
-    [Tooltip("Kéo file .json (được Ink biên dịch) vào đây")]
+    [Tooltip("Drag and drop .json file (compiled with Ink) here")]
     public TextAsset inkJSON;
 
     [Header("Visual")]
     public GameObject chatIcon;
+
+    [Header("Cutscene Alignment")]
+    [Tooltip("Transform(position) that player needs to stand in to start the dialogue")]
+    public Transform standPosition;
 
     private void Start()
     {
@@ -16,13 +20,25 @@ public class DialogueTrigger : MonoBehaviour
 
     public void TriggerDialogue()
     {
-        // Gửi file Ink sang cho Manager xử lý
-        DialogueManager.Instance.StartDialogue(inkJSON);
-
+        // Tắt icon chat ngay khi ấn nút
         if (chatIcon != null) chatIcon.SetActive(false);
+
+        // Nếu có set điểm đứng, ra lệnh cho Player đi tới đó rồi mới mở thoại
+        if (standPosition != null && PlayerController.Instance != null)
+        {
+            PlayerController.Instance.MoveToAndFace(standPosition, this.transform, () =>
+            {
+                // Đoạn code này chỉ chạy khi Player đã đi tới nơi và xoay mặt xong
+                DialogueManager.Instance.StartDialogue(inkJSON);
+            });
+        }
+        else
+        {
+            // Fallback: Nếu không set điểm đứng, mở thoại luôn (giống code cũ của bạn)
+            DialogueManager.Instance.StartDialogue(inkJSON);
+        }
     }
 
-    // ... (Giữ nguyên phần OnTriggerEnter2D / Exit2D gọi PlayerController như cũ)
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.CompareTag("Player"))

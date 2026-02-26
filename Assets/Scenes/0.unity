@@ -260,7 +260,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 11
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 19b84d13b4e51a64b8aa6f9532611ef6, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 31261ef829c8d5443941fedf93581633, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1074,6 +1074,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParallaxLayer
   parallaxFactor: 0.1
+  parallaxFactorY: 0
 --- !u!1 &274061456
 GameObject:
   m_ObjectHideFlags: 0
@@ -1103,7 +1104,7 @@ Transform:
   m_GameObject: {fileID: 274061456}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -37.57, y: -0.32099986, z: -10}
+  m_LocalPosition: {x: -37.989998, y: 0.26, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1383,12 +1384,12 @@ GameObject:
   m_Component:
   - component: {fileID: 519420032}
   - component: {fileID: 519420031}
-  - component: {fileID: 519420029}
   - component: {fileID: 519420030}
   - component: {fileID: 519420033}
   - component: {fileID: 519420034}
   - component: {fileID: 519420035}
   - component: {fileID: 519420036}
+  - component: {fileID: 519420037}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1396,14 +1397,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!81 &519420029
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 519420028}
-  m_Enabled: 1
 --- !u!114 &519420030
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1577,13 +1570,13 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 519420028}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c88f5cead0c0b2a4eb05b5900433f8d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.2D.Runtime::UnityEngine.Rendering.Universal.PixelPerfectCamera
   m_ComponentVersion: 1
-  m_AssetsPPU: 32
+  m_AssetsPPU: 18
   m_RefResolutionX: 320
   m_RefResolutionY: 180
   m_CropFrame: 0
@@ -1594,6 +1587,20 @@ MonoBehaviour:
   m_CropFrameX: 0
   m_CropFrameY: 0
   m_StretchFill: 0
+--- !u!114 &519420037
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86c6556701af9e04380698b89f691b6e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: FMODUnity::FMODUnity.StudioListener
+  nonRigidbodyVelocity: 0
+  attenuationObject: {fileID: 0}
 --- !u!1 &586488743
 GameObject:
   m_ObjectHideFlags: 0
@@ -1876,7 +1883,7 @@ Transform:
   m_GameObject: {fileID: 654680749}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -94.03999, y: 25.019001, z: -10}
+  m_LocalPosition: {x: -94.46, y: 25.6, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2198,6 +2205,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParallaxLayer
   parallaxFactor: 0.3
+  parallaxFactorY: 0
 --- !u!1 &833356756
 GameObject:
   m_ObjectHideFlags: 0
@@ -2276,6 +2284,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DialogueTrigger
   inkJSON: {fileID: 4900000, guid: 2b368bf21a5882142b9aa0c7eb49502a, type: 3}
   chatIcon: {fileID: 39519406}
+  standPosition: {fileID: 1473929895}
 --- !u!4 &833356760
 Transform:
   m_ObjectHideFlags: 0
@@ -2291,6 +2300,7 @@ Transform:
   m_Children:
   - {fileID: 39519408}
   - {fileID: 191753134}
+  - {fileID: 1473929895}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &912245285
@@ -2398,6 +2408,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParallaxLayer
   parallaxFactor: 0.5
+  parallaxFactorY: 0
 --- !u!1 &985772721
 GameObject:
   m_ObjectHideFlags: 0
@@ -2407,9 +2418,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 985772724}
-  - component: {fileID: 985772723}
   - component: {fileID: 985772722}
-  - component: {fileID: 985772726}
   - component: {fileID: 985772725}
   m_Layer: 0
   m_Name: Audio Manager
@@ -2430,27 +2439,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a5e5285038e00aa40a2fe3f18de1ce3c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SoundManager
-  sfxLibrary: {fileID: 985772723}
-  sfx2DSource: {fileID: 101367783}
---- !u!114 &985772723
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 985772721}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4559901e8fc49f54d86d5cf8e6240ba9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SoundLibrary
-  soundEffects:
-  - groupID: Jump
-    clips:
-    - {fileID: 8300000, guid: 7bacd442175a8ab409ab143ce25ef62e, type: 3}
-  - groupID: Attack
-    clips:
-    - {fileID: 8300000, guid: 7d3626d5ce7fdd34badabf03270f6cb9, type: 3}
+  sfxTracks:
+  - soundName: Jump
+    fmodEvent:
+      Guid:
+        Data1: 1830629132
+        Data2: 1341351872
+        Data3: 579543440
+        Data4: -840926661
+      Path: event:/Jump
 --- !u!4 &985772724
 Transform:
   m_ObjectHideFlags: 0
@@ -2480,23 +2477,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 69949bb2a20fedf4bb132077a533e397, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MusicManager
-  musicLibrary: {fileID: 985772726}
-  musicSource: {fileID: 1841511657}
---- !u!114 &985772726
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 985772721}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bd60b635f56310941a12b17707d44fac, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MusicLibrary
-  tracks:
+  musicTracks:
   - trackName: Main Theme
-    clip: {fileID: 8300000, guid: 3f1e020c80c3dd147b4775c0f2222015, type: 3}
+    fmodEvent:
+      Guid:
+        Data1: -866324017
+        Data2: 1149849954
+        Data3: -1233752661
+        Data4: 287241532
+      Path: event:/Main Theme
 --- !u!1 &1048349238
 GameObject:
   m_ObjectHideFlags: 0
@@ -3685,6 +3674,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParallaxLayer
   parallaxFactor: 0.2
+  parallaxFactorY: 0
 --- !u!1 &1261906042
 GameObject:
   m_ObjectHideFlags: 0
@@ -3757,7 +3747,7 @@ Transform:
   m_GameObject: {fileID: 1261906042}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -14.68, y: -0.32099986, z: -10}
+  m_LocalPosition: {x: -15.1, y: 0.26, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4008,6 +3998,37 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!1 &1473929894
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1473929895}
+  m_Layer: 0
+  m_Name: Player Position
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1473929895
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1473929894}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.47, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 833356760}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1487549311
 GameObject:
   m_ObjectHideFlags: 0
@@ -4365,7 +4386,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0.49899992, y: -0.112999916, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 1}
+  m_LocalScale: {x: -0.5, y: 0.5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1694173121}
@@ -4551,7 +4572,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a959f104153ff8c4788ffee97157a7ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RobotHand
-  flySpeed: 25
+  flySpeed: 30
   maxDistance: 5
   wallLayer:
     serializedVersion: 2
@@ -4870,6 +4891,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParallaxLayer
   parallaxFactor: 0.6
+  parallaxFactorY: 0.6
 --- !u!1 &1929308629
 GameObject:
   m_ObjectHideFlags: 0
@@ -4975,6 +4997,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParallaxLayer
   parallaxFactor: 0.4
+  parallaxFactorY: 0
 --- !u!1 &1948053354
 GameObject:
   m_ObjectHideFlags: 0
@@ -10511,11 +10534,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4173589304260275096, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -7.45
+      value: -7.87
       objectReference: {fileID: 0}
     - target: {fileID: 4173589304260275096, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -3.981
+      value: -3.4
       objectReference: {fileID: 0}
     - target: {fileID: 4173589304260275096, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
       propertyPath: m_LocalPosition.z
