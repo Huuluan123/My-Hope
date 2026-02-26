@@ -122,6 +122,7 @@ public class PlayerController : MonoBehaviour
     /* ---------- Events -------------- */
     public event Action OnJumpPerformed;
     public event Action OnLanded;
+    public event Action OnShootHand;
     public event Action<bool> OnRunChanged;
     public event Action<bool> OnWallGrabChanged;
     public event Action<bool> OnClimbChanged;
@@ -490,7 +491,6 @@ public class PlayerController : MonoBehaviour
 
         lastGroundedTime = -999f; // Reset ground time
 
-        SoundManager.Instance.PlaySound("Jump");
         OnJumpPerformed?.Invoke();
     }
     #endregion
@@ -629,6 +629,7 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator PerformGrappleWithLeniency()
     {
+        OnShootHand?.Invoke();
         // 1. ĐÓNG BĂNG VẬT LÝ VÀ CHUYỂN TRẠNG THÁI
         currentState = PlayerState.GrappleFreeze;
         velocity = Vector3.zero; // Dừng toàn bộ vận tốc (trọng lực, quán tính)

@@ -42,7 +42,7 @@ MonoBehaviour:
   Path: FMOD/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639076167001360856
+  lastModified: 639077466444625964
   FileSizes: []
   Exists: 1
 --- !u!114 &-1184005835692883167
@@ -72,6 +72,33 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 0
+--- !u!114 &-973785210174382274
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Player_Footsteps
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Player_Footsteps
+  Guid:
+    Data1: -1469475457
+    Data2: 1098958758
+    Data3: 1111558049
+    Data4: -1673275321
+  Banks:
+  - {fileID: -4893171304041935319}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 200
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -90,18 +117,51 @@ MonoBehaviour:
   EditorEvents:
   - {fileID: -1184005835692883167}
   - {fileID: -4923398468512384997}
+  - {fileID: -973785210174382274}
+  - {fileID: 6321964981666071516}
   EditorParameters: []
   MasterBanks:
   - {fileID: -4893171304041935319}
   StringsBanks:
   - {fileID: 8345543451865520628}
   cacheVersion: 131858
-  cacheTime: 639076167001519916
+  cacheTime: 639077466444645710
   SerializableEventsDict:
   - key: event:/Main Theme
     index: 0
   - key: event:/Jump
     index: 1
+  - key: event:/Player_Footsteps
+    index: 2
+  - key: event:/Shoot Hand
+    index: 3
+--- !u!114 &6321964981666071516
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Shoot Hand
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Shoot Hand
+  Guid:
+    Data1: -391442565
+    Data2: 1292238780
+    Data3: 451361415
+    Data4: -97936753
+  Banks:
+  - {fileID: -4893171304041935319}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 0
 --- !u!114 &8345543451865520628
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -117,8 +177,8 @@ MonoBehaviour:
   Path: FMOD/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639076167001519916
+  lastModified: 639077466444645710
   FileSizes:
   - Name: 
-    Value: 818
+    Value: 906
   Exists: 1
