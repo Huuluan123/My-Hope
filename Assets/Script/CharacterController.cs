@@ -93,6 +93,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private PlayerState currentState;
     [SerializeField] private Vector2 moveInput;
     [SerializeField] private bool isGrounded; // Biến kiểm tra nhân vật có đang chạm đất không
+    private bool wasGrounded;
     [SerializeField] private bool hitLeftWall;
     [SerializeField] private bool hitRightWall;
 
@@ -179,6 +180,8 @@ public class PlayerController : MonoBehaviour
             else
                 velocity.x = 0;
         }
+
+        wasGrounded = isGrounded; // Lưu trạng thái chạm đất cũ để so sánh trong FixedUpdate
     }
 
     void FixedUpdate()
@@ -312,6 +315,13 @@ public class PlayerController : MonoBehaviour
 
         // 1. Tính vận tốc mục tiêu (Target Velocity)
         float targetSpeed = moveInput.x * moveSpeed;
+
+        // Nếu frame trước đang rơi VÀ frame này đã chạm đất VÀ người chơi thả tay cầm
+        if (!wasGrounded && isGrounded && Mathf.Abs(moveInput.x) < 0.01f)
+        {
+            velocity.x = 0f; // Ép vận tốc trục X về 0 ngay lập tức
+            return; // Thoát hàm, bỏ qua bước tính toán trượt (deceleration) bên dưới
+        }
 
         // 2. Chọn gia tốc phù hợp (Gia tốc tăng hay Gia tốc giảm?)
         float currentAccel;
@@ -492,6 +502,7 @@ public class PlayerController : MonoBehaviour
         lastGroundedTime = -999f; // Reset ground time
 
         OnJumpPerformed?.Invoke();
+        SoundManager.Instance.PlaySound("Jump");
     }
     #endregion
 

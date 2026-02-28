@@ -62,8 +62,6 @@ public class PlayerAnimation : MonoBehaviour
     private void PlayJump()
     {
         animator.SetTrigger(JumpTrig);
-        // Có thể thêm code: Tạo bụi nhảy, phát âm thanh nhảy ở đây
-        SoundManager.Instance.PlaySound("Jump");
     }
 
     private void PlayLand()
