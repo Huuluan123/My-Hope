@@ -106,6 +106,10 @@ public class PlayerController : MonoBehaviour
         get { return velocity; }
     }
 
+    [Header("Respawn Settings")]
+    [SerializeField] private Vector2 currentRespawnPoint;
+    [SerializeField] private float respawnDelay = 1f;
+
     [Header("Cutscene Settings")]
     public float autoWalkSpeed = 4f;
 
@@ -1092,6 +1096,80 @@ public class PlayerController : MonoBehaviour
         {
             currentDialogueTrigger = null;
         }
+    }
+    #endregion
+
+    #region Respawn Handling
+    public void SetRespawnPoint(Vector2 newPoint)
+    {
+        currentRespawnPoint = newPoint;
+    }
+
+    public void Die()
+    {
+        // Tránh trường hợp gọi hàm Die nhiều lần (ví dụ chạm 2 cái gai cùng lúc)
+        if (currentState == PlayerState.Dead) return;
+
+        // 1. Chuyển trạng thái để khóa toàn bộ Input và Vật lý
+        SetState(PlayerState.Dead);
+
+        // 2. Ép dừng mọi chuyển động ngay lập tức
+        velocity = Vector3.zero;
+        if (rb != null) rb.linearVelocity = Vector2.zero;
+
+        // 3. Tắt hình ảnh nhân vật (Tạo cảm giác nhân vật vỡ vụn biến mất)
+        // Lưu ý: Đừng Destroy(gameObject), vì ta còn phải hồi sinh nó!
+        GetComponentInChildren<SpriteRenderer>().enabled = false;
+
+        // TODO: Gọi FMOD phát tiếng vỡ vụn ở đây
+        // TODO: Gọi Particle System nổ ra các mảnh vỡ ở đây
+
+        // 4. Bắt đầu đếm ngược hồi sinh
+        StartCoroutine(RespawnRoutine());
+    }
+
+    private IEnumerator RespawnRoutine()
+    {
+        // Kích hoạt ANIMATION START
+        if (TransitionManager.Instance != null)
+        {
+            TransitionManager.Instance.PlayStartTransition();
+        }
+
+        // --- BẮT ĐẦU HỒI SINH ---
+
+        // Đợi cho Animation Start chạy xong
+        yield return new WaitForSeconds(TransitionManager.Instance.transitionTime + 0.5f);
+
+        // ANIMATION START đã xong, giờ mới cho nhân vật hiện lại và hồi sinh thực sự
+        
+
+        // 1. Dịch chuyển nhân vật về điểm Checkpoint
+        transform.position = currentRespawnPoint;
+        if (rb != null) rb.position = currentRespawnPoint; // Cập nhật cả Rigidbody cho chắc chắn
+
+        // 2. Reset lại các chỉ số quan trọng
+        velocity = Vector3.zero;
+        currentStamina = maxStamina; // Hồi đầy thể lực
+        isGrounded = false; // Bắt buộc false để tính toán lại chạm đất an toàn
+
+        // Nếu tay móc đang bắn ra, thu hồi lại
+        if (robotHand != null) robotHand.FinishGrapple();
+
+        // 3. Bật lại hình ảnh nhân vật
+        GetComponentInChildren<SpriteRenderer>().enabled = true;
+
+        // Delay một chút để đủ tổng thời gian 1 giây
+        yield return new WaitForSeconds(0.4f);
+
+        // KÍCH HOẠT ANIMATION END
+        if (TransitionManager.Instance != null)
+        {
+            TransitionManager.Instance.PlayEndTransition();
+        }
+
+        // 4. Trả lại quyền điều khiển
+        SetState(PlayerState.Idle);
     }
     #endregion
 
