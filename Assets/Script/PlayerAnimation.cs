@@ -36,6 +36,7 @@ public class PlayerAnimation : MonoBehaviour
         // Cú pháp: Tên_Event += Tên_Hàm_Xử_Lý
         controller.OnJumpPerformed += PlayJump;
         controller.OnLanded += PlayLand;
+        controller.OnShootHand += PlayHand;
         controller.OnRunChanged += SetRunState;
         controller.OnWallGrabChanged += SetWallGrab;
         controller.OnClimbChanged += SetClimb;
@@ -61,13 +62,17 @@ public class PlayerAnimation : MonoBehaviour
     private void PlayJump()
     {
         animator.SetTrigger(JumpTrig);
-        // Có thể thêm code: Tạo bụi nhảy, phát âm thanh nhảy ở đây
     }
 
     private void PlayLand()
     {
         // Có thể thêm code: Tạo hiệu ứng nén nhân vật (Squash), bụi tiếp đất
         // SoundManager.Instance.PlaySound("Land");
+    }
+
+    private void PlayHand()
+    {
+        SoundManager.Instance.PlaySound("Shoot Hand");
     }
 
     private void SetGrounded(bool isGrounded)

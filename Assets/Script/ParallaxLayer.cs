@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[ExecuteInEditMode]
+//[ExecuteInEditMode]
 public class ParallaxLayer : MonoBehaviour
 {
     public float parallaxFactor;
