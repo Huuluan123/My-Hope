@@ -406,6 +406,43 @@ public class PlayerController : MonoBehaviour
         onComplete?.Invoke();
     }
 
+    // Hàm Tách Biệt: Chỉ dùng cho chuyển phòng (Dựa trên thời gian và Vận tốc)
+    public void ForceWalkIntoRoom(Vector2 direction, float duration)
+    {
+        if (currentState == PlayerState.Dead || currentState == PlayerState.ScriptedMove) return;
+        StartCoroutine(RoomTransitionWalkRoutine(direction, duration));
+    }
+
+    private IEnumerator RoomTransitionWalkRoutine(Vector2 dir, float time)
+    {
+        SetState(PlayerState.ScriptedMove);
+        OnRunChanged?.Invoke(true); // Báo hiệu Animation chạy
+
+        float elapsedTime = 0f;
+
+        while (elapsedTime < time)
+        {
+            // Dùng Vận tốc (Velocity) để KHÔNG làm hỏng Trọng lực khi đang nhảy/rơi
+            velocity.x = dir.x * moveSpeed;
+
+            // Xoay mặt
+            if (dir.x != 0)
+            {
+                Vector3 scale = transform.localScale;
+                scale.x = Mathf.Abs(scale.x) * Mathf.Sign(dir.x);
+                transform.localScale = scale;
+            }
+
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+
+        // Trả lại trạng thái bình thường
+        velocity.x = 0f;
+        OnRunChanged?.Invoke(false); // Tắt Animation chạy
+        SetState(PlayerState.Idle);
+    }
+
     #region Jump Handling
     // Phương thức xử lý nhảy input: chỉ lưu thời điểm ấn để dùng jump buffer
     private void OnJump(InputAction.CallbackContext context)

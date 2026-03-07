@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[ExecuteInEditMode]
+//[ExecuteInEditMode]
 public class ParallaxBackground : MonoBehaviour
 {
     public ParallaxCamera parallaxCamera;
