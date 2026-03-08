@@ -12,6 +12,7 @@ public class RoomTransitionScript : MonoBehaviour
 
     private Collider2D roomCollider;
     private bool isPlayerInside = false; // Biến ghi nhớ trạng thái
+    public bool drawRoomBoudary = true;
 
     private void Awake()
     {
@@ -73,14 +74,17 @@ public class RoomTransitionScript : MonoBehaviour
     // Hàm vẽ viền phòng
     private void OnDrawGizmos()
     {
-        Collider2D col = GetComponent<Collider2D>();
-        if (col != null)
+        if (drawRoomBoudary)
         {
-            // Chọn một màu nổi bật (VD: Màu vàng trong suốt)
-            Gizmos.color = new Color(1f, 0.92f, 0.016f, 0.5f);
+            Collider2D col = GetComponent<Collider2D>();
+            if (col != null)
+            {
+                // Chọn một màu nổi bật (VD: Màu vàng trong suốt)
+                Gizmos.color = new Color(1f, 0.92f, 0.016f, 0.5f);
 
-            // Vẽ một cái khung viền bao quanh toàn bộ Collider của phòng
-            Gizmos.DrawWireCube(col.bounds.center, col.bounds.size);
+                // Vẽ một cái khung viền bao quanh toàn bộ Collider của phòng
+                Gizmos.DrawWireCube(col.bounds.center, col.bounds.size);
+            }
         }
     }
 }
