@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 2153383039020267555}
   - component: {fileID: 5047040719513408512}
   m_Layer: 0
-  m_Name: Room Zone
+  m_Name: Room Boundary
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -92,6 +92,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoomTranstionScript
   roomCamera: {fileID: 7874856184278163302}
+  pushDuration: 0.2
+  drawRoomBoudary: 1
 --- !u!1 &6083493676450104377
 GameObject:
   m_ObjectHideFlags: 0
@@ -210,6 +212,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2938075163576352562}
+  - component: {fileID: 5613290469752002602}
   m_Layer: 0
   m_Name: Room
   m_TagString: Untagged
@@ -230,7 +233,19 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 4892436201671028652}
   - {fileID: 7972859586520101624}
+  - {fileID: 4892436201671028652}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5613290469752002602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7419765808580983041}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d90bd4594d0f27242bd7caac9a361f00, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RoomAutoParent

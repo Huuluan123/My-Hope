@@ -108,7 +108,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Respawn Settings")]
     [SerializeField] private Vector2 currentRespawnPoint;
-    [SerializeField] private float respawnDelay = 1f;
+    //[SerializeField] private float respawnDelay = 1f;
 
     [Header("Cutscene Settings")]
     public float autoWalkSpeed = 4f;
@@ -156,7 +156,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (GameManager.state == GameState.Pause) return;
+        if (GameManager.Instance.State == GameState.Pause) return;
 
         if (climbHopInputTimer > 0)
         {
