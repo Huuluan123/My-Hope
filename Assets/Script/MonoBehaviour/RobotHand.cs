@@ -30,7 +30,7 @@ public class RobotHand : MonoBehaviour
     // Hàm này được Player gọi khi ấn nút bắn
     public void Shoot(Vector2 direction, PlayerController controller)
     {
-        if (GameManager.state == GameState.Pause) return;
+        if (GameManager.Instance.State == GameState.Pause) return;
 
         // Bật Active ngay đầu tiên để Awake() chạy và lấy baseScale (nếu chưa lấy)
         gameObject.SetActive(true);
@@ -72,7 +72,7 @@ public class RobotHand : MonoBehaviour
 
     void Update()
     {
-        if (GameManager.state == GameState.Pause) return;
+        if (GameManager.Instance.State == GameState.Pause) return;
 
         // Luôn cập nhật điểm đầu của dây xích là vị trí Player
         lineRenderer.SetPosition(0, launchPosition.position);

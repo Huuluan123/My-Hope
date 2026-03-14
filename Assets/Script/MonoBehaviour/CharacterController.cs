@@ -156,7 +156,7 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (GameManager.state == GameState.Pause) return;
+        if (GameManager.Instance.State == GameState.Pause) return;
 
         if (climbHopInputTimer > 0)
         {

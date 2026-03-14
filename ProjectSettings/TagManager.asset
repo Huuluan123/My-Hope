@@ -5,8 +5,7 @@ TagManager:
   serializedVersion: 3
   tags:
   - Ground
-  - Right Trigger
-  - Left Trigger
+  - LevelElement
   layers:
   - Default
   - TransparentFX

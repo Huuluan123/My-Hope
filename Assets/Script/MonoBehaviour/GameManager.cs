@@ -9,30 +9,27 @@ public enum GameState
 
 public class GameManager : MonoBehaviour
 {
-    public static GameState state;
+    public static GameManager Instance { get; private set; }
+    public GameState State { get; private set; }
+
     private InputAction pauseAction;
 
     void Awake()
     {
-        //QualitySettings.vSyncCount = 1; // Turn on VSync
-        Application.targetFrameRate = 165; // FPS cap
-        state = GameState.Running;
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Application.targetFrameRate = 165;
+        State = GameState.Running;
         pauseAction = InputSystem.actions.FindAction("Pause");
-    }
-
-    private void Start()
-    {
-        //MusicManager.Instance.PlayMusic("Main Theme");
-    }
-
-    private void Update()
-    {
-        if (state == GameState.Running) {
-            Time.timeScale = 1f;
-        }
-        else if (state == GameState.Pause) {
-            Time.timeScale = 0f;
-        }
     }
 
     private void OnEnable()
@@ -53,7 +50,6 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // handler được gọi một lần khi action chuyển sang performed
     private void OnPausePerformed(InputAction.CallbackContext context)
     {
         TogglePause();
@@ -61,15 +57,17 @@ public class GameManager : MonoBehaviour
 
     private void TogglePause()
     {
-        if (state == GameState.Running)
+        if (State == GameState.Running)
         {
             Debug.Log("Game Paused!");
-            state = GameState.Pause;
+            State = GameState.Pause;
+            Time.timeScale = 0f; // Chỉ dừng thời gian 1 LẦN DUY NHẤT khi bấm Pause
         }
-        else if (state == GameState.Pause)
+        else if (State == GameState.Pause)
         {
             Debug.Log("Game resumed!");
-            state = GameState.Running;
+            State = GameState.Running;
+            Time.timeScale = 1f; // Chỉ trả lại thời gian 1 LẦN DUY NHẤT khi bỏ Pause
         }
     }
 }
