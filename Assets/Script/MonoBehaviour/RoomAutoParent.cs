@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[ExecuteAlways]
+[ExecuteInEditMode]
 public class RoomAutoParent : MonoBehaviour
 {
     private BoxCollider2D roomBounds;
