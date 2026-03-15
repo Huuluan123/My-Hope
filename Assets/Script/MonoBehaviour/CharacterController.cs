@@ -866,8 +866,15 @@ public class PlayerController : MonoBehaviour
 
             if (hit)
             {
-                // Cho phép nhảy xuyên qua (One Way Platform) nếu cần - Logic đơn giản
-                // if (hit.collider.CompareTag("OneWay") && directionY == 1) continue;
+                // Xử lí One-way platform
+                if (hit.collider.CompareTag("OneWay")){
+                    // 1. Đang bay lên -> Bỏ qua va chạm (xuyên qua sàn)
+                    if (directionY > 0) continue;
+
+                    // 2. Nếu đang rớt xuống, nhưng tia ray bắt đầu từ BÊN TRONG vật thể
+                    // (hit.distance == 0 nghĩa là chân nhân vật đã lọt vào sàn lúc đang ở đỉnh cú nhảy -> Cho rớt xuyên nốt để không bị kẹt)
+                    if (hit.distance == 0) continue;
+                }
 
                 velocity.y = (hit.distance - skinWidth) * directionY / Time.fixedDeltaTime; // Tính lại vận tốc thực dựa trên quãng đường còn lại
                 rayLength = hit.distance; // Thu ngắn tia lại để không check xuyên qua vật cản gần nhất
@@ -929,6 +936,9 @@ public class PlayerController : MonoBehaviour
 
             if (hit)
             {
+                // Bỏ qua HOÀN TOÀN va chạm ngang với nền One-way để không bị vướng đầu/vai
+                if (hit.collider.CompareTag("OneWay")) continue;
+
                 // Nếu khoảng cách quá gần (bằng 0), nghĩa là đang kẹt trong tường -> bỏ qua
                 if (hit.distance == 0) continue;
 
@@ -974,6 +984,8 @@ public class PlayerController : MonoBehaviour
         float rayLength = Mathf.Abs(moveVelocity.x * Time.fixedDeltaTime) + skinWidth * 2;
         RaycastHit2D hitHead = Physics2D.Raycast(origin, Vector2.right * directionX, rayLength, collisionMask);
 
+        if (hitHead && hitHead.collider.CompareTag("OneWay")) hitHead = default;
+
         // Nếu đầu va phải tường -> Không phải là góc -> Không sửa được
         if (hitHead) return false;
 
@@ -981,6 +993,8 @@ public class PlayerController : MonoBehaviour
         // Hạ thấp xuống một đoạn nhỏ (bạn có thể tạo biến cornerDetectOffset)
         Vector2 bodyOrigin = origin + Vector2.down * 0.1f;
         RaycastHit2D hitBody = Physics2D.Raycast(bodyOrigin, Vector2.right * directionX, rayLength, collisionMask);
+
+        if (hitBody && hitBody.collider.CompareTag("OneWay")) hitBody = default;
 
         // --- LOGIC SỬA GÓC ---
         // Nếu ĐẦU THOÁNG (Miss) mà THÂN VƯỚNG (Hit) => Đang ở mép/góc
@@ -1017,6 +1031,10 @@ public class PlayerController : MonoBehaviour
         RaycastHit2D hitOuterLeft = Physics2D.Raycast(outerLeft, Vector2.up, rayLength, collisionMask);
         RaycastHit2D hitInnerLeft = Physics2D.Raycast(innerLeft, Vector2.up, rayLength, collisionMask);
 
+        // Xoá bỏ kết quả nếu bắn tia trúng One-way platform
+        if (hitOuterLeft && hitOuterLeft.collider.CompareTag("OneWay")) hitOuterLeft = default;
+        if (hitInnerLeft && hitInnerLeft.collider.CompareTag("OneWay")) hitInnerLeft = default;
+
         // LOGIC: Vai trúng (Outer Hit) nhưng Đầu lọt (Inner Miss) => Đẩy sang PHẢI
         if (hitOuterLeft && !hitInnerLeft)
         {
@@ -1032,6 +1050,10 @@ public class PlayerController : MonoBehaviour
 
         RaycastHit2D hitOuterRight = Physics2D.Raycast(outerRight, Vector2.up, rayLength, collisionMask);
         RaycastHit2D hitInnerRight = Physics2D.Raycast(innerRight, Vector2.up, rayLength, collisionMask);
+
+        // Xoá bỏ kết quả nếu bắn tia trúng One-way platform
+        if (hitOuterRight && hitOuterRight.collider.CompareTag("OneWay")) hitOuterRight = default;
+        if (hitInnerRight && hitInnerRight.collider.CompareTag("OneWay")) hitInnerRight = default;
 
         // LOGIC: Vai trúng (Outer Hit) nhưng Đầu lọt (Inner Miss) => Đẩy sang TRÁI
         if (hitOuterRight && !hitInnerRight)
@@ -1057,6 +1079,9 @@ public class PlayerController : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
+            // Không đẩy nhân vật ra nếu đang xuyên qua nền One-way
+            if (results[i].CompareTag("OneWay")) continue;
+
             ColliderDistance2D diff = col.Distance(results[i]);
             if (diff.isOverlapped)
             {
