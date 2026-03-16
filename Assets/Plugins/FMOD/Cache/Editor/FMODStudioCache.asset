@@ -42,7 +42,7 @@ MonoBehaviour:
   Path: FMOD/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639077492925509227
+  lastModified: 639092970148564274
   FileSizes: []
   Exists: 1
 --- !u!114 &-1184005835692883167
@@ -119,13 +119,14 @@ MonoBehaviour:
   - {fileID: -4923398468512384997}
   - {fileID: -973785210174382274}
   - {fileID: 6321964981666071516}
+  - {fileID: 5988485510939275845}
   EditorParameters: []
   MasterBanks:
   - {fileID: -4893171304041935319}
   StringsBanks:
   - {fileID: 8345543451865520628}
   cacheVersion: 131858
-  cacheTime: 639077492925516139
+  cacheTime: 639092970148574167
   SerializableEventsDict:
   - key: event:/Main Theme
     index: 0
@@ -135,6 +136,35 @@ MonoBehaviour:
     index: 2
   - key: event:/Shoot Hand
     index: 3
+  - key: event:/Land
+    index: 4
+--- !u!114 &5988485510939275845
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Land
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Land
+  Guid:
+    Data1: -617626071
+    Data2: 1161037423
+    Data3: -1038425210
+    Data4: 1220062578
+  Banks:
+  - {fileID: -4893171304041935319}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 0
 --- !u!114 &6321964981666071516
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -177,8 +207,8 @@ MonoBehaviour:
   Path: FMOD/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639077492925516139
+  lastModified: 639092970148574167
   FileSizes:
   - Name: 
-    Value: 906
+    Value: 942
   Exists: 1

@@ -67,7 +67,7 @@ public class PlayerAnimation : MonoBehaviour
     private void PlayLand()
     {
         // Có thể thêm code: Tạo hiệu ứng nén nhân vật (Squash), bụi tiếp đất
-        // SoundManager.Instance.PlaySound("Land");
+        SoundManager.Instance.PlaySound("Land");
     }
 
     private void PlayHand()

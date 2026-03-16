@@ -106,6 +106,10 @@ public class PlayerController : MonoBehaviour
         get { return velocity; }
     }
 
+    [Header("Moving Platform Handle")]
+    private Transform currentMovingPlatform;
+    private Vector3 lastPlatformPosition;
+
     [Header("Respawn Settings")]
     [SerializeField] private Vector2 currentRespawnPoint;
     //[SerializeField] private float respawnDelay = 1f;
@@ -185,11 +189,13 @@ public class PlayerController : MonoBehaviour
                 velocity.x = 0;
         }
 
-        wasGrounded = isGrounded; // Lưu trạng thái chạm đất cũ để so sánh trong FixedUpdate
+        
     }
 
     void FixedUpdate()
     {
+        wasGrounded = isGrounded;
+
         // Process jump buffer & coyote here (FixedUpdate) so ground checks are up-to-date
         ProcessJumpBuffer();
 
@@ -281,6 +287,17 @@ public class PlayerController : MonoBehaviour
 
         //Calculate new position
         Vector3 moveAmount = velocity * Time.fixedDeltaTime;
+
+        //Handle moving platform
+        if (currentMovingPlatform != null)
+        {
+            Vector3 platformDelta = currentMovingPlatform.position - lastPlatformPosition;
+            moveAmount += platformDelta;
+
+            // Cập nhật trí nhớ cho frame sau
+            lastPlatformPosition = currentMovingPlatform.position;
+        }
+
         Vector3 targetPosition = (Vector3)rb.position + moveAmount;
         rb.MovePosition(targetPosition);
 
@@ -319,13 +336,6 @@ public class PlayerController : MonoBehaviour
 
         // 1. Tính vận tốc mục tiêu (Target Velocity)
         float targetSpeed = moveInput.x * moveSpeed;
-
-        // Nếu frame trước đang rơi VÀ frame này đã chạm đất VÀ người chơi thả tay cầm
-        if (!wasGrounded && isGrounded && Mathf.Abs(moveInput.x) < 0.01f)
-        {
-            velocity.x = 0f; // Ép vận tốc trục X về 0 ngay lập tức
-            return; // Thoát hàm, bỏ qua bước tính toán trượt (deceleration) bên dưới
-        }
 
         // 2. Chọn gia tốc phù hợp (Gia tốc tăng hay Gia tốc giảm?)
         float currentAccel;
@@ -849,10 +859,18 @@ public class PlayerController : MonoBehaviour
         float directionY = Mathf.Sign(velocity.y);
         float rayLength = Mathf.Abs(velocity.y * Time.fixedDeltaTime) + skinWidth;
 
+        // Kéo dài tia raycast xuống thêm một chút khi đang đứng trên Moving Platform đang đi xuống
+        if (currentMovingPlatform != null && directionY == -1)
+        {
+            rayLength += 0.2f;
+        }
+
         if (directionY == -1 || velocity.y > 0)
         {
             isGrounded = false;
         }
+
+        Transform hitPlatform = null; // Biến tạm để lưu bệ đỡ nếu dẫm trúng trong frame này
 
         for (int i = 0; i < verticalRayCount; i++)
         {
@@ -881,15 +899,46 @@ public class PlayerController : MonoBehaviour
 
                 if (directionY == -1) // Đang rơi xuống
                 {
-                    if (!isGrounded) OnLanded?.Invoke();
+                    if (!wasGrounded)
+                    {
+                        OnLanded?.Invoke();
+
+                        // Nếu lúc chạm đất mà người chơi không bấm phím di chuyển -> Khóa vận tốc ngang về 0 ngay lập tức
+                        if (Mathf.Abs(moveInput.x) < 0.01f)
+                        {
+                            velocity.x = 0f;
+                        }
+                    }
+
                     isGrounded = true;
                     lastGroundedTime = Time.time;
+
+                    // KIỂM TRA MOVING PLATFORM: Nếu dẫm trúng thì lưu lại
+                    if (hit.collider.CompareTag("MovingPlatform"))
+                    {
+                        hitPlatform = hit.transform;
+                    }
                 }
                 else // Đang nhảy lên đụng trần
                 {
                     velocity.y = 0; // Tùy chọn: Đụng trần thì dừng hẳn lực nảy
                 }
             }
+        }
+
+        if (hitPlatform != null)
+        {
+            // Nếu đây là bệ đỡ mới (vừa nhảy lên) -> Cập nhật tọa độ tham chiếu
+            if (currentMovingPlatform != hitPlatform)
+            {
+                currentMovingPlatform = hitPlatform;
+                lastPlatformPosition = currentMovingPlatform.position;
+            }
+        }
+        else
+        {
+            // Nếu không dẫm trúng (nhảy ra khỏi bệ, hoặc rớt xuống) -> Hủy trí nhớ
+            currentMovingPlatform = null;
         }
     }
 

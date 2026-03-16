@@ -5,6 +5,9 @@ public class RoomAutoParent : MonoBehaviour
 {
     private BoxCollider2D roomBounds;
 
+    private float nextCheckTime = 0f;
+    private float checkInterval = 0.5f; // Cứ 0.5 giây mới quét 1 lần thay vì quét mỗi khung hình
+
     private void OnEnable()
     {
         roomBounds = GetComponentInChildren<BoxCollider2D>();
@@ -18,28 +21,37 @@ public class RoomAutoParent : MonoBehaviour
 
         if (roomBounds == null) return;
 
-        // 2. TÌM KIẾM: Tìm tất cả vật thể có tag là "LevelElement" (Quái, Bẫy, Tiền...)
-        // LƯU Ý: Hãy nhớ tạo Tag "LevelElement" và gắn cho các Prefab bạn muốn phòng tự hút vào.
-        GameObject[] elements = GameObject.FindGameObjectsWithTag("LevelElement");
+        // TỐI ƯU HÓA: Chỉ quét 0.5 giây một lần để Editor không bị khựng (lag) khi kéo thả
+        if (Time.realtimeSinceStartup < nextCheckTime) return;
+        nextCheckTime = Time.realtimeSinceStartup + checkInterval;
 
-        foreach (GameObject obj in elements)
+        // 2. TÌM KIẾM BẰNG INTERFACE: Quét toàn bộ MonoBehaviour trong cảnh
+        MonoBehaviour[] allScripts = Object.FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        foreach (MonoBehaviour script in allScripts)
         {
-            // Kiểm tra xem tâm của vật thể có nằm TRONG vùng BoxCollider của phòng không
-            if (roomBounds.bounds.Contains(obj.transform.position))
+            // Nếu script này có ký hợp đồng IRoomElement
+            if (script is IRoomElement)
             {
-                // Nếu nằm trong phòng, nhưng chưa làm con -> Nhận làm con ngay!
-                if (obj.transform.parent != transform)
+                Transform obj = script.transform;
+
+                // Kiểm tra xem tâm của vật thể có nằm TRONG vùng BoxCollider của phòng không
+                if (roomBounds.bounds.Contains(obj.position))
                 {
-                    obj.transform.SetParent(transform);
+                    // Nếu nằm trong phòng, nhưng chưa làm con -> Nhận làm con ngay!
+                    if (obj.parent != transform)
+                    {
+                        obj.SetParent(transform);
+                    }
                 }
-            }
-            else
-            {
-                // Nếu vật thể LÀ CON của phòng, nhưng bị Level Designer kéo ra NGOÀI vùng
-                if (obj.transform.parent == transform)
+                else
                 {
-                    // Đá nó ra khỏi phòng (trả về Root Hierarchy)
-                    obj.transform.SetParent(null);
+                    // Nếu vật thể LÀ CON của phòng, nhưng bị Level Designer kéo ra NGOÀI vùng
+                    if (obj.parent == transform)
+                    {
+                        // Đá nó ra khỏi phòng (trả về Root Hierarchy)
+                        obj.SetParent(null);
+                    }
                 }
             }
         }

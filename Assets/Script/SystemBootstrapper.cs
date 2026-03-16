@@ -2,6 +2,7 @@ using UnityEngine;
 
 public static class SystemBootstrapper
 {
+    // Script load GAME_MANAGERS vào mọi scene
     // Cờ đặc biệt này bảo Unity: "Hãy chạy hàm này NGAY TRƯỚC KHI bất kỳ Scene nào được load!"
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     public static void ExecuteRoutine()
@@ -15,13 +16,12 @@ public static class SystemBootstrapper
             if (managerPrefab != null)
             {
                 Object.Instantiate(managerPrefab);
-                Debug.Log("Hệ thống Managers đã được TỰ ĐỘNG triệu hồi thành công!");
+                Debug.Log("Succesfully instantiate [GAME_MANAGERS]");
             }
             else
             {
-                Debug.LogError("Không tìm thấy Prefab [GAME_MANAGERS] trong thư mục Resources!");
+                Debug.LogError("Cannot find [GAME_MANAGERS] in Resources!!!");
             }
         }
-        else Debug.Log("Đã có GameManager tồn tại, không cần tạo thêm.");
     }
 }
