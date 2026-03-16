@@ -68,6 +68,12 @@ public class PlayerAnimation : MonoBehaviour
     {
         // Có thể thêm code: Tạo hiệu ứng nén nhân vật (Squash), bụi tiếp đất
         SoundManager.Instance.PlaySound("Land");
+        if (HapticManager.Instance != null)
+        {
+            // Rung chạm đất nhẹ nhàng: 
+            // Motor trầm (Low): 0.1 | Motor gắt (High): 0.3 | Thời gian: 0.1 giây
+            HapticManager.Instance.Rumble(0.1f, 0.3f, 0.1f);
+        }
     }
 
     private void PlayHand()
