@@ -79,6 +79,7 @@ public class PlayerAnimation : MonoBehaviour
     private void PlayHand()
     {
         SoundManager.Instance.PlaySound("Shoot Hand");
+        HapticManager.Instance.Rumble(0f, 0f, 0.8f, 0f, 0.05f);
     }
 
     private void SetGrounded(bool isGrounded)
