@@ -32,6 +32,12 @@ public class GameManager : MonoBehaviour
         pauseAction = InputSystem.actions.FindAction("Pause");
     }
 
+    private void Start()
+    {
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+    }
+
     private void OnEnable()
     {
         if (pauseAction != null)
@@ -62,12 +68,20 @@ public class GameManager : MonoBehaviour
             Debug.Log("Game Paused!");
             State = GameState.Pause;
             Time.timeScale = 0f; // Chỉ dừng thời gian 1 LẦN DUY NHẤT khi bấm Pause
+
+            // HIỆN LẠI CHUỘT ĐỂ BẤM MENU
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None; // Mở khóa cho chuột di chuyển tự do
         }
         else if (State == GameState.Pause)
         {
             Debug.Log("Game resumed!");
             State = GameState.Running;
             Time.timeScale = 1f; // Chỉ trả lại thời gian 1 LẦN DUY NHẤT khi bỏ Pause
+
+            // GIẤU CHUỘT ĐI KHI CHƠI TIẾP
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
         }
     }
 }

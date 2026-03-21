@@ -14,10 +14,10 @@ public enum PlayerState
     Sliding,
     Climbing,
 
+    /* Nhóm khoá input */
     GrappleFreeze,
     Grappling,
 
-    /* Nhóm khoá input */
     Talking,
     Dead,
     ScriptedMove
@@ -128,6 +128,12 @@ public class PlayerController : MonoBehaviour
 
     private CharacterInput input;
 
+    [Header("Failsafe Mechanics")]
+    [SerializeField] private float stuckTimeout = 3f;
+    [SerializeField] private float mapBottom = -50f;
+    private float currentStuckTimer = 0f;
+    private Vector3 lastSafePosition;
+
     /* ---------- Events -------------- */
     public event Action OnJumpPerformed;
     public event Action OnLanded;
@@ -150,6 +156,8 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         col = GetComponent<BoxCollider2D>();
 
+        // Not using Unity's physics for movement, we'll handle it manually
+        rb.bodyType = RigidbodyType2D.Kinematic; 
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
     }
 
@@ -161,6 +169,33 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         if (GameManager.Instance.State == GameState.Pause) return;
+
+        // Chống rơi ra ngoài bản đồ (Failsafe)
+        if (transform.position.y < mapBottom)
+        {
+            //transform.position = lastSafePosition;
+            //rb.position = transform.position;
+            Debug.LogWarning("Player has fallen out of the map! Activating failsafe reset.");
+            EmergencyReset();
+            return;
+        }
+
+        bool isVulnerableState = (currentState == PlayerState.Grappling ||
+                                  currentState == PlayerState.GrappleFreeze);
+
+        if (isVulnerableState)
+        {
+            currentStuckTimer += Time.deltaTime;
+            if (currentStuckTimer >= stuckTimeout)
+            {
+                Debug.LogWarning($"[Watchdog] Stucking at {currentState} for more than {stuckTimeout} seconds. Activating emergency reset!");
+                EmergencyReset();
+            }
+        }
+        else
+        {
+            currentStuckTimer = 0f; // Các trạng thái khác (Idle, Talking, Cutscene...) đều an toàn -> Reset
+        }
 
         if (climbHopInputTimer > 0)
         {
@@ -188,8 +223,6 @@ public class PlayerController : MonoBehaviour
             else
                 velocity.x = 0;
         }
-
-        
     }
 
     void FixedUpdate()
@@ -809,6 +842,12 @@ public class PlayerController : MonoBehaviour
         CheckWallGrab(); // Kiểm tra có đang leo tưởng hay không
         if (isWallClimbing) return; // Nếu đang leo thì không chạy logic bên dưới
 
+        // Chỉ lưu điểm an toàn khi: Đang chạm đất + Đứng yên + Không ở trạng thái nguy hiểm
+        if (isGrounded && velocity.magnitude < 0.1f && CanMove)
+        {
+            lastSafePosition = transform.position;
+        }
+
         if (isGrounded && velocity.y <= 0.1f)
         {
             // Nếu chạm đất: quyết định xem là Running hay Idle
@@ -850,6 +889,35 @@ public class PlayerController : MonoBehaviour
         bool isRunning = (currentState == PlayerState.Running);
         OnRunChanged?.Invoke(isRunning);
         OnGroundedChanged?.Invoke(isGrounded);
+    }
+
+    // Gọi hàm này khi bị rớt map, kẹt góc, hoặc văng quá xa
+    private void EmergencyReset()
+    {
+        // 1. Dừng mọi luồng Coroutine đang chạy ngầm (AutoWalk, v.v.)
+        StopAllCoroutines();
+
+        // 2. Thu hồi Grappling Hook (nếu tay xích đang kẹt trong tường)
+        if (robotHand != null) robotHand.FinishGrapple();
+        grappleTarget = Vector2.zero;
+
+        // 3. Dập tắt mọi vận tốc và lực quán tính điên rồ
+        velocity = Vector3.zero;
+        if (rb != null) rb.linearVelocity = Vector2.zero;
+
+        // 4. DỊCH CHUYỂN VỀ ĐIỂM AN TOÀN TRƯỚC ĐÓ (Teleport)
+        if (lastSafePosition != Vector3.zero)
+        {
+            transform.position = lastSafePosition;
+            if (rb != null) rb.position = lastSafePosition;
+        }
+
+        // 5. Trả về trạng thái an toàn
+        SetState(PlayerState.Idle);
+        isGrounded = false; // Reset để hàm VerticalCollisionCheck tự động tính lại vào frame sau
+
+        // 6. Reset lại bộ đếm Watchdog
+        currentStuckTimer = 0f;
     }
     #endregion
 
@@ -1214,6 +1282,7 @@ public class PlayerController : MonoBehaviour
     public void SetRespawnPoint(Vector2 newPoint)
     {
         currentRespawnPoint = newPoint;
+        lastSafePosition = currentRespawnPoint;
     }
 
     public void Die()
