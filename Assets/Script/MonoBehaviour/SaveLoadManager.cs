@@ -5,6 +5,7 @@ using UnityEngine;
 public class SaveLoadManager : MonoBehaviour
 {
     /*
+    public static SaveLoadManager Instance { get; private set; }
     public PlayerProgressSO playerProgress;
     public WorldStateSO worldState;
 
@@ -12,6 +13,17 @@ public class SaveLoadManager : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }    
+
         // Đường dẫn chuẩn, an toàn trên Windows, Mac, Android, iOS
         savePath = Application.persistentDataPath + "/savegame.json";
     }

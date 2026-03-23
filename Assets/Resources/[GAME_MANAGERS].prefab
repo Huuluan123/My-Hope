@@ -10,6 +10,11 @@ GameObject:
   m_Component:
   - component: {fileID: 702725956063006973}
   - component: {fileID: 867011657282305296}
+  - component: {fileID: 4734011297502678574}
+  - component: {fileID: 6830758811573089095}
+  - component: {fileID: 6143938523374842907}
+  - component: {fileID: 155440873158588088}
+  - component: {fileID: -1587121967506083700}
   m_Layer: 0
   m_Name: '[GAME_MANAGERS]'
   m_TagString: Untagged
@@ -26,7 +31,7 @@ Transform:
   m_GameObject: {fileID: 1308000809469694418}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 6.50436, y: -3.3028, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -44,3 +49,98 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c218f8127d9f3d40b2ca9778aa229f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
+--- !u!114 &4734011297502678574
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1308000809469694418}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7527d5f884eab3f4a8afea58bad33a4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CutsceneManager
+  director: {fileID: 0}
+--- !u!114 &6830758811573089095
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1308000809469694418}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 097991c8c869b6844be47a9938adacda, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HapticManager
+--- !u!114 &6143938523374842907
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1308000809469694418}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69949bb2a20fedf4bb132077a533e397, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MusicManager
+  musicTracks:
+  - trackName: Main Theme
+    fmodEvent:
+      Guid:
+        Data1: -866324017
+        Data2: 1149849954
+        Data3: -1233752661
+        Data4: 287241532
+      Path: event:/Main Theme
+--- !u!114 &155440873158588088
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1308000809469694418}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5e5285038e00aa40a2fe3f18de1ce3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SoundManager
+  sfxTracks:
+  - soundName: Jump
+    fmodEvent:
+      Guid:
+        Data1: 1830629132
+        Data2: 1341351872
+        Data3: 579543440
+        Data4: -840926661
+      Path: event:/Jump
+  - soundName: Land
+    fmodEvent:
+      Guid:
+        Data1: -617626071
+        Data2: 1161037423
+        Data3: -1038425210
+        Data4: 1220062578
+      Path: event:/Land
+  - soundName: Shoot Hand
+    fmodEvent:
+      Guid:
+        Data1: -391442565
+        Data2: 1292238780
+        Data3: 451361415
+        Data4: -97936753
+      Path: event:/Shoot Hand
+--- !u!114 &-1587121967506083700
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1308000809469694418}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5192501826a70746ae88692948e6229, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SaveLoadManager

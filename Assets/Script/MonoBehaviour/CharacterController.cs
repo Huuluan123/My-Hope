@@ -148,6 +148,11 @@ public class PlayerController : MonoBehaviour
     void Awake()
     {
         if (Instance == null) Instance = this;
+        else
+        {
+            Destroy(Instance);
+            return;
+        }
 
         // Lấy hoặc thêm component CharacterInput
         input = GetComponent<CharacterInput>();
@@ -409,10 +414,7 @@ public class PlayerController : MonoBehaviour
     private IEnumerator AutoWalkRoutine(Transform targetPos, Transform lookAtTarget, Action onComplete)
     {
         //KHÓA INPUT (Ngăn người chơi bấm nút lúc đang đi tới chỗ NPC)
-        currentState = PlayerState.ScriptedMove; 
-
-        // Dừng các lực vật lý quán tính (nếu có)
-        if (rb != null) rb.linearVelocity = Vector2.zero;
+        currentState = PlayerState.ScriptedMove;
 
         // Chạy vòng lặp cho đến khi khoảng cách X < 0.05
         while (Mathf.Abs(transform.position.x - targetPos.position.x) > 0.05f)
@@ -901,9 +903,7 @@ public class PlayerController : MonoBehaviour
         if (robotHand != null) robotHand.FinishGrapple();
         grappleTarget = Vector2.zero;
 
-        // 3. Dập tắt mọi vận tốc và lực quán tính điên rồ
         velocity = Vector3.zero;
-        if (rb != null) rb.linearVelocity = Vector2.zero;
 
         // 4. DỊCH CHUYỂN VỀ ĐIỂM AN TOÀN TRƯỚC ĐÓ (Teleport)
         if (lastSafePosition != Vector3.zero)
@@ -918,6 +918,24 @@ public class PlayerController : MonoBehaviour
 
         // 6. Reset lại bộ đếm Watchdog
         currentStuckTimer = 0f;
+    }
+
+    // Xử lý Unity Timeline
+    public void OnTimelineStart()
+    {
+        // Đưa vào nhóm State bị cấm Input và cấm Vật lý
+        SetState(PlayerState.ScriptedMove);
+        velocity = Vector3.zero;
+    }
+
+    public void OnTimelineEnd()
+    {
+        // Đánh thức hệ thống vật lý
+        SetState(PlayerState.Idle);
+
+        // Reset các trạng thái chạm đất để raycast tự cập nhật vào frame sau
+        wasGrounded = false;
+        isGrounded = false;
     }
     #endregion
 
@@ -1295,7 +1313,6 @@ public class PlayerController : MonoBehaviour
 
         // 2. Ép dừng mọi chuyển động ngay lập tức
         velocity = Vector3.zero;
-        if (rb != null) rb.linearVelocity = Vector2.zero;
 
         // 3. Tắt hình ảnh nhân vật (Tạo cảm giác nhân vật vỡ vụn biến mất)
         // Lưu ý: Đừng Destroy(gameObject), vì ta còn phải hồi sinh nó!
