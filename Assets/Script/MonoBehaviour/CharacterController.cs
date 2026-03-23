@@ -987,7 +987,11 @@ public class PlayerController : MonoBehaviour
                 {
                     if (!wasGrounded)
                     {
-                        OnLanded?.Invoke();
+                        // Chỉ phát âm thanh chạm đất nếu trước đó ĐANG RƠI hoặc ĐANG TRƯỢT TƯỜNG
+                        if (currentState == PlayerState.OnAir || currentState == PlayerState.Sliding)
+                        {
+                            OnLanded?.Invoke();
+                        }
 
                         // Nếu lúc chạm đất mà người chơi không bấm phím di chuyển -> Khóa vận tốc ngang về 0 ngay lập tức
                         if (Mathf.Abs(moveInput.x) < 0.01f)
