@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
+using System.Reflection;
 
 public class HapticManager : MonoBehaviour
 {

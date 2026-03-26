@@ -57,6 +57,9 @@ MonoBehaviour:
   maxFallSpeed: -25
   lastGroundedTime: -999
   lastJumpInputTime: -999
+  acceleration: 0
+  deceleration: 50
+  airDeceleration: 10
   gravity: -40
   verticalRayCount: 8
   horizontalRayCount: 8
@@ -66,21 +69,33 @@ MonoBehaviour:
   wallClimbSpeed: 4
   wallClimbDownSpeed: 8
   wallJumpForce: {x: 15, y: 25}
+  wallClimbJumpForceY: 20
   maxStamina: 100
   climbStaminaDrain: 20
   holdStaminaDrain: 5
   currentStamina: 0
+  robotHand: {fileID: 0}
+  pullSpeed: 30
+  grappleInputWindow: 0.05
+  climbHopForce: {x: 10, y: 15}
+  climbHopNoInputTime: 0.2
+  cornerCorrectionSpeed: 0.1
+  ceilingTolerance: 0.15
+  ceilingNudgeAmount: 0.2
   currentState: 0
   moveInput: {x: 0, y: 0}
   isGrounded: 0
   hitLeftWall: 0
   hitRightWall: 0
   velocity: {x: 0, y: 0, z: 0}
-  acceleration: 0
   jumpTime: 0
+  currentRespawnPoint: {x: 0, y: 0}
+  autoWalkSpeed: 4
   collisionMask:
     serializedVersion: 2
     m_Bits: 64
+  stuckTimeout: 3
+  mapBottom: -50
 --- !u!114 &4281691145552618231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -111,11 +126,11 @@ MonoBehaviour:
     m_Interactions: 
     m_SingletonActionBindings: []
     m_Flags: 0
-  dashAction:
-    m_Name: Dash
+  grappleAction:
+    m_Name: Grapple
     m_Type: 0
     m_ExpectedControlType: 
-    m_Id: d82518dd-e4c0-4b7f-9f2b-ab37eeb2edea
+    m_Id: 4047cbcd-4579-4324-bd10-6d3654702f2c
     m_Processors: 
     m_Interactions: 
     m_SingletonActionBindings: []
