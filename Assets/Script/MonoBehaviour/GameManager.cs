@@ -12,6 +12,8 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
     public GameState State { get; private set; }
 
+    public float gameSpeed = 1f;
+
     private InputAction pauseAction;
 
     void Awake()
@@ -37,6 +39,13 @@ public class GameManager : MonoBehaviour
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
     }
+
+#if UNITY_EDITOR
+    private void Update()
+    {
+        if (State != GameState.Pause) Time.timeScale = gameSpeed;
+    }
+#endif
 
     private void OnEnable()
     {

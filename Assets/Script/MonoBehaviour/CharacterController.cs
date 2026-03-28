@@ -88,6 +88,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Vector2 climbHopForce = new Vector2(10f, 15f); // Lực đẩy lên sàn (X nhỏ, Y lớn)
     [SerializeField] private float climbHopNoInputTime = 0.2f; // Thời gian khóa Input ngang để nhân vật lọt vào sàn
     private float climbHopInputTimer; // Timer đếm ngược
+    private bool isWaitingForHopX; // Cờ đánh dấu đang chờ bung lực ngang
+    private int hopDirX; // Hướng đẩy vào sàn
 
     [Header("Corner Correction")]
     [SerializeField] private float cornerCorrectionSpeed = 0.1f; // Khoảng cách đẩy lên mỗi frame (Pixel perfect)
@@ -313,10 +315,14 @@ public class PlayerController : MonoBehaviour
             if (velocity.y > maxFallSpeed) velocity.y += gravity * Time.fixedDeltaTime;
         }
 
-        if (!CorrectCorner(velocity))
-        {
-            HorizonalCollisionCheck();
-        }
+        HorizonalCollisionCheck();
+
+        //if (!CorrectCorner(velocity))
+        //{
+        //    HorizonalCollisionCheck();
+        //}
+
+        //else Debug.Log("Corner corrected!");
 
         if (isWallSliding && !isWallClimbing)
         {
@@ -374,6 +380,38 @@ public class PlayerController : MonoBehaviour
         {
             velocity.x = 0;
             return; // Thoát hàm ngay, không chạy logic bên dưới
+        }
+
+        if (isWaitingForHopX)
+        {
+            // Người chơi cố tình bấm phím di chuyển ngược hướng với vách tường
+            bool isSteeringAway = (moveInput.x != 0 && Mathf.Sign(moveInput.x) != hopDirX);
+
+            // Hủy nếu cố tình bẻ lái ra ngoài, HOẶC đã hết đà bay lên (velocity.y <= 0)
+            if (isSteeringAway || velocity.y <= 0)
+            {
+                isWaitingForHopX = false;
+                climbHopInputTimer = 0f; // Mở khóa Input ngay lập tức để người chơi lấy lại quyền kiểm soát!
+            }
+
+            else
+            {
+                // Bắn một tia raycast ngắn ở dưới chân về hướng tường để xem toàn thân đã lọt qua tường chưa
+                Vector2 originBottom = (hopDirX == 1) ? rayCastOrigins.bottomRight : rayCastOrigins.bottomLeft;
+                RaycastHit2D hitWall = Physics2D.Raycast(originBottom, Vector2.right * hopDirX, skinWidth * 2, collisionMask);
+
+                if (!hitWall)
+                {
+                    // Toàn thân đã lọt lên trên vách tường -> BUNG LỰC NGANG ĐẨY VÀO TRONG!
+                    velocity.x = hopDirX * climbHopForce.x;
+                    isWaitingForHopX = false;
+                }
+                else if (velocity.y <= 0)
+                {
+                    // Nếu đang rơi xuống (Hết đà) mà vẫn chưa lọt -> Hủy lệnh đẩy ngang
+                    isWaitingForHopX = false;
+                }
+            }
         }
 
         if (climbHopInputTimer > 0 || wallJumpInputTimer > 0)
@@ -653,7 +691,7 @@ public class PlayerController : MonoBehaviour
     private void CheckWallGrab() // Gọi trong FixedUpdate() hoặc UpdatePhysicsState()
     {
         // Nếu đang trong thời gian Cooldown sau khi nhảy dọc tường -> Cấm bám
-        if (climbJumpCooldownTimer > 0)
+        if (climbJumpCooldownTimer > 0 || climbHopInputTimer > 0)
         {
             isWallClimbing = false;
             return;
@@ -700,31 +738,25 @@ public class PlayerController : MonoBehaviour
 
     private void PerformClimbHop()
     {
-        // 1. Xác định hướng đẩy (Vào trong tường)
-        // Nếu bám tường phải (wallDirX = 1) -> Cần đẩy sang trái? KHÔNG!
-        // Climb Hop là leo LÊN sàn, nên ta cần đẩy sâu vào hướng của tường.
-        // Ví dụ: Tường bên Phải -> Đẩy sang Phải + Lên Trên.
-        int hopDirection = wallDirX;
+        hopDirX = wallDirX;
 
-        // 2. Gán vận tốc vật lý (Tạo cú nhảy tự động)
-        velocity.x = hopDirection * climbHopForce.x;
+        // CHỈ cấp lực bật lên (Trục Y), KHÔNG cấp trục X ngay lập tức
         velocity.y = climbHopForce.y;
+        velocity.x = 0;
 
-        // 3. Chuyển trạng thái về OnAir (Để hệ thống vật lý tự lo phần còn lại)
+        // Khóa Input để người chơi không bẻ lái lung tung
+        climbHopInputTimer = climbHopNoInputTime;
+
+        // Bật cờ chờ đẩy ngang
+        isWaitingForHopX = true;
+
         currentState = PlayerState.OnAir;
         isWallClimbing = false;
         isWallSliding = false;
         isGrounded = false;
-
-        // 4. Khóa Input ngang trong 0.2s
-        // Để người chơi không lỡ tay bấm ngược lại làm nhân vật rớt xuống
-        climbHopInputTimer = climbHopNoInputTime;
-
-        // 5. Reset các trạng thái khác
         lastGroundedTime = -999f;
 
         OnJumpPerformed?.Invoke();
-        //Debug.Log("Climb Hop Performed!");
     }
     #endregion
 
@@ -1187,6 +1219,7 @@ public class PlayerController : MonoBehaviour
         return false;
     }
 
+    // TODO: Nâng cấp thành OverlapBox nếu phát hiện lỗi xuyên tường sau này
     bool CorrectCeiling(Vector2 moveVelocity)
     {
         // Chỉ xử lý khi đang bay lên
