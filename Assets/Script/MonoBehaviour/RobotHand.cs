@@ -93,28 +93,36 @@ public class RobotHand : MonoBehaviour
 
         if (isFlying)
         {
-            // Bàn tay bay đi
-            transform.Translate(targetDirection * flySpeed * Time.deltaTime, Space.World);
+            float step = flySpeed * Time.deltaTime;
 
-            // Xoay bàn tay theo hướng bay (tuỳ chọn)
-            float angle = Mathf.Atan2(targetDirection.y, targetDirection.x) * Mathf.Rad2Deg;
-            transform.rotation = Quaternion.Euler(0, 0, angle);
+            // DÙNG CIRCLE-CAST: Quét trước va chạm trên đoạn đường chuẩn bị bay tới
+            RaycastHit2D hit = Physics2D.CircleCast(transform.position, 0.2f, targetDirection, step, wallLayer);
 
-            // Kiểm tra va chạm tường bằng OverlapCircle
-            Collider2D hit = Physics2D.OverlapCircle(transform.position, 0.2f, wallLayer);
             if (hit)
             {
-                // Trúng tường!
+                // Trúng tường! Dịch chuyển tay đến đúng điểm chạm (Sát mép tường, KHÔNG bao giờ lọt vào trong)
+                transform.position = hit.centroid;
+
                 isFlying = false;
                 isAttached = true;
                 playerController.StartPullingToHand(transform.position, hit.transform);
             }
-            // Kiểm tra quá tầm bay
-            else if (Vector2.Distance(startPos, transform.position) > maxDistance)
+            else
             {
-                isFlying = false;
-                isReturning = true; // Thu hồi tay lại
-                playerController.CancelGrapple();
+                // Không trúng, an tâm bay tiếp
+                transform.Translate(targetDirection * step, Space.World);
+
+                // Xoay bàn tay theo hướng bay
+                float angle = Mathf.Atan2(targetDirection.y, targetDirection.x) * Mathf.Rad2Deg;
+                transform.rotation = Quaternion.Euler(0, 0, angle);
+
+                // Kiểm tra quá tầm bay
+                if (Vector2.Distance(startPos, transform.position) > maxDistance)
+                {
+                    isFlying = false;
+                    isReturning = true; // Thu hồi tay lại
+                    playerController.CancelGrapple();
+                }
             }
         }
     }

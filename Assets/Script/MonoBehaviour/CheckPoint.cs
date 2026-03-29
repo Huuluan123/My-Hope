@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Checkpoint : MonoBehaviour
+public class Checkpoint : MonoBehaviour, IRoomElement
 {
     private void OnTriggerEnter2D(Collider2D collision)
     {
@@ -15,4 +15,6 @@ public class Checkpoint : MonoBehaviour
             }
         }
     }
+
+    public void ResetState() { }
 }
