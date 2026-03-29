@@ -67,6 +67,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float wallSlideSpeed = 2f; // Tốc độ trượt xuống chậm
     [SerializeField] private float wallClimbSpeed = 4f; // Tốc độ leo lên/xuống
     [SerializeField] private float wallClimbDownSpeed = 8f; // Tốc độ trượt tường nhanh khi bám
+    [SerializeField] private float ledgeSlipSpeed = 8f; // Tốc độ tụt xuống khi đỉnh đầu không chạm tường
     [SerializeField] private Vector2 wallJumpForce = new Vector2(15f, 25f); // Lực nhảy tường (X, Y)
     [SerializeField] private float wallClimbJumpForceY = 20f; // Nhảy leo thẳng lên (Chỉ cần lực Y)
     private float climbJumpCooldownTimer;
@@ -98,6 +99,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Movement and control")]
     // Biến để lưu trữ giá trị di chuyển
+    [SerializeField] private float diagonalThreshold = 0.35f;
     [SerializeField] private PlayerState currentState;
     [SerializeField] private Vector2 moveInput;
     [SerializeField] private bool isGrounded; // Biến kiểm tra nhân vật có đang chạm đất không
@@ -234,7 +236,10 @@ public class PlayerController : MonoBehaviour
         else
         {
             // Nếu được phép điều khiển:
-            moveInput = (input != null) ? input.MoveInput : Vector2.zero;
+            // Chuẩn hoá Input để chỉ còn -1, 0, hoặc 1 ở mỗi trục (D-pad hoặc Analog nhẹ cũng chỉ tính là 1)
+            Vector2 rawInput = (input != null) ? input.MoveInput : Vector2.zero;
+
+            moveInput = Apply8WaySnap(rawInput);
 
             if (CanMove)
                 CalculateHorizontalMovement();
@@ -258,6 +263,27 @@ public class PlayerController : MonoBehaviour
     #endregion
 
     #region Movement Handling
+
+    private Vector2 Apply8WaySnap(Vector2 rawInput)
+    {
+        float snapX = 0;
+        float snapY = 0;
+
+        // Trục X: Chỉ ghi nhận nếu người chơi đẩy MẠNH hơn ngưỡng chéo
+        if (Mathf.Abs(rawInput.x) > diagonalThreshold)
+        {
+            snapX = Mathf.Sign(rawInput.x);
+        }
+
+        // Trục Y: Bỏ qua các rung động nhỏ của ngón tay (ví dụ y = 0.15 sẽ bị bỏ qua)
+        if (Mathf.Abs(rawInput.y) > diagonalThreshold)
+        {
+            snapY = Mathf.Sign(rawInput.y);
+        }
+
+        // Rơi vào 1 trong 8 hướng chuẩn mực: (1,0), (1,1), (0,1)...
+        return new Vector2(snapX, snapY);
+    }
 
     private void MoveCharacter()
     {
@@ -582,9 +608,10 @@ public class PlayerController : MonoBehaviour
                 // Phải dùng lastWallDirX vì lúc này hitWall có thể đã bằng false
                 bool isHoldingTowardsWall = (moveInput.x != 0 && Mathf.Sign(moveInput.x) == lastWallDirX);
                 bool isHoldingUp = moveInput.y > 0.1f;
+                bool isNotHolding = moveInput.magnitude < 0.1f;
 
-                // NẾU: Đang giữ nút Bám VÀ (cố tình ép vào tường HOẶC hướng lên) VÀ còn thể lực
-                if (input.IsGrabbing && (isHoldingTowardsWall || isHoldingUp) && currentStamina > 0)
+                // NẾU: Đang giữ nút Bám VÀ (cố tình ép vào tường HOẶC hướng lên HOẶC không giữ hướng di chuyển) VÀ còn thể lực
+                if (input.IsGrabbing && (isHoldingTowardsWall || isHoldingUp || isNotHolding) && currentStamina > 0)
                 {
                     // Trèo nhảy lên (Wall Climb Jump)
                     Jump(true, lastWallDirX, true);
@@ -657,33 +684,50 @@ public class PlayerController : MonoBehaviour
     #region Wall Climbing Handling
     private void HandleWallClimbingPhysics() // Gọi trong MoveCharacter()
     {
-        // 1. Áp dụng vận tốc leo dựa trên input Y
-        if (moveInput.y > 0)
+        // --- BƯỚC 1: KIỂM TRA LEDGE SLIP (TRƯỢT MÉP) ---
+        Vector2 originTop = (wallDirX == 1) ? rayCastOrigins.topRight : rayCastOrigins.topLeft;
+        Vector2 originBottom = (wallDirX == 1) ? rayCastOrigins.bottomRight : rayCastOrigins.bottomLeft;
+
+        // Bắn tia kiểm tra
+        bool hitTop = Physics2D.Raycast(originTop, Vector2.right * wallDirX, skinWidth * 2, collisionMask);
+        bool hitBottom = Physics2D.Raycast(originBottom, Vector2.right * wallDirX, skinWidth * 2, collisionMask);
+
+        // Điều kiện trượt: Chân/thân đụng tường NHƯNG đỉnh đầu hụt mất
+        bool isSlipping = hitBottom && !hitTop;
+
+        if (isSlipping)
         {
-            // Đang bấm LÊN -> Dùng tốc độ leo lên
-            velocity.y = moveInput.y * wallClimbSpeed;
-            CheckForLedge();
-        }
-        else if (moveInput.y < 0)
-        {
-            // Đang bấm XUỐNG -> Dùng tốc độ trượt xuống nhanh (Fast Drop)
-            velocity.y = moveInput.y * wallClimbDownSpeed;
+            // Ép nhân vật trượt xuống, KHÔNG cho phép leo lên hay đứng im
+            velocity.y = -ledgeSlipSpeed;
         }
         else
         {
-            // Không bấm gì -> Đứng yên trên tường
-            velocity.y = 0;
+            // --- BƯỚC 2: XỬ LÝ LEO TRÈO BÌNH THƯỜNG (Khi đã bám chắc) ---
+            if (moveInput.y > 0)
+            {
+                velocity.y = moveInput.y * wallClimbSpeed;
+                CheckForLedge(); // Hàm này có thể dùng để gọi ClimbHop() khi đã leo hẳn lên mép
+            }
+            else if (moveInput.y < 0)
+            {
+                velocity.y = moveInput.y * wallClimbDownSpeed;
+            }
+            else
+            {
+                velocity.y = 0; // Đứng yên
+            }
+
+            // --- BƯỚC 3: TRỪ THỂ LỰC ---
+            // (Chỉ trừ thể lực khi không bị trượt mép)
+            float drain = (moveInput.y != 0) ? climbStaminaDrain : holdStaminaDrain;
+            currentStamina -= drain * Time.fixedDeltaTime;
         }
 
-        // 2. Trừ thể lực
-        float drain = (moveInput.y != 0) ? climbStaminaDrain : holdStaminaDrain;
-        currentStamina -= drain * Time.fixedDeltaTime;
-
-        // 3. Nếu hết thể lực, tự động buông tay
+        // --- BƯỚC 4: RỚT KHI HẾT THỂ LỰC ---
         if (currentStamina <= 0)
         {
             currentStamina = 0;
-            currentState = PlayerState.OnAir; // Chuyển về trạng thái rơi
+            currentState = PlayerState.OnAir;
             isWallClimbing = false;
         }
     }

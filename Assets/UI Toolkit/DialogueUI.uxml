@@ -1,0 +1,9 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement name="dialogue-container" style="flex-grow: 1; position: absolute; left: 0; bottom: auto; right: 0; top: 0; height: auto; background-color: rgba(0, 0, 0, 0.71); flex-direction: row; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; padding-top: 20px; padding-right: 20px; padding-bottom: 20px; padding-left: 20px; -unity-text-generator: standard; word-spacing: 0; min-height: 250px;">
+        <ui:VisualElement name="character-icon" style="flex-grow: 0; width: 200px; height: 200px; background-color: rgb(86, 86, 86); margin-right: 20px; flex-shrink: 0; align-self: flex-start;"/>
+        <ui:VisualElement name="text-container" style="flex-grow: 1; height: auto;">
+            <ui:Label text="Name" name="character-name" style="-unity-font-style: bold; font-size: 25px; color: rgb(255, 255, 255);"/>
+            <ui:Label text="Hello World" name="dialogue-text" enabled="true" style="color: rgb(255, 255, 255); -unity-font-style: bold; font-size: 20px; flex-wrap: nowrap; white-space: normal; height: auto;"/>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
