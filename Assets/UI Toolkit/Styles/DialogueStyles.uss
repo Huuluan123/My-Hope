@@ -1,0 +1,44 @@
+﻿/* 1. TRẠNG THÁI GỐC (KHI HIỂN THỊ ĐẦY ĐỦ) */
+.dialogue-box-animated {
+    /* Đứng yên tại vị trí gốc */
+    translate: 0px 0px; 
+    opacity: 1;
+    scale: 1 1;
+    
+    /* Tăng độ bo góc lên 25px để trông giống một cái khung thông báo mềm mại của iOS/Android */
+    border-radius: 25px; 
+    
+    transition-property: translate, opacity, scale; 
+    transition-duration: 0.4s;
+    /* Phép màu ở đây: ease-out-back sẽ làm hộp thoại rơi xuống lố một chút rồi nảy ngược lại vào vị trí */
+    transition-timing-function: ease-out-back; 
+}
+
+/* 2. TRẠNG THÁI ẨN (KHI BIẾN MẤT) */
+.dialogue-hidden {
+    /* Trục X là 0, Trục Y là -300px -> Kéo ngược cái hộp lên trên trần nhà giấu đi */
+    translate: 0px -300px; 
+    opacity: 0;
+    scale: 0.1 1; /* Thu nhỏ chiều rộng để tạo hiệu ứng biến mất mờ dần về phía trục X */
+    
+    transition-duration: 0.25s;
+    /* Khi biến mất thì trượt ngược lên trên thật dứt khoát */
+    transition-timing-function: ease-in; 
+}
+
+.skip-container {
+    position: absolute;
+
+    bottom: 15px; /* Cách cạnh dưới của hộp thoại 15px (tạo khoảng hở) */
+    right: 20px;  /* Cách cạnh phải của hộp thoại 20px (tạo khoảng hở) */
+
+    width: auto;   /* Co giãn theo độ dài của chữ ("Hold C to Skip") */
+    height: auto;  /* Co giãn theo chiều cao văn bản */
+    
+    flex-direction: row; 
+    align-items: center;  /* Căn giữa văn bản và icon nút theo chiều dọc */
+    justify-content: flex-end; /* Ép toàn bộ cụm dính vào cạnh phải của CHÍNH container này */
+
+    padding: 8px 12px;
+    border-radius: 10px; /* Bo góc nhẹ */
+}
