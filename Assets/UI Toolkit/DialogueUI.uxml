@@ -1,9 +1,15 @@
 <ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <ui:VisualElement name="dialogue-container" style="flex-grow: 1; position: absolute; left: 0; bottom: auto; right: 0; top: 0; height: auto; background-color: rgba(0, 0, 0, 0.71); flex-direction: row; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; padding-top: 20px; padding-right: 20px; padding-bottom: 20px; padding-left: 20px; -unity-text-generator: standard; word-spacing: 0; min-height: 250px;">
-        <ui:VisualElement name="character-icon" style="flex-grow: 0; width: 200px; height: 200px; background-color: rgb(86, 86, 86); margin-right: 20px; flex-shrink: 0; align-self: flex-start;"/>
+    <Style src="project://database/Assets/UI%20Toolkit/Styles/DialogueStyles.uss?fileID=7433441132597879392&amp;guid=bc05f4eb263ede94da1a1059e3f01090&amp;type=3#DialogueStyles"/>
+    <ui:VisualElement name="dialogue-container" class="dialogue-box-animated" style="flex-direction: row; opacity: 1; color: rgb(255, 255, 255); background-color: rgba(242, 188, 140, 0.71); position: absolute; top: 0; left: 0; right: 0; margin-top: 10px; margin-left: 10px; margin-right: 10px; padding-top: 0; padding-right: 5px; padding-bottom: 5px;">
+        <ui:VisualElement name="character-icon" style="flex-grow: 0; width: 200px; height: 200px; background-color: rgb(86, 86, 86); margin-right: 20px; flex-shrink: 0; align-self: flex-start; margin-top: 20px; margin-left: 20px; margin-bottom: 20px; border-top-left-radius: 20px; border-top-right-radius: 20px; border-bottom-right-radius: 20px; border-bottom-left-radius: 20px;"/>
         <ui:VisualElement name="text-container" style="flex-grow: 1; height: auto;">
             <ui:Label text="Name" name="character-name" style="-unity-font-style: bold; font-size: 25px; color: rgb(255, 255, 255);"/>
             <ui:Label text="Hello World" name="dialogue-text" enabled="true" style="color: rgb(255, 255, 255); -unity-font-style: bold; font-size: 20px; flex-wrap: nowrap; white-space: normal; height: auto;"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="skip-container" class="skip-container" style="flex-grow: 1;">
+            <ui:Label text="&gt;&gt; Hold " style="-unity-font-style: bold;"/>
+            <ui:VisualElement name="skip-icon" style="flex-grow: 1; width: 25px; height: 25px;"/>
+            <ui:Label text="to skip" style="-unity-font-style: bold;"/>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

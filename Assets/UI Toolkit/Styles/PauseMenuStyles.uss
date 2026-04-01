@@ -1,0 +1,40 @@
+/* Lớp mờ che toàn màn hình */
+#pause-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); /* Đen mờ 70% */
+    justify-content: center; /* Đẩy panel vào giữa chiều dọc */
+    align-items: center; /* Đẩy panel vào giữa chiều ngang */
+    display: flex; /* Sẽ dùng C# để đổi thành 'none' khi tắt menu */
+}
+
+/* Cái bảng chứa nút */
+#pause-panel {
+    background-color: rgb(40, 40, 40);
+    padding: 30px;
+    border-radius: 15px;
+    width: 300px;
+    border-width: 2px;
+    border-color: rgb(100, 100, 100);
+}
+
+/* Định dạng Nút bấm */
+.pause-button {
+    margin-bottom: 15px;
+    padding: 15px;
+    font-size: 20px;
+    -unity-font-style: bold;
+    background-color: rgb(70, 70, 70);
+    color: white;
+    border-radius: 8px;
+    border-width: 0;
+    transition-duration: 0.1s; /* Hiệu ứng hover mượt */
+}
+
+.pause-button:focus, .pause-button:hover {
+    background-color: rgb(255, 150, 50); /* Đổi màu cam cho dễ phân biệt với chuột */
+    scale: 1.1 1.1; /* Phóng to hơn một chút */
+    border-color: white; /* Thêm viền trắng nổi bật */
+    border-width: 3px;
+}

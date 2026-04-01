@@ -1,0 +1,10 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI%20Toolkit/Styles/PauseMenuStyles.uss?fileID=7433441132597879392&amp;guid=fe6337972a1bc384ca39ce9031836e6a&amp;type=3#PauseMenuStyles"/>
+    <ui:VisualElement name="pause-overlay" style="flex-grow: 1; top: 0; left: 0; flex-direction: row; flex-wrap: nowrap;">
+        <ui:VisualElement name="pause-panel" style="flex-grow: 1; width: 300px; flex-direction: column; flex-wrap: nowrap; align-items: stretch; justify-content: center; align-self: auto; position: absolute;">
+            <ui:Button text="Resume" name="btn-resume" class="pause-button"/>
+            <ui:Button text="Options" name="btn-options" class="pause-button"/>
+            <ui:Button text="Save &amp; Exit" name="btn-exit" class="pause-button"/>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

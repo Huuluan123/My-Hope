@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Users; // Thư viện để quản lý thiết bị
+using System;
 
 public enum GameState
 {
@@ -13,6 +15,8 @@ public class GameManager : MonoBehaviour
     public GameState State { get; private set; }
 
     public float gameSpeed = 1f;
+
+    public event Action<GameState> OnGameStateChanged;
 
     private InputAction pauseAction;
 
@@ -54,6 +58,7 @@ public class GameManager : MonoBehaviour
             pauseAction.Enable();
             pauseAction.performed += OnPausePerformed;
         }
+            InputSystem.onActionChange += OnInputDeviceChanged;
     }
 
     private void OnDisable()
@@ -63,6 +68,7 @@ public class GameManager : MonoBehaviour
             pauseAction.performed -= OnPausePerformed;
             pauseAction.Disable();
         }
+        InputSystem.onActionChange -= OnInputDeviceChanged;
     }
 
     private void OnPausePerformed(InputAction.CallbackContext context)
@@ -70,7 +76,7 @@ public class GameManager : MonoBehaviour
         TogglePause();
     }
 
-    private void TogglePause()
+    public void TogglePause()
     {
         if (State == GameState.Running)
         {
@@ -91,6 +97,42 @@ public class GameManager : MonoBehaviour
             // GIẤU CHUỘT ĐI KHI CHƠI TIẾP
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
+        }
+        OnGameStateChanged?.Invoke(State);
+    }
+
+    private void OnInputDeviceChanged(object obj, InputActionChange change)
+    {
+        // Chỉ quét khi có một nút thực sự được bấm/gạt
+        if (change == InputActionChange.ActionPerformed)
+        {
+            InputAction action = (InputAction)obj;
+            InputDevice device = action.activeControl.device;
+
+            // CHỈ thay đổi chuột khi game ĐANG TẠM DỪNG (Mở Menu)
+            if (State == GameState.Pause)
+            {
+                if (device is Gamepad) // Nếu phát hiện Tay Cầm
+                {
+                    Cursor.visible = false; // Tàng hình chuột
+
+                    // Dịch chuyển chuột vào giữa góc dưới cùng bên phải để tránh vướng UI
+                    if (Mouse.current != null)
+                    {
+                        Mouse.current.WarpCursorPosition(new Vector2(Screen.width, 0));
+                    }
+                }
+                else if (device is Pointer || device is Keyboard) // Nếu lắc Chuột hoặc gõ Phím
+                {
+                    // Di chuyển chuột ra giữa màn hình nếu có input chuột để người chơi dễ tìm
+                    if (!Cursor.visible && Mouse.current != null)
+                    {
+                        Mouse.current.WarpCursorPosition(new Vector2(Screen.width / 2f, Screen.height / 2f));
+                    }
+
+                    Cursor.visible = true; // Hiện chuột lại bình thường
+                }
+            }
         }
     }
 }
