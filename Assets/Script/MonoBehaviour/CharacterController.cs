@@ -569,6 +569,8 @@ public class PlayerController : MonoBehaviour
     // Phương thức xử lý nhảy input: chỉ lưu thời điểm ấn để dùng jump buffer
     private void OnJump(InputAction.CallbackContext context)
     {
+        if (GameManager.Instance.State == GameState.Pause) return;
+
         if (!CanMove && currentState != PlayerState.Talking) return;
 
         if (context.performed)
@@ -579,6 +581,8 @@ public class PlayerController : MonoBehaviour
 
     private void OnJumpCanceled(InputAction.CallbackContext context)
     {
+        if (GameManager.Instance.State == GameState.Pause) return;
+
         // Chỉ thực hiện khi đang bay lên (velocity.y > 0)
         // Không áp dụng khi đang rơi hoặc đang đứng yên
         if (velocity.y > 0)
@@ -807,6 +811,8 @@ public class PlayerController : MonoBehaviour
     #region Grabbling Handling
     private void OnGrappleInput(InputAction.CallbackContext context)
     {
+        if (GameManager.Instance.State == GameState.Pause) return;
+
         // Chặn nếu đang bận, đang dừng hình, hoặc đang bị kéo
         if (!CanMove || currentState == PlayerState.GrappleFreeze || currentState == PlayerState.Grappling) return;
 
@@ -832,7 +838,7 @@ public class PlayerController : MonoBehaviour
         velocity = Vector3.zero; // Dừng toàn bộ vận tốc (trọng lực, quán tính)
 
         // 2. CHỜ 0.05s ĐỂ NGƯỜI CHƠI NHẬP HƯỚNG
-        yield return new WaitForSecondsRealtime(grappleInputWindow);
+        yield return new WaitForSeconds(grappleInputWindow);
 
         // 3. ĐỌC HƯỚNG BẮN
         Vector2 shootDir = Vector2.zero;
