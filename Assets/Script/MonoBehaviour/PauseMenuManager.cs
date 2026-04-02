@@ -32,11 +32,14 @@ public class PauseMenuManager : MonoBehaviour
             GameManager.Instance.OnGameStateChanged += HandleGameStateChanged;
         }
 
+        // 1. LẮP CẢM BIẾN NHẬN DIỆN DI CHUYỂN CHUỘT
+        root.RegisterCallback<PointerMoveEvent>(OnPointerMove);
+
         // Mặc định ép ẩn UI khi mới vào game
         HideMenu();
     }
 
-    // 🔴 BẮT BUỘC PHẢI CÓ: Hủy đăng ký khi chuyển Scene hoặc xóa UI để tránh tràn RAM
+    // BẮT BUỘC PHẢI CÓ: Hủy đăng ký khi chuyển Scene hoặc xóa UI để tránh tràn RAM
     private void OnDestroy()
     {
         if (GameManager.Instance != null)
@@ -47,6 +50,27 @@ public class PauseMenuManager : MonoBehaviour
         if (btnResume != null) btnResume.clicked -= OnResumeClicked;
         if (btnOptions != null) btnOptions.clicked -= OpenOptions;
         if (btnExit != null) btnExit.clicked -= SaveAndExitGame;
+
+        // 2. GỠ CẢM BIẾN CHUỘT
+        if (uiDocument != null && uiDocument.rootVisualElement != null)
+        {
+            uiDocument.rootVisualElement.UnregisterCallback<PointerMoveEvent>(OnPointerMove);
+        }
+    }
+
+    // 3. XỬ LÝ SỰ KIỆN CHUỘT DI CHUYỂN (TRÁNH XUNG ĐỘT FOCUS)
+    private void OnPointerMove(PointerMoveEvent evt)
+    {
+        // Nếu KHÔNG xài con trỏ chuột thì phớt lờ mọi sự kiện nhúc nhích chuột giả (do lệnh Warp gây ra)
+        if (GameManager.Instance != null && !GameManager.Instance.IsUsingPointer) return;
+
+        // Nếu người chơi THỰC SỰ đang cầm chuột, tiến hành "tẩy não" Focus
+        var focusController = uiDocument.rootVisualElement.focusController;
+
+        if (focusController.focusedElement != null)
+        {
+            focusController.focusedElement.Blur();
+        }
     }
 
     // Hàm này tự động chạy mỗi khi GameManager gọi lệnh TogglePause()
@@ -77,7 +101,19 @@ public class PauseMenuManager : MonoBehaviour
         if (pauseOverlay != null)
         {
             pauseOverlay.style.display = DisplayStyle.Flex; // Bung UI ra
-            if (btnResume != null) btnResume.Focus(); // Highlight nút đầu tiên cho tay cầm Console
+
+            // 4. NÂNG CẤP FOCUS: Trì hoãn 1 frame để đảm bảo UI Toolkit đã vẽ xong nút
+            if (btnResume != null)
+            {
+                pauseOverlay.schedule.Execute(() =>
+                {
+                    // Chỉ tự động Focus vào nút Resume nếu người chơi ĐANG XÀI tay cầm hoặc bàn phím
+                    if (GameManager.Instance != null && !GameManager.Instance.IsUsingPointer)
+                    {
+                        btnResume.Focus();
+                    }
+                });
+            }
         }
     }
 

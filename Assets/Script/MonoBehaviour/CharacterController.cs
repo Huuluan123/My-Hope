@@ -116,6 +116,15 @@ public class PlayerController : MonoBehaviour
         get { return velocity; }
     }
 
+    [Header("Ability Unlocks & Counters")]
+    [Tooltip("Maximum number of times to shoot grappling hand while on air")]
+    public int maxGrappleCount = 2;
+    private int currentGrappleCount = 0;
+
+    [Tooltip("Number of air jumps (0 = Normal jump, 1 = Double Jump, 2 = Triple Jump)")]
+    public int maxAirJumps = 0;
+    private int currentAirJumps = 0;
+
     [Header("Moving Platform Handle")]
     private Transform currentMovingPlatform;
     private Vector3 lastPlatformPosition;
@@ -632,6 +641,21 @@ public class PlayerController : MonoBehaviour
                 // QUAN TRỌNG: Xóa luôn trí nhớ tường để tránh bị spam nhảy tường trên không!
                 lastWallTouchTime = -999f;
             }
+
+            // ƯU TIÊN 3: NHẢY TRÊN KHÔNG (Double Jump, Triple Jump...)
+            else if (currentAirJumps < maxAirJumps)
+            {
+                currentAirJumps++; // Trừ đi 1 lượt nhảy trên không
+
+                // Gọi lại hàm Jump thường. Nó sẽ tự động đè velocity.y = jumpForce, 
+                // tạo ra cảm giác nảy lên cực kỳ chuẩn xác dù nhân vật đang rơi nhanh cỡ nào!
+                Jump(false, 0, false);
+
+                lastJumpInputTime = -999f; // Hủy buffer để không nhảy đúp
+
+                // (Tùy chọn) TODO: Bạn có thể gọi một âm thanh/Particle System khói nổ riêng cho Double Jump ở đây
+                Debug.Log($"Air Jump performed! Performed {currentAirJumps}/{maxAirJumps} attempts.");
+            }
         }
     }
 
@@ -826,6 +850,15 @@ public class PlayerController : MonoBehaviour
                 // Dừng lại ở đây, KHÔNG thực hiện code nhảy bên dưới
                 return;
             }
+
+            if (!isGrounded && currentGrappleCount >= maxGrappleCount)
+            {
+                Debug.Log("All attempts to shoot grappling hand on air have been used up!");
+                return;
+            }
+
+            if (!isGrounded) currentGrappleCount++;
+
             StartCoroutine(PerformGrappleWithLeniency());
         }
     }
@@ -945,6 +978,7 @@ public class PlayerController : MonoBehaviour
         if (isGrounded)
         {
             currentStamina = maxStamina;
+            RechargeAbilities(); // Sạc lại kỹ năng mỗi lần chạm đất
         }
 
         CheckWallGrab(); // Kiểm tra có đang leo tưởng hay không
@@ -1490,6 +1524,15 @@ public class PlayerController : MonoBehaviour
         // 4. Trả lại quyền điều khiển
         SetState(PlayerState.Idle);
     }
+    #endregion
+
+    #region Player Progress
+    private void RechargeAbilities()
+    {
+        currentGrappleCount = 0;
+        currentAirJumps = 0;
+    }
+
     #endregion
 
     #region Callback Fuctions

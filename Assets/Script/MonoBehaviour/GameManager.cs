@@ -20,6 +20,9 @@ public class GameManager : MonoBehaviour
 
     private InputAction pauseAction;
 
+    public bool IsUsingPointer { get; private set; }
+    private float lastMouseWarpTime;
+
     // 🌟 THÊM MỚI: Các biến để chứa Bản đồ hành động
     private InputActionMap playerMap;
     private InputActionMap uiMap;
@@ -73,6 +76,7 @@ public class GameManager : MonoBehaviour
             pauseAction.performed += OnPausePerformed;
         }
         InputSystem.onActionChange += OnInputDeviceChanged;
+        InputSystem.onDeviceChange += OnDeviceChange;
     }
 
     private void OnDisable()
@@ -127,7 +131,6 @@ public class GameManager : MonoBehaviour
 
     private void OnInputDeviceChanged(object obj, InputActionChange change)
     {
-        // Giữ nguyên logic xử lý chuột xuất sắc của bạn
         if (change == InputActionChange.ActionPerformed)
         {
             InputAction action = (InputAction)obj;
@@ -135,24 +138,55 @@ public class GameManager : MonoBehaviour
 
             if (State == GameState.Pause)
             {
-                if (device is Gamepad)
+                if (device is Gamepad || device is Keyboard)
                 {
-                    Cursor.visible = false;
-
-                    if (Mouse.current != null)
+                    // CHỈ thực hiện khi đang từ Chuột chuyển sang Tay cầm (Chốt khóa Transition)
+                    if (IsUsingPointer)
                     {
-                        Mouse.current.WarpCursorPosition(new Vector2(Screen.width, 0));
+                        IsUsingPointer = false;
+                        Cursor.visible = false;
+
+                        if (Mouse.current != null)
+                        {
+                            // Đánh dấu mốc thời gian vừa ném chuột đi (Dùng unscaledTime vì timeScale đang = 0)
+                            lastMouseWarpTime = Time.unscaledTime;
+                            Mouse.current.WarpCursorPosition(new Vector2(Screen.width, 0));
+                        }
                     }
                 }
-                else if (device is Pointer || device is Keyboard)
-                {
-                    if (!Cursor.visible && Mouse.current != null)
-                    {
-                        Mouse.current.WarpCursorPosition(new Vector2(Screen.width / 2f, Screen.height / 2f));
-                    }
 
-                    Cursor.visible = true;
+                else if (device is Pointer)
+                {
+                    // BỎ QUA tín hiệu chuột nếu nó vừa bị Code dịch chuyển trong vòng 0.1 giây trước đó (Chống Warp Echo)
+                    if (Time.unscaledTime - lastMouseWarpTime < 0.1f) return;
+
+                    // CHỈ thực hiện khi đang từ Tay cầm chuyển sang Chuột
+                    if (!IsUsingPointer)
+                    {
+                        if (Mouse.current != null)
+                        {
+                            Mouse.current.WarpCursorPosition(new Vector2(Screen.width / 2f, Screen.height / 2f));
+                        }
+
+                        IsUsingPointer = true;
+                        Cursor.visible = true;
+                    }
                 }
+            }
+        }
+    }
+
+    private void OnDeviceChange(InputDevice device, InputDeviceChange change)
+    {
+        // Kiểm tra nếu thiết bị bị gỡ bỏ (Removed) hoặc mất tín hiệu (Disconnected - thường do hết pin)
+        if (change == InputDeviceChange.Removed || change == InputDeviceChange.Disconnected)
+        {
+            // Chỉ Pause nếu Game đang chạy 
+            // và thiết bị bị mất là Tay cầm hoặc Bàn phím
+            if (State == GameState.Running && (device is Gamepad || device is Keyboard))
+            {
+                Debug.LogWarning($"Detected disconnection of: {device.name}. Automatically pause game!");
+                TogglePause();
             }
         }
     }
