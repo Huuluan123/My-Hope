@@ -100,6 +100,15 @@ public class RobotHand : MonoBehaviour
 
             if (hit)
             {
+                // Trúng unclimbable! Thu hồi tay về ngay lập tức
+                if (hit.collider.CompareTag("Unclimbable"))
+                {
+                    isFlying = false;
+                    isReturning = true; // Dội ngược tay về
+                    playerController.CancelGrapple(); // Huỷ hành động bắn tay nếu trúng phải tường không thể bám
+                    return;
+                }
+
                 // Trúng tường! Dịch chuyển tay đến đúng điểm chạm (Sát mép tường, KHÔNG bao giờ lọt vào trong)
                 transform.position = hit.centroid;
 

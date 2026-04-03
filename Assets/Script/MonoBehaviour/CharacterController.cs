@@ -106,6 +106,7 @@ public class PlayerController : MonoBehaviour
     private bool wasGrounded;
     [SerializeField] private bool hitLeftWall;
     [SerializeField] private bool hitRightWall;
+    private bool canClimbCurrentWall;
 
     [Space]
     [SerializeField] private Vector3 velocity;
@@ -115,6 +116,15 @@ public class PlayerController : MonoBehaviour
     {
         get { return velocity; }
     }
+
+    [Header("Ability Unlocks & Counters")]
+    [Tooltip("Maximum number of times to shoot grappling hand while on air")]
+    public int maxGrappleCount = 2;
+    private int currentGrappleCount = 0;
+
+    [Tooltip("Number of air jumps (0 = Normal jump, 1 = Double Jump, 2 = Triple Jump)")]
+    public int maxAirJumps = 0;
+    private int currentAirJumps = 0;
 
     [Header("Moving Platform Handle")]
     private Transform currentMovingPlatform;
@@ -383,18 +393,26 @@ public class PlayerController : MonoBehaviour
         rb.MovePosition(targetPosition);
 
         // Flip character
-        if (moveInput.x != 0 && !isWallClimbing && wallJumpInputTimer <= 0)
+        HandleSpriteFlipping();
+    }
+
+    private void HandleSpriteFlipping()
+    {
+        // ƯU TIÊN 1: Khi bám tường hoặc trượt tường -> BẮT BUỘC quay mặt vào tường
+        if (isWallSliding || isWallClimbing)
         {
-
-            if (moveInput.x > 0)
+            if (wallDirX != 0) // Kiểm tra an toàn
             {
-                transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+                // Ép Scale X mang dấu của wallDirX (1 là phải, -1 là trái)
+                transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x) * wallDirX, transform.localScale.y, transform.localScale.z);
             }
-
-            if (moveInput.x < 0)
-            {
-                transform.localScale = new Vector3(-Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
-            }
+        }
+        // ƯU TIÊN 2: Đi bộ/Nhảy bình thường -> Quay mặt theo phím bấm
+        // (Chỉ áp dụng khi không bị khóa hướng do vừa nhảy bật tường ra)
+        else if (moveInput.x != 0 && wallJumpInputTimer <= 0 && CanMove)
+        {
+            float inputDirection = Mathf.Sign(moveInput.x);
+            transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x) * inputDirection, transform.localScale.y, transform.localScale.z);
         }
     }
 
@@ -569,6 +587,8 @@ public class PlayerController : MonoBehaviour
     // Phương thức xử lý nhảy input: chỉ lưu thời điểm ấn để dùng jump buffer
     private void OnJump(InputAction.CallbackContext context)
     {
+        if (GameManager.Instance.State == GameState.Pause) return;
+
         if (!CanMove && currentState != PlayerState.Talking) return;
 
         if (context.performed)
@@ -579,6 +599,8 @@ public class PlayerController : MonoBehaviour
 
     private void OnJumpCanceled(InputAction.CallbackContext context)
     {
+        if (GameManager.Instance.State == GameState.Pause) return;
+
         // Chỉ thực hiện khi đang bay lên (velocity.y > 0)
         // Không áp dụng khi đang rơi hoặc đang đứng yên
         if (velocity.y > 0)
@@ -627,6 +649,21 @@ public class PlayerController : MonoBehaviour
                 lastJumpInputTime = -999f;
                 // QUAN TRỌNG: Xóa luôn trí nhớ tường để tránh bị spam nhảy tường trên không!
                 lastWallTouchTime = -999f;
+            }
+
+            // ƯU TIÊN 3: NHẢY TRÊN KHÔNG (Double Jump, Triple Jump...)
+            else if (currentAirJumps < maxAirJumps)
+            {
+                currentAirJumps++; // Trừ đi 1 lượt nhảy trên không
+
+                // Gọi lại hàm Jump thường. Nó sẽ tự động đè velocity.y = jumpForce, 
+                // tạo ra cảm giác nảy lên cực kỳ chuẩn xác dù nhân vật đang rơi nhanh cỡ nào!
+                Jump(false, 0, false);
+
+                lastJumpInputTime = -999f; // Hủy buffer để không nhảy đúp
+
+                // (Tùy chọn) TODO: Bạn có thể gọi một âm thanh/Particle System khói nổ riêng cho Double Jump ở đây
+                Debug.Log($"Air Jump performed! Performed {currentAirJumps}/{maxAirJumps} attempts.");
             }
         }
     }
@@ -744,7 +781,7 @@ public class PlayerController : MonoBehaviour
         // Điều kiện: Đang giữ phím Grab + Chạm tường + Không ở mặt đất + Còn thể lực
         bool isTouchingWall = hitLeftWall || hitRightWall;
 
-        if (input.IsGrabbing && isTouchingWall && currentStamina > 0)
+        if (input.IsGrabbing && isTouchingWall && currentStamina > 0 && canClimbCurrentWall)
         {
             currentState = PlayerState.Climbing;
             isWallClimbing = true;
@@ -807,6 +844,8 @@ public class PlayerController : MonoBehaviour
     #region Grabbling Handling
     private void OnGrappleInput(InputAction.CallbackContext context)
     {
+        if (GameManager.Instance.State == GameState.Pause) return;
+
         // Chặn nếu đang bận, đang dừng hình, hoặc đang bị kéo
         if (!CanMove || currentState == PlayerState.GrappleFreeze || currentState == PlayerState.Grappling) return;
 
@@ -820,6 +859,15 @@ public class PlayerController : MonoBehaviour
                 // Dừng lại ở đây, KHÔNG thực hiện code nhảy bên dưới
                 return;
             }
+
+            if (!isGrounded && currentGrappleCount >= maxGrappleCount)
+            {
+                Debug.Log("All attempts to shoot grappling hand on air have been used up!");
+                return;
+            }
+
+            if (!isGrounded) currentGrappleCount++;
+
             StartCoroutine(PerformGrappleWithLeniency());
         }
     }
@@ -832,7 +880,7 @@ public class PlayerController : MonoBehaviour
         velocity = Vector3.zero; // Dừng toàn bộ vận tốc (trọng lực, quán tính)
 
         // 2. CHỜ 0.05s ĐỂ NGƯỜI CHƠI NHẬP HƯỚNG
-        yield return new WaitForSecondsRealtime(grappleInputWindow);
+        yield return new WaitForSeconds(grappleInputWindow);
 
         // 3. ĐỌC HƯỚNG BẮN
         Vector2 shootDir = Vector2.zero;
@@ -939,6 +987,7 @@ public class PlayerController : MonoBehaviour
         if (isGrounded)
         {
             currentStamina = maxStamina;
+            RechargeAbilities(); // Sạc lại kỹ năng mỗi lần chạm đất
         }
 
         CheckWallGrab(); // Kiểm tra có đang leo tưởng hay không
@@ -1168,6 +1217,8 @@ public class PlayerController : MonoBehaviour
             rayLength = 2 * skinWidth;
         }
 
+        canClimbCurrentWall = false; // Mặc định là không thể leo
+
         for (int i = 0; i < horizontalRayCount; i++)
         {
             Vector2 rayOrigin = (directionX == -1) ? rayCastOrigins.bottomLeft : rayCastOrigins.bottomRight;
@@ -1180,6 +1231,8 @@ public class PlayerController : MonoBehaviour
             {
                 // Bỏ qua HOÀN TOÀN va chạm ngang với nền One-way để không bị vướng đầu/vai
                 if (hit.collider.CompareTag("OneWay")) continue;
+
+                if (!hit.collider.CompareTag("Unclimbable")) canClimbCurrentWall = true;
 
                 // Nếu khoảng cách quá gần (bằng 0), nghĩa là đang kẹt trong tường -> bỏ qua
                 if (hit.distance == 0) continue;
@@ -1207,7 +1260,7 @@ public class PlayerController : MonoBehaviour
                 // Trạng thái trượt tường: Đang chạm tường, đang rơi và người chơi đang ấn phím hướng vào tường
                 bool isPressingAgainstWall = (moveInput.x > 0 && wallDirX == 1) || (moveInput.x < 0 && wallDirX == -1);
 
-                if (!isGrounded && velocity.y < 0 && isPressingAgainstWall)
+                if (!isGrounded && velocity.y < 0 && isPressingAgainstWall && canClimbCurrentWall)
                 {
                     isWallSliding = true;
                 }
@@ -1484,6 +1537,15 @@ public class PlayerController : MonoBehaviour
         // 4. Trả lại quyền điều khiển
         SetState(PlayerState.Idle);
     }
+    #endregion
+
+    #region Player Progress
+    private void RechargeAbilities()
+    {
+        currentGrappleCount = 0;
+        currentAirJumps = 0;
+    }
+
     #endregion
 
     #region Callback Fuctions
