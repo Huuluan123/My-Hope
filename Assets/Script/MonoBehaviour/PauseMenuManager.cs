@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEngine.InputSystem;
 
 public class PauseMenuManager : MonoBehaviour
 {
@@ -10,6 +11,11 @@ public class PauseMenuManager : MonoBehaviour
     private Button btnResume;
     private Button btnOptions;
     private Button btnExit;
+
+    private InputAction cancelAction;
+    private InputAction uiPauseAction;
+
+    private bool isOptionsMenuOpen = false;
 
     // Dùng Start thay vì OnEnable để chắc chắn GameManager đã khởi tạo xong
     private void Start()
@@ -35,6 +41,18 @@ public class PauseMenuManager : MonoBehaviour
         // 1. LẮP CẢM BIẾN NHẬN DIỆN DI CHUYỂN CHUỘT
         root.RegisterCallback<PointerMoveEvent>(OnPointerMove);
 
+        cancelAction = InputSystem.actions.FindAction("UI/Cancel");
+        if (cancelAction != null)
+        {
+            cancelAction.performed += OnCancelPerformed;
+        }
+
+        uiPauseAction = InputSystem.actions.FindAction("UI/Pause");
+        if (uiPauseAction != null)
+        {
+            uiPauseAction.performed += OnPauseResumePerformed;
+        }
+
         // Mặc định ép ẩn UI khi mới vào game
         HideMenu();
     }
@@ -50,6 +68,8 @@ public class PauseMenuManager : MonoBehaviour
         if (btnResume != null) btnResume.clicked -= OnResumeClicked;
         if (btnOptions != null) btnOptions.clicked -= OpenOptions;
         if (btnExit != null) btnExit.clicked -= SaveAndExitGame;
+        if (cancelAction != null) cancelAction.performed -= OnCancelPerformed;
+        if (uiPauseAction != null) uiPauseAction.performed -= OnPauseResumePerformed;
 
         // 2. GỠ CẢM BIẾN CHUỘT
         if (uiDocument != null && uiDocument.rootVisualElement != null)
@@ -70,6 +90,40 @@ public class PauseMenuManager : MonoBehaviour
         if (focusController.focusedElement != null)
         {
             focusController.focusedElement.Blur();
+        }
+    }
+
+    private void OnCancelPerformed(InputAction.CallbackContext context)
+    {
+        // Chỉ xử lý khi Game ĐANG PAUSE (nghĩa là Menu đang được mở)
+        if (GameManager.Instance != null && GameManager.Instance.State == GameState.Pause)
+        {
+            // KIỂM TRA LỚP 1: Có đang mở Menu Con (Options) không?
+            if (isOptionsMenuOpen)
+            {
+                CloseOptions(); // Đóng Options, hiển thị lại Menu chính
+            }
+            // KIỂM TRA LỚP 2: Nếu đang ở Menu Chính -> Đóng Menu, quay lại Game!
+            else
+            {
+                GameManager.Instance.TogglePause();
+            }
+        }
+    }
+
+    private void OnPauseResumePerformed(InputAction.CallbackContext context)
+    {
+        if (GameManager.Instance != null && GameManager.Instance.State == GameState.Pause)
+        {
+            // Nếu đang mở Menu chính (không phải Options) thì mới Resume
+            if (!isOptionsMenuOpen)
+            {
+                GameManager.Instance.TogglePause();
+            }
+            else
+            {
+                CloseOptions(); // Nếu đang ở Options thì lùi về Menu chính
+            }
         }
     }
 
@@ -128,6 +182,23 @@ public class PauseMenuManager : MonoBehaviour
     private void OpenOptions()
     {
         Debug.Log("Opening options Menu");
+        isOptionsMenuOpen = true;
+    }
+
+    private void CloseOptions()
+    {
+        Debug.Log("Closing options Menu, back to Pause Menu...");
+        isOptionsMenuOpen = false;
+
+        // TODO sau này: Ẩn optionsOverlay, Hiện lại pauseOverlay
+        // optionsOverlay.style.display = DisplayStyle.None;
+        // pauseOverlay.style.display = DisplayStyle.Flex;
+
+        // Nhớ Focus lại vào nút Options để người chơi biết họ vừa từ đâu chui ra
+        if (btnOptions != null && !GameManager.Instance.IsUsingPointer)
+        {
+            btnOptions.Focus();
+        }
     }
 
     private void SaveAndExitGame()

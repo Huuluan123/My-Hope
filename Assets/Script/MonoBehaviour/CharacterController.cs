@@ -106,6 +106,7 @@ public class PlayerController : MonoBehaviour
     private bool wasGrounded;
     [SerializeField] private bool hitLeftWall;
     [SerializeField] private bool hitRightWall;
+    private bool canClimbCurrentWall;
 
     [Space]
     [SerializeField] private Vector3 velocity;
@@ -392,18 +393,26 @@ public class PlayerController : MonoBehaviour
         rb.MovePosition(targetPosition);
 
         // Flip character
-        if (moveInput.x != 0 && !isWallClimbing && wallJumpInputTimer <= 0)
+        HandleSpriteFlipping();
+    }
+
+    private void HandleSpriteFlipping()
+    {
+        // ƯU TIÊN 1: Khi bám tường hoặc trượt tường -> BẮT BUỘC quay mặt vào tường
+        if (isWallSliding || isWallClimbing)
         {
-
-            if (moveInput.x > 0)
+            if (wallDirX != 0) // Kiểm tra an toàn
             {
-                transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+                // Ép Scale X mang dấu của wallDirX (1 là phải, -1 là trái)
+                transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x) * wallDirX, transform.localScale.y, transform.localScale.z);
             }
-
-            if (moveInput.x < 0)
-            {
-                transform.localScale = new Vector3(-Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
-            }
+        }
+        // ƯU TIÊN 2: Đi bộ/Nhảy bình thường -> Quay mặt theo phím bấm
+        // (Chỉ áp dụng khi không bị khóa hướng do vừa nhảy bật tường ra)
+        else if (moveInput.x != 0 && wallJumpInputTimer <= 0 && CanMove)
+        {
+            float inputDirection = Mathf.Sign(moveInput.x);
+            transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x) * inputDirection, transform.localScale.y, transform.localScale.z);
         }
     }
 
@@ -772,7 +781,7 @@ public class PlayerController : MonoBehaviour
         // Điều kiện: Đang giữ phím Grab + Chạm tường + Không ở mặt đất + Còn thể lực
         bool isTouchingWall = hitLeftWall || hitRightWall;
 
-        if (input.IsGrabbing && isTouchingWall && currentStamina > 0)
+        if (input.IsGrabbing && isTouchingWall && currentStamina > 0 && canClimbCurrentWall)
         {
             currentState = PlayerState.Climbing;
             isWallClimbing = true;
@@ -1208,6 +1217,8 @@ public class PlayerController : MonoBehaviour
             rayLength = 2 * skinWidth;
         }
 
+        canClimbCurrentWall = false; // Mặc định là không thể leo
+
         for (int i = 0; i < horizontalRayCount; i++)
         {
             Vector2 rayOrigin = (directionX == -1) ? rayCastOrigins.bottomLeft : rayCastOrigins.bottomRight;
@@ -1220,6 +1231,8 @@ public class PlayerController : MonoBehaviour
             {
                 // Bỏ qua HOÀN TOÀN va chạm ngang với nền One-way để không bị vướng đầu/vai
                 if (hit.collider.CompareTag("OneWay")) continue;
+
+                if (!hit.collider.CompareTag("Unclimbable")) canClimbCurrentWall = true;
 
                 // Nếu khoảng cách quá gần (bằng 0), nghĩa là đang kẹt trong tường -> bỏ qua
                 if (hit.distance == 0) continue;
@@ -1247,7 +1260,7 @@ public class PlayerController : MonoBehaviour
                 // Trạng thái trượt tường: Đang chạm tường, đang rơi và người chơi đang ấn phím hướng vào tường
                 bool isPressingAgainstWall = (moveInput.x > 0 && wallDirX == 1) || (moveInput.x < 0 && wallDirX == -1);
 
-                if (!isGrounded && velocity.y < 0 && isPressingAgainstWall)
+                if (!isGrounded && velocity.y < 0 && isPressingAgainstWall && canClimbCurrentWall)
                 {
                     isWallSliding = true;
                 }
