@@ -1282,8 +1282,19 @@ public class PlayerController : MonoBehaviour
 
                 if (hitLeftWall || hitRightWall)
                 {
-                    lastWallTouchTime = Time.time;
-                    lastWallDirX = hitLeftWall ? -1 : 1;
+                    // KIỂM TRA ĐIỀU KIỆN TRƯỚC KHI CHO PHÉP NHẢY
+                    if (canClimbCurrentWall)
+                    {
+                        // Nếu tường bám được -> Lưu lại trí nhớ để cho phép Wall Jump
+                        lastWallTouchTime = Time.time;
+                        lastWallDirX = hitLeftWall ? -1 : 1;
+                    }
+                    else
+                    {
+                        // XÓA TRÍ NHỚ NẾU CHẠM TƯỜNG TRƠN (Teflon Wall)
+                        // Bất kể người chơi thao tác nhanh cỡ nào, hệ thống cũng không ghi nhận đây là tường để nhảy
+                        lastWallTouchTime = -999f; 
+                    }
                 }
 
                 //Phát hiện tường
