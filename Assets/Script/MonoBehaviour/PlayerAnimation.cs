@@ -1,9 +1,11 @@
 ﻿using UnityEngine;
+using System.Collections;
 
 public class PlayerAnimation : MonoBehaviour
 {
     private Animator animator;
     private PlayerController controller;
+    private SpriteRenderer spriteRenderer;
 
     // Các ID Animation (Hash để tối ưu hiệu năng)
     private static readonly int JumpTrig = Animator.StringToHash("jump");
@@ -13,9 +15,12 @@ public class PlayerAnimation : MonoBehaviour
     private static readonly int IsClimbing = Animator.StringToHash("isClimbing");
     private static readonly int YVelocity = Animator.StringToHash("yVelocity");
 
+    private Coroutine lowStaminaCoroutine;
+
     private void Awake()
     {
         animator = GetComponentInChildren<Animator>();
+        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         controller = GetComponent<PlayerController>();
     }
 
@@ -41,6 +46,7 @@ public class PlayerAnimation : MonoBehaviour
         controller.OnWallGrabChanged += SetWallGrab;
         controller.OnClimbChanged += SetClimb;
         controller.OnGroundedChanged += SetGrounded;
+        controller.OnLowStamina += HandleLowStamina;
     }
 
     // --- HỦY ĐĂNG KÝ (BẮT BUỘC ĐỂ TRÁNH LỖI MEMORY LEAK) ---
@@ -55,6 +61,7 @@ public class PlayerAnimation : MonoBehaviour
         controller.OnWallGrabChanged -= SetWallGrab;
         controller.OnClimbChanged -= SetClimb;
         controller.OnGroundedChanged -= SetGrounded;
+        controller.OnLowStamina -= HandleLowStamina;
     }
 
     // --- CÁC HÀM XỬ LÝ (Sẽ được gọi tự động khi Event kích hoạt) ---
@@ -102,5 +109,50 @@ public class PlayerAnimation : MonoBehaviour
     private void SetClimb(bool isClimbing)
     {
         animator.SetBool(IsClimbing, isClimbing);
+    }
+
+    // --- XỬ LÝ BÁO ĐỘNG THỂ LỰC ---
+    private void HandleLowStamina(bool isLow)
+    {
+        if (isLow)
+        {
+            // Bắt đầu nhấp nháy nếu chưa chạy
+            if (lowStaminaCoroutine == null)
+            {
+                lowStaminaCoroutine = StartCoroutine(LowStaminaRoutine());
+            }
+        }
+        else
+        {
+            // Tắt nhấp nháy ngay lập tức khi an toàn
+            if (lowStaminaCoroutine != null)
+            {
+                StopCoroutine(lowStaminaCoroutine);
+                lowStaminaCoroutine = null;
+            }
+            // Đảm bảo trả lại màu trắng gốc cho nhân vật
+            spriteRenderer.color = Color.white;
+        }
+    }
+
+    // COROUTINE TẠO NHỊP ĐẬP CHỚP ĐỎ VÀ RUNG TAY CẦM
+    private IEnumerator LowStaminaRoutine()
+    {
+        // Chạy vòng lặp vô tận cho đến khi bị StopCoroutine cắt ngang
+        while (true)
+        {
+            // 1. NHỊP CĂNG: Đổi màu Đỏ + Rung gắt
+            spriteRenderer.color = Color.red;
+            if (HapticManager.Instance != null)
+            {
+                // Rung motor nhỏ (High frequency) rất gắt trong thời gian cực ngắn (0.1s)
+                HapticManager.Instance.Rumble(0f, 0.4f, 0.1f);
+            }
+            yield return new WaitForSeconds(0.15f); // Thời gian hiển thị màu đỏ
+
+            // 2. NHỊP NGHỈ: Trả về màu Trắng + Dừng rung
+            spriteRenderer.color = Color.white;
+            yield return new WaitForSeconds(0.15f); // Thời gian chờ trước nhịp đập tiếp theo
+        }
     }
 }

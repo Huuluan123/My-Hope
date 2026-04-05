@@ -84,6 +84,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float climbStaminaDrain = 20f; // Tốn thể lực khi leo
     [SerializeField] private float holdStaminaDrain = 5f;   // Tốn ít hơn khi chỉ bám yên
     [SerializeField] private float currentStamina;
+    [SerializeField] private float lowStaminaThreshold = 25f; // Dưới mức này sẽ báo động
+    private bool isLowStaminaState; // Biến nhớ để không spam event liên tục
 
     [Header("Grappling Hand")]
     [SerializeField] private RobotHand robotHand;
@@ -168,6 +170,7 @@ public class PlayerController : MonoBehaviour
     public event Action<bool> OnWallGrabChanged;
     public event Action<bool> OnClimbChanged;
     public event Action<bool> OnGroundedChanged;
+    public event Action<bool> OnLowStamina; // Truyền true khi báo động, false khi an toàn
     #endregion
 
     #region Unity Callbacks
@@ -789,6 +792,16 @@ public class PlayerController : MonoBehaviour
             // (Chỉ trừ thể lực khi không bị trượt mép)
             float drain = (moveInput.y != 0) ? climbStaminaDrain : holdStaminaDrain;
             currentStamina -= drain * Time.fixedDeltaTime;
+
+            // --- CẢM BIẾN BÁO ĐỘNG THỂ LỰC ---
+            bool isCurrentlyLow = (currentStamina > 0 && currentStamina <= lowStaminaThreshold);
+
+            // Chỉ phát Event khi có sự thay đổi trạng thái (Từ an toàn sang nguy hiểm, hoặc ngược lại)
+            if (isCurrentlyLow != isLowStaminaState)
+            {
+                isLowStaminaState = isCurrentlyLow;
+                OnLowStamina?.Invoke(isLowStaminaState);
+            }
         }
 
         // --- BƯỚC 4: RỚT KHI HẾT THỂ LỰC ---
@@ -1018,6 +1031,13 @@ public class PlayerController : MonoBehaviour
         if (isGrounded)
         {
             currentStamina = maxStamina;
+
+            if (isLowStaminaState)
+            {
+                isLowStaminaState = false;
+                OnLowStamina?.Invoke(false);
+            }
+
             RechargeAbilities(); // Sạc lại kỹ năng mỗi lần chạm đất
         }
 

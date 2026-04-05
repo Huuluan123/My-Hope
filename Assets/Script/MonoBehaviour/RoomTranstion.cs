@@ -35,6 +35,10 @@ public class RoomTransitionScript : MonoBehaviour
 
                 // (Tùy chọn) Ép camera chuyển luôn sang phòng này ngay lúc bắt đầu game
                 CameraManager.SwitchCamera(roomCamera);
+
+                //Reset Parallax lúc mới vào game
+                ParallaxCamera pCam = Camera.main.GetComponent<ParallaxCamera>();
+                if (pCam != null) pCam.ResetOldPosition();
             }
         }
     }
@@ -51,6 +55,10 @@ public class RoomTransitionScript : MonoBehaviour
 
             // 1. Chuyển Camera
             CameraManager.SwitchCamera(roomCamera);
+
+            //Reset Parallax khi đổi phòng
+            ParallaxCamera pCam = Camera.main.GetComponent<ParallaxCamera>();
+            if (pCam != null) pCam.ResetOldPosition();
 
             // 2. Reset các toàn bộ vật thể trong phòng (nếu có)
             if (myRoomManager != null)

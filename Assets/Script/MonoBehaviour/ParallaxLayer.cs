@@ -3,8 +3,8 @@ using UnityEngine;
 //[ExecuteInEditMode]
 public class ParallaxLayer : MonoBehaviour
 {
-    public float parallaxFactor;
-    public float parallaxFactorY;
+    [Range(0f, 1f)] public float parallaxFactor;
+    [Range(0f, 1f)] public float parallaxFactorY;
 
     public void Move(Vector3 delta)
     {
