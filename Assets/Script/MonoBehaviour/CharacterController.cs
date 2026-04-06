@@ -73,11 +73,19 @@ public class PlayerController : MonoBehaviour
     private float climbJumpCooldownTimer;
 
     [Space]
+    // Neutreal Wall Jump
+    [SerializeField] private Vector2 neutralWallJumpForce = new Vector2(5f, 22f); // Lực đẩy ngang rất nhỏ, lực dọc lớn
+    [SerializeField] private float neutralJumpStaminaCost = 10f; // Hình phạt thể lực
+    [SerializeField] private float neutralJumpInputLockTime = 0.1f; // Khóa input ngắn hơn nhảy tường thường
+
+    [Space]
 
     [SerializeField] private float maxStamina = 100f;
     [SerializeField] private float climbStaminaDrain = 20f; // Tốn thể lực khi leo
     [SerializeField] private float holdStaminaDrain = 5f;   // Tốn ít hơn khi chỉ bám yên
     [SerializeField] private float currentStamina;
+    [SerializeField] private float lowStaminaThreshold = 25f; // Dưới mức này sẽ báo động
+    private bool isLowStaminaState; // Biến nhớ để không spam event liên tục
 
     [Header("Grappling Hand")]
     [SerializeField] private RobotHand robotHand;
@@ -162,6 +170,7 @@ public class PlayerController : MonoBehaviour
     public event Action<bool> OnWallGrabChanged;
     public event Action<bool> OnClimbChanged;
     public event Action<bool> OnGroundedChanged;
+    public event Action<bool> OnLowStamina; // Truyền true khi báo động, false khi an toàn
     #endregion
 
     #region Unity Callbacks
@@ -547,29 +556,31 @@ public class PlayerController : MonoBehaviour
     }
 
     // Hàm Tách Biệt: Chỉ dùng cho chuyển phòng (Dựa trên thời gian và Vận tốc)
-    public void ForceWalkIntoRoom(Vector2 direction, float duration)
+    public void ForceWalkIntoRoom(Vector2 pushVelocity, float duration, float cameraTime)
     {
         if (currentState == PlayerState.Dead || currentState == PlayerState.ScriptedMove) return;
-        StartCoroutine(RoomTransitionWalkRoutine(direction, duration));
+        StartCoroutine(RoomTransitionWalkRoutine(pushVelocity, duration, cameraTime));
     }
 
-    private IEnumerator RoomTransitionWalkRoutine(Vector2 dir, float time)
+    private IEnumerator RoomTransitionWalkRoutine(Vector2 pushVelocity, float duration, float cameraTime)
     {
+        // Khóa hoàn toàn Input của người chơi
         SetState(PlayerState.ScriptedMove);
-        OnRunChanged?.Invoke(true); // Báo hiệu Animation chạy
 
+        // Bật animation chạy nếu đi ngang
+        if (pushVelocity.x != 0) OnRunChanged?.Invoke(true);
+
+        // 1. Đẩy nhân vật vào trong (0.2 giây)
         float elapsedTime = 0f;
-
-        while (elapsedTime < time)
+        while (elapsedTime < duration)
         {
-            // Dùng Vận tốc (Velocity) để KHÔNG làm hỏng Trọng lực khi đang nhảy/rơi
-            velocity.x = dir.x * moveSpeed;
+            transform.position += (Vector3)pushVelocity * Time.deltaTime;
+            if (rb != null) rb.position = transform.position;
 
-            // Xoay mặt
-            if (dir.x != 0)
+            if (pushVelocity.x != 0)
             {
                 Vector3 scale = transform.localScale;
-                scale.x = Mathf.Abs(scale.x) * Mathf.Sign(dir.x);
+                scale.x = Mathf.Abs(scale.x) * Mathf.Sign(pushVelocity.x);
                 transform.localScale = scale;
             }
 
@@ -577,9 +588,35 @@ public class PlayerController : MonoBehaviour
             yield return null;
         }
 
-        // Trả lại trạng thái bình thường
-        velocity.x = 0f;
-        OnRunChanged?.Invoke(false); // Tắt Animation chạy
+        // 2. Chờ Camera lia tới
+        // Nhân vật đã lọt vào phòng, tắt animation chạy để đứng Idle
+        if (pushVelocity.x != 0) OnRunChanged?.Invoke(false);
+        velocity = Vector3.zero; // Xóa sạch quán tính bị đẩy
+
+        // Tính toán xem Camera còn phải quay bao lâu nữa thì tới nơi
+        float waitTimeForCamera = Mathf.Max(0f, cameraTime - duration);
+        if (waitTimeForCamera > 0)
+        {
+            yield return new WaitForSeconds(waitTimeForCamera); // Chỉ dùng WaitForSeconds bình thường, không đụng TimeScale
+        }
+
+        // 3. Thêm thời gian nghỉ để người chơi quan sát phòng
+        // Màn hình đã cố định, cho người chơi thêm 0.15s nhìn ngắm bố cục bẫy
+        //yield return new WaitForSeconds(0.15f);
+
+        // 4. Ép nhảy (Nếu đi lên) và trả lại quyền di chuyển cho người chơi
+        // Nếu nhảy từ dưới lên trên -> Ép một lực nhảy
+        if (pushVelocity.y > 0)
+        {
+            velocity.y = jumpForce;
+            OnJumpPerformed?.Invoke();
+        }
+        else if (pushVelocity.y < 0) // Rớt từ trên xuống
+        {
+            velocity.y = 0;
+        }
+
+        // Mở khóa Input!
         SetState(PlayerState.Idle);
     }
 
@@ -629,14 +666,22 @@ public class PlayerController : MonoBehaviour
                 // Kiểm tra Input người chơi để quyết định loại nhảy tường (Leap hay Climb)
                 // Phải dùng lastWallDirX vì lúc này hitWall có thể đã bằng false
                 bool isHoldingTowardsWall = (moveInput.x != 0 && Mathf.Sign(moveInput.x) == lastWallDirX);
+                //bool isHoldingAwayFromWall = (moveInput.x != 0 && Mathf.Sign(moveInput.x) != lastWallDirX);
                 bool isHoldingUp = moveInput.y > 0.1f;
                 bool isNotHolding = moveInput.magnitude < 0.1f;
+                bool isNotHoldingHorizontal = Mathf.Abs(moveInput.x) < 0.1f; // NGƯỜI CHƠI KHÔNG BẤM TRÁI/PHẢI
 
                 // NẾU: Đang giữ nút Bám VÀ (cố tình ép vào tường HOẶC hướng lên HOẶC không giữ hướng di chuyển) VÀ còn thể lực
                 if (input.IsGrabbing && (isHoldingTowardsWall || isHoldingUp || isNotHolding) && currentStamina > 0)
                 {
                     // Trèo nhảy lên (Wall Climb Jump)
                     Jump(true, lastWallDirX, true);
+                }
+
+                // B. Nhảy trung lập (Neutral Wall Jump) - 🌟 TÍNH NĂNG MỚI: Không bấm hướng ngang
+                else if (isNotHoldingHorizontal)
+                {
+                    Jump(true, lastWallDirX, false, true); // Gọi Jump với tham số isNeutral = true
                 }
                 else
                 {
@@ -668,7 +713,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void Jump(bool isWallJump, int wallDir, bool isClimbJump)
+    private void Jump(bool isWallJump, int wallDir, bool isClimbJump, bool isNeutral = false)
     {
         // Wall Jump
         if (isWallJump)
@@ -683,8 +728,25 @@ public class PlayerController : MonoBehaviour
                 climbJumpCooldownTimer = 0.2f;
                 //Debug.Log("Wall Climb jump!");
             }
+            else if (isNeutral)
+            {
+                // NEUTRAL WALL JUMP
+                // Đẩy ngược hướng tường với lực RẤT NHỎ
+                velocity.x = -wallDir * neutralWallJumpForce.x;
+                velocity.y = neutralWallJumpForce.y;
+
+                // Áp dụng hình phạt thể lực
+                currentStamina -= neutralJumpStaminaCost;
+
+                // Khóa input ngắn để người chơi vẫn giữ được sự linh hoạt
+                wallJumpInputTimer = neutralJumpInputLockTime;
+
+                // Quay mặt ra ngoài tường một chút
+                transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x) * (-wallDir), transform.localScale.y, transform.localScale.z);
+            }
             else
             {
+                // Wall Leap Jump
                 velocity.x = -wallDir * wallJumpForce.x;
                 velocity.y = wallJumpForce.y;
                 wallJumpInputTimer = wallJumpInputLockTime;
@@ -758,6 +820,16 @@ public class PlayerController : MonoBehaviour
             // (Chỉ trừ thể lực khi không bị trượt mép)
             float drain = (moveInput.y != 0) ? climbStaminaDrain : holdStaminaDrain;
             currentStamina -= drain * Time.fixedDeltaTime;
+
+            // --- CẢM BIẾN BÁO ĐỘNG THỂ LỰC ---
+            bool isCurrentlyLow = (currentStamina > 0 && currentStamina <= lowStaminaThreshold);
+
+            // Chỉ phát Event khi có sự thay đổi trạng thái (Từ an toàn sang nguy hiểm, hoặc ngược lại)
+            if (isCurrentlyLow != isLowStaminaState)
+            {
+                isLowStaminaState = isCurrentlyLow;
+                OnLowStamina?.Invoke(isLowStaminaState);
+            }
         }
 
         // --- BƯỚC 4: RỚT KHI HẾT THỂ LỰC ---
@@ -982,11 +1054,19 @@ public class PlayerController : MonoBehaviour
     {
         // Nếu đang bận việc riêng (Talking/Dead) thì không can thiệp
         if (currentState == PlayerState.Talking || currentState == PlayerState.Dead
-            || currentState == PlayerState.Grappling || currentState == PlayerState.GrappleFreeze) return;
+            || currentState == PlayerState.Grappling || currentState == PlayerState.GrappleFreeze
+            || currentState == PlayerState.ScriptedMove) return;
 
         if (isGrounded)
         {
             currentStamina = maxStamina;
+
+            if (isLowStaminaState)
+            {
+                isLowStaminaState = false;
+                OnLowStamina?.Invoke(false);
+            }
+
             RechargeAbilities(); // Sạc lại kỹ năng mỗi lần chạm đất
         }
 
@@ -1251,8 +1331,19 @@ public class PlayerController : MonoBehaviour
 
                 if (hitLeftWall || hitRightWall)
                 {
-                    lastWallTouchTime = Time.time;
-                    lastWallDirX = hitLeftWall ? -1 : 1;
+                    // KIỂM TRA ĐIỀU KIỆN TRƯỚC KHI CHO PHÉP NHẢY
+                    if (canClimbCurrentWall)
+                    {
+                        // Nếu tường bám được -> Lưu lại trí nhớ để cho phép Wall Jump
+                        lastWallTouchTime = Time.time;
+                        lastWallDirX = hitLeftWall ? -1 : 1;
+                    }
+                    else
+                    {
+                        // XÓA TRÍ NHỚ NẾU CHẠM TƯỜNG TRƠN (Teflon Wall)
+                        // Bất kể người chơi thao tác nhanh cỡ nào, hệ thống cũng không ghi nhận đây là tường để nhảy
+                        lastWallTouchTime = -999f; 
+                    }
                 }
 
                 //Phát hiện tường

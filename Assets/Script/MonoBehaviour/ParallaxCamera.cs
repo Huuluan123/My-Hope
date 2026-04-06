@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[ExecuteInEditMode]
+// TUYỆT ĐỐI KHÔNG DÙNG [ExecuteInEditMode] Ở ĐÂY NỮA
 public class ParallaxCamera : MonoBehaviour
 {
     public delegate void ParallaxCameraDelegate(Vector3 deltaMovement);
@@ -13,7 +13,8 @@ public class ParallaxCamera : MonoBehaviour
         oldPosition = transform.position;
     }
 
-    void Update()
+    // SỬA UPDATE THÀNH LATEUPDATE ĐỂ ĐỒNG BỘ VỚI CINEMACHINE
+    void LateUpdate()
     {
         if (transform.position != oldPosition)
         {
@@ -22,8 +23,13 @@ public class ParallaxCamera : MonoBehaviour
                 Vector3 delta = oldPosition - transform.position;
                 onCameraTranslate(delta);
             }
-
             oldPosition = transform.position;
         }
+    }
+
+    // HÀM NÀY DÙNG ĐỂ CHỐNG LỖI VĂNG HÌNH KHI CHUYỂN PHÒNG (TELEPORT)
+    public void ResetOldPosition()
+    {
+        oldPosition = transform.position;
     }
 }
