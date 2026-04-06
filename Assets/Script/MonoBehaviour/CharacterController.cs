@@ -556,29 +556,31 @@ public class PlayerController : MonoBehaviour
     }
 
     // Hàm Tách Biệt: Chỉ dùng cho chuyển phòng (Dựa trên thời gian và Vận tốc)
-    public void ForceWalkIntoRoom(Vector2 direction, float duration)
+    public void ForceWalkIntoRoom(Vector2 pushVelocity, float duration, float cameraTime)
     {
         if (currentState == PlayerState.Dead || currentState == PlayerState.ScriptedMove) return;
-        StartCoroutine(RoomTransitionWalkRoutine(direction, duration));
+        StartCoroutine(RoomTransitionWalkRoutine(pushVelocity, duration, cameraTime));
     }
 
-    private IEnumerator RoomTransitionWalkRoutine(Vector2 dir, float time)
+    private IEnumerator RoomTransitionWalkRoutine(Vector2 pushVelocity, float duration, float cameraTime)
     {
+        // Khóa hoàn toàn Input của người chơi
         SetState(PlayerState.ScriptedMove);
-        OnRunChanged?.Invoke(true); // Báo hiệu Animation chạy
 
+        // Bật animation chạy nếu đi ngang
+        if (pushVelocity.x != 0) OnRunChanged?.Invoke(true);
+
+        // 1. Đẩy nhân vật vào trong (0.2 giây)
         float elapsedTime = 0f;
-
-        while (elapsedTime < time)
+        while (elapsedTime < duration)
         {
-            // Dùng Vận tốc (Velocity) để KHÔNG làm hỏng Trọng lực khi đang nhảy/rơi
-            velocity.x = dir.x * moveSpeed;
+            transform.position += (Vector3)pushVelocity * Time.deltaTime;
+            if (rb != null) rb.position = transform.position;
 
-            // Xoay mặt
-            if (dir.x != 0)
+            if (pushVelocity.x != 0)
             {
                 Vector3 scale = transform.localScale;
-                scale.x = Mathf.Abs(scale.x) * Mathf.Sign(dir.x);
+                scale.x = Mathf.Abs(scale.x) * Mathf.Sign(pushVelocity.x);
                 transform.localScale = scale;
             }
 
@@ -586,9 +588,35 @@ public class PlayerController : MonoBehaviour
             yield return null;
         }
 
-        // Trả lại trạng thái bình thường
-        velocity.x = 0f;
-        OnRunChanged?.Invoke(false); // Tắt Animation chạy
+        // 2. Chờ Camera lia tới
+        // Nhân vật đã lọt vào phòng, tắt animation chạy để đứng Idle
+        if (pushVelocity.x != 0) OnRunChanged?.Invoke(false);
+        velocity = Vector3.zero; // Xóa sạch quán tính bị đẩy
+
+        // Tính toán xem Camera còn phải quay bao lâu nữa thì tới nơi
+        float waitTimeForCamera = Mathf.Max(0f, cameraTime - duration);
+        if (waitTimeForCamera > 0)
+        {
+            yield return new WaitForSeconds(waitTimeForCamera); // Chỉ dùng WaitForSeconds bình thường, không đụng TimeScale
+        }
+
+        // 3. Thêm thời gian nghỉ để người chơi quan sát phòng
+        // Màn hình đã cố định, cho người chơi thêm 0.15s nhìn ngắm bố cục bẫy
+        //yield return new WaitForSeconds(0.15f);
+
+        // 4. Ép nhảy (Nếu đi lên) và trả lại quyền di chuyển cho người chơi
+        // Nếu nhảy từ dưới lên trên -> Ép một lực nhảy
+        if (pushVelocity.y > 0)
+        {
+            velocity.y = jumpForce;
+            OnJumpPerformed?.Invoke();
+        }
+        else if (pushVelocity.y < 0) // Rớt từ trên xuống
+        {
+            velocity.y = 0;
+        }
+
+        // Mở khóa Input!
         SetState(PlayerState.Idle);
     }
 
@@ -1026,7 +1054,8 @@ public class PlayerController : MonoBehaviour
     {
         // Nếu đang bận việc riêng (Talking/Dead) thì không can thiệp
         if (currentState == PlayerState.Talking || currentState == PlayerState.Dead
-            || currentState == PlayerState.Grappling || currentState == PlayerState.GrappleFreeze) return;
+            || currentState == PlayerState.Grappling || currentState == PlayerState.GrappleFreeze
+            || currentState == PlayerState.ScriptedMove) return;
 
         if (isGrounded)
         {

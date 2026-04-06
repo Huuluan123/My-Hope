@@ -62,10 +62,10 @@ public class GameManager : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    private void Update()
-    {
-        if (State != GameState.Pause) Time.timeScale = gameSpeed;
-    }
+    //private void Update()
+    //{
+    //    if (State != GameState.Pause) Time.timeScale = gameSpeed;
+    //}
 #endif
 
     private void OnEnable()

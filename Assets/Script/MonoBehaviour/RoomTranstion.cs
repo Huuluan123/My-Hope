@@ -9,6 +9,9 @@ public class RoomTransitionScript : MonoBehaviour
     [Header("Auto Walk Settings")]
     [Tooltip("Time to push player (Seconds)")]
     [SerializeField] private float pushDuration = 0.2f;
+    [SerializeField] private float horizontalPushSpeed = 8f;   // Tốc độ lướt ngang
+    [SerializeField] private float downwardPushSpeed = 8f;     // Tốc độ rớt xuống
+    [SerializeField] private float upwardPushSpeed = 18f;      // Lực đẩy lên cực mạnh để qua mép
 
     private Collider2D roomCollider;
     private RoomManager myRoomManager;
@@ -66,35 +69,51 @@ public class RoomTransitionScript : MonoBehaviour
                 myRoomManager.OnRoomEntered();
             }
 
-            // 3. Ép đi lọt vào phòng
+            // 3. Ép đi lọt vào phòng (TÍNH THEO 4 CẠNH CỦA PHÒNG)
             PlayerController player = collision.GetComponent<PlayerController>();
             if (player != null)
             {
-                // Lấy tọa độ tâm phòng và tọa độ hiện tại của người chơi
-                Vector3 roomCenter = roomCollider.bounds.center;
+                Bounds bounds = roomCollider.bounds;
                 Vector3 playerPos = collision.transform.position;
 
-                // Tính khoảng cách từ người chơi nhìn về hướng tâm phòng
-                float diffX = roomCenter.x - playerPos.x;
-                float diffY = roomCenter.y - playerPos.y;
+                // Đo khoảng cách từ nhân vật đến 4 vách tường
+                float distToLeft = Mathf.Abs(playerPos.x - bounds.min.x);
+                float distToRight = Mathf.Abs(playerPos.x - bounds.max.x);
+                float distToBottom = Mathf.Abs(playerPos.y - bounds.min.y);
+                float distToTop = Mathf.Abs(playerPos.y - bounds.max.y);
 
-                Vector2 autoDirection = Vector2.zero;
+                // Tìm cạnh gần nhất
+                float minDist = Mathf.Min(distToLeft, distToRight, distToBottom, distToTop);
 
-                // Trục nào có khoảng cách chênh lệch lớn hơn thì ta ưu tiên đẩy theo trục đó
-                if (Mathf.Abs(diffX) > Mathf.Abs(diffY))
+                Vector2 pushVelocity = Vector2.zero;
+
+                if (minDist == distToLeft)
                 {
-                    // Đi vào từ cửa ngang (Trái hoặc Phải)
-                    // Mathf.Sign sẽ trả về 1 nếu diffX dương (đẩy sang phải), và -1 nếu diffX âm (đẩy sang trái)
-                    autoDirection = new Vector2(Mathf.Sign(diffX), 0f);
+                    pushVelocity = new Vector2(horizontalPushSpeed, 0f); // Vào mép trái -> Đẩy sang phải
                 }
-                else
+                else if (minDist == distToRight)
                 {
-                    // Đi vào từ cửa dọc (Rớt từ trên trần xuống, hoặc nảy từ dưới hố lên)
-                    autoDirection = new Vector2(0f, Mathf.Sign(diffY));
+                    pushVelocity = new Vector2(-horizontalPushSpeed, 0f); // Vào mép phải -> Đẩy sang trái
+                }
+                else if (minDist == distToBottom)
+                {
+                    pushVelocity = new Vector2(0f, upwardPushSpeed); // Vào mép dưới -> Vọt mạnh lên trên
+                }
+                else if (minDist == distToTop)
+                {
+                    pushVelocity = new Vector2(0f, -downwardPushSpeed); // Vào mép trên -> Rớt xuống dưới
                 }
 
-                // Gọi lệnh ép di chuyển bên script Player
-                player.ForceWalkIntoRoom(autoDirection, pushDuration);
+                // Đọc thời gian blend của camera để đồng bộ với thời gian đẩy
+                float cameraBlendTime = 0.75f; // Giá trị dự phòng
+                CinemachineBrain brain = Camera.main.GetComponent<CinemachineBrain>();
+                if (brain != null)
+                {
+                    cameraBlendTime = brain.DefaultBlend.Time;
+                }
+
+                // Gửi lệnh đẩy đi kèm theo thời gian chờ Camera
+                player.ForceWalkIntoRoom(pushVelocity, pushDuration, cameraBlendTime);
             }
         }
     }
