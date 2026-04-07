@@ -140,6 +140,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Respawn Settings")]
     [SerializeField] private Vector2 currentRespawnPoint;
+    [HideInInspector] public float lastSpawnTime;
     //[SerializeField] private float respawnDelay = 1f;
 
     [Header("Cutscene Settings")]
@@ -176,6 +177,8 @@ public class PlayerController : MonoBehaviour
     #region Unity Callbacks
     void Awake()
     {
+        lastSpawnTime = Time.unscaledTime;
+
         if (Instance == null) Instance = this;
         else
         {
@@ -1604,6 +1607,7 @@ public class PlayerController : MonoBehaviour
         // 1. Dịch chuyển nhân vật về điểm Checkpoint
         transform.position = currentRespawnPoint;
         if (rb != null) rb.position = currentRespawnPoint; // Cập nhật cả Rigidbody cho chắc chắn
+        lastSpawnTime = Time.unscaledTime;
 
         // 2. Reset lại các chỉ số quan trọng
         velocity = Vector3.zero;
