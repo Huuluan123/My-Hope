@@ -44,6 +44,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float airDeceleration = 40f; // Ma sát trên không (Thấp hơn để bay lượn mượt hơn)
 
     [Header("Jump Settings")]
+    [SerializeField] private float jumpHorizontalBoost = 5f; // Lực đẩy ngang khi nhảy (Nên set bằng khoảng 40-50% moveSpeed của bạn)
     [SerializeField] private const float skinWidth = 0.015f;
     [SerializeField] private float gravity = -40f;
     [SerializeField] private int verticalRayCount = 8;
@@ -137,6 +138,10 @@ public class PlayerController : MonoBehaviour
     [Header("Moving Platform Handle")]
     private Transform currentMovingPlatform;
     private Vector3 lastPlatformPosition;
+
+    [Header("One-Way Platform Settings")]
+    [SerializeField] private float oneWayDropGhostTime = 0.2f; // Thời gian đi xuyên sàn
+    private float ignoreOneWayTimer; // Bộ đếm lùi
 
     [Header("Respawn Settings")]
     [SerializeField] private Vector2 currentRespawnPoint;
@@ -273,6 +278,11 @@ public class PlayerController : MonoBehaviour
     void FixedUpdate()
     {
         wasGrounded = isGrounded;
+
+        if (ignoreOneWayTimer > 0)
+        {
+            ignoreOneWayTimer -= Time.deltaTime;
+        }
 
         // Process jump buffer & coyote here (FixedUpdate) so ground checks are up-to-date
         ProcessJumpBuffer();
@@ -654,6 +664,17 @@ public class PlayerController : MonoBehaviour
         // Nếu người chơi vừa bấm nhảy trong khoảng thời gian cho phép
         if (Time.time - lastJumpInputTime <= jumpBufferTime && CanJump)
         {
+            // ƯU TIÊN 0: ĐI XUỐNG ONE-WAY PLATFORM (Bấm Xuống + Nhảy)
+            if (moveInput.y < -0.1f && isGrounded)
+            {
+                // Cấp quyền tàng hình xuyên sàn One-way
+                ignoreOneWayTimer = oneWayDropGhostTime;
+
+                // Tiêu thụ input nhảy để KHÔNG kích hoạt nhảy lên trời
+                lastJumpInputTime = -999f;
+                return; // Thoát hàm ngay lập tức
+            }
+
             // ƯU TIÊN 1: NHẢY THƯỜNG (Từ mặt đất)
             // Kể cả khi đang sát tường nhưng chân vẫn chạm đất thì tính là nhảy thường
             if (Time.time - lastGroundedTime <= coyoteTime)
@@ -768,6 +789,18 @@ public class PlayerController : MonoBehaviour
             // Normal Jump
             velocity.y = jumpForce;
             //Debug.Log("Normal jump!");
+
+            if (moveInput.x != 0)
+            {
+                // Cộng thêm một lực đẩy ngang vào quán tính hiện tại
+                velocity.x += jumpHorizontalBoost * moveInput.x;
+
+                //Khóa không cho vượt quá tốc độ chạy tối đa (để tránh lạm dụng nhảy liên tục để tăng tốc)
+                if (Mathf.Abs(velocity.x) > moveSpeed)
+                {
+                    velocity.x = moveSpeed * Mathf.Sign(velocity.x);
+                }
+            }
         }
 
         // Cập nhật trạng thái
@@ -1213,6 +1246,9 @@ public class PlayerController : MonoBehaviour
                     // 2. Nếu đang rớt xuống, nhưng tia ray bắt đầu từ BÊN TRONG vật thể
                     // (hit.distance == 0 nghĩa là chân nhân vật đã lọt vào sàn lúc đang ở đỉnh cú nhảy -> Cho rớt xuyên nốt để không bị kẹt)
                     if (hit.distance == 0) continue;
+
+                    // 3. Đang rớt xuống trong thời gian xuyên qua One-way platform (ignoreOneWayTimer > 0) -> Bỏ qua va chạm
+                    if (ignoreOneWayTimer > 0) continue;
                 }
 
                 velocity.y = (hit.distance - skinWidth) * directionY / Time.fixedDeltaTime; // Tính lại vận tốc thực dựa trên quãng đường còn lại
