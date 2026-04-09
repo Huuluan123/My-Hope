@@ -47,6 +47,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float jumpHorizontalBoost = 5f; // Lực đẩy ngang khi nhảy (Nên set bằng khoảng 40-50% moveSpeed của bạn)
     [SerializeField] private const float skinWidth = 0.015f;
     [SerializeField] private float gravity = -40f;
+    [SerializeField] private float apexHangThreshold = 6f; // Ngưỡng vận tốc y để bắt đầu giảm trọng lực (Khi nhân vật đang ở gần đỉnh nhảy, tức là vận tốc y nhỏ hơn 2 đơn vị)
+    [SerializeField] private float apexHangMultiplier = 0.5f; // Hệ số nhân trọng lực khi ở trạng thái Apex Hang (0.5f nghĩa là giảm 50% lực hút, giúp nhân vật lơ lửng lâu hơn ở đỉnh nhảy)
     [SerializeField] private int verticalRayCount = 8;
     [SerializeField] private int horizontalRayCount = 8;
     float verticalRaySpacing;
@@ -370,7 +372,20 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            if (velocity.y > maxFallSpeed) velocity.y += gravity * Time.fixedDeltaTime;
+            float currentGravity = gravity;
+
+            if (Mathf.Abs(velocity.y) < apexHangThreshold && input.IsJumping)
+            {
+                currentGravity *= apexHangMultiplier; // Giảm 50% lực hút
+            }
+
+            // Nếu đang rơi nhanh hơn bình thường (VD: Người chơi bấm phím Xuống) -> (Tùy chọn Fast Fall nếu bạn muốn làm sau)
+
+            // Áp dụng trọng lực
+            if (velocity.y > maxFallSpeed)
+            {
+                velocity.y += currentGravity * Time.fixedDeltaTime;
+            }
         }
 
         HorizonalCollisionCheck();
