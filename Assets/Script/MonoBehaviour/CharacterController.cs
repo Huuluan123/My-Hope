@@ -13,6 +13,7 @@ public enum PlayerState
     OnAir,
     Sliding,
     Climbing,
+    Pushing,
 
     /* Nhóm khoá input */
     GrappleFreeze,
@@ -90,6 +91,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float lowStaminaThreshold = 25f; // Dưới mức này sẽ báo động
     private bool isLowStaminaState; // Biến nhớ để không spam event liên tục
 
+    [Header("Push/Pull Mechanics")]
+    [SerializeField] private float pushSpeedMultiplier = 0.5f; // Giảm 50% tốc độ khi đẩy hộp
+    [SerializeField] private float grabReachDistance = 0.1f;   // Tầm với tay ra lấy hộp
+    private IPushable currentPushable;
+
     [Header("Grappling Hand")]
     [SerializeField] private RobotHand robotHand;
     [SerializeField] private float pullSpeed = 30f;
@@ -163,6 +169,7 @@ public class PlayerController : MonoBehaviour
     private Rigidbody2D rb;
 
     private CharacterInput input;
+    [HideInInspector] public RoomManager currentRoom;
 
     [Header("Failsafe Mechanics")]
     [SerializeField] private float stuckTimeout = 3f;
@@ -413,6 +420,20 @@ public class PlayerController : MonoBehaviour
         }
         if (velocity.y != 0) VerticalCollisionCheck();
 
+        if (input.IsGrabbing) Debug.Log("Grabbing");
+        // CODE ÉP HỘP CHẠY THEO PLAYER
+        if (currentState == PlayerState.Pushing && currentPushable != null && velocity.x != 0)
+        {
+            float pushAmount = velocity.x * Time.fixedDeltaTime;
+            bool canMoveBox = currentPushable.TryMove(pushAmount);
+
+            // Nếu cái hộp bị kẹt vào tường, Player cũng phải bị chặn đứng lại
+            if (!canMoveBox)
+            {
+                velocity.x = 0;
+            }
+        }
+
         //Calculate new position
         Vector3 moveAmount = velocity * Time.fixedDeltaTime;
 
@@ -504,8 +525,9 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // 1. Tính vận tốc mục tiêu (Target Velocity)
-        float targetSpeed = moveInput.x * moveSpeed;
+        // 1. Tính vận tốc mục tiêu (Thêm logic giảm tốc độ nếu đang đẩy)
+        float speedMult = (currentState == PlayerState.Pushing) ? pushSpeedMultiplier : 1f;
+        float targetSpeed = moveInput.x * moveSpeed * speedMult;
 
         // 2. Chọn gia tốc phù hợp (Gia tốc tăng hay Gia tốc giảm?)
         float currentAccel;
@@ -1057,6 +1079,40 @@ public class PlayerController : MonoBehaviour
         }
     }
     #endregion
+
+    #region Push/pull mechanic handling
+    private void CheckPushPull()
+    {
+        // 1. ĐIỀU KIỆN THOÁT STATE PUSHING
+        if (currentState == PlayerState.Pushing)
+        {
+            // Nếu thả nút bám, rớt khỏi mặt đất, mất hộp, HOẶC NGƯỜI CHƠI BẤM LÊN (Muốn leo lên hộp)
+            if (!input.IsGrabbing || !isGrounded || currentPushable == null || moveInput.y > 0.1f)
+            {
+                currentPushable = null;
+                SetState(PlayerState.Idle);
+                return;
+            }
+        }
+
+        // 2. ĐIỀU KIỆN VÀO STATE PUSHING
+        // Chú ý: Chỉ được phép vào trạng thái đẩy nếu KHÔNG BẤM LÊN (moveInput.y <= 0.1f)
+        if (isGrounded && input.IsGrabbing && currentState != PlayerState.Pushing && currentStamina > 0 && moveInput.y <= 0.1f)
+        {
+            float facingDir = Mathf.Sign(transform.localScale.x);
+            Vector2 origin = col.bounds.center;
+
+            RaycastHit2D hit = Physics2D.Raycast(origin, Vector2.right * facingDir, col.bounds.extents.x + grabReachDistance, collisionMask);
+
+            if (hit && hit.collider.TryGetComponent(out IPushable pushable))
+            {
+                SetState(PlayerState.Pushing);
+                currentPushable = pushable;
+                velocity.x = 0;
+            }
+        }
+    }
+    #endregion
     #endregion
 
     #region State Machine
@@ -1074,6 +1130,7 @@ public class PlayerController : MonoBehaviour
                    currentState == PlayerState.Running ||
                    currentState == PlayerState.OnAir ||
                    currentState == PlayerState.Sliding ||
+                   currentState == PlayerState.Pushing ||
                    currentState == PlayerState.Climbing;
         }
     }
@@ -1120,6 +1177,9 @@ public class PlayerController : MonoBehaviour
 
             RechargeAbilities(); // Sạc lại kỹ năng mỗi lần chạm đất
         }
+
+        CheckPushPull();
+        if (currentState == PlayerState.Pushing) return; // Nếu đang đẩy hộp, không chạy logic chuyển sang state khác nữa
 
         CheckWallGrab(); // Kiểm tra có đang leo tưởng hay không
         if (isWallClimbing) return; // Nếu đang leo thì không chạy logic bên dưới
@@ -1171,6 +1231,33 @@ public class PlayerController : MonoBehaviour
         bool isRunning = (currentState == PlayerState.Running);
         OnRunChanged?.Invoke(isRunning);
         OnGroundedChanged?.Invoke(isGrounded);
+
+        // Xử lý Event Đẩy / Kéo hộp
+        if (currentState == PlayerState.Pushing)
+        {
+            // Hướng mặt của nhân vật (1 là phải, -1 là trái)
+            float facingDir = Mathf.Sign(transform.localScale.x);
+
+            // Hướng di chuyển từ Input
+            float moveDir = Mathf.Sign(moveInput.x);
+
+            // NẾU HƯỚNG MẶT CÙNG CHIỀU VỚI HƯỚNG ĐI -> ĐANG ĐẨY TỚI
+            if (facingDir == moveDir && moveInput.x != 0)
+            {
+                // Báo cho Animator chạy Animation ĐẨY
+                // OnPushingStateChanged?.Invoke(true, false); 
+            }
+            // NẾU HƯỚNG MẶT NGƯỢC CHIỀU VỚI HƯỚNG ĐI -> ĐANG KÉO LÙI
+            else if (facingDir != moveDir && moveInput.x != 0)
+            {
+                // Báo cho Animator chạy Animation KÉO
+                // OnPushingStateChanged?.Invoke(false, true);
+            }
+            else
+            {
+                // Đứng yên ôm hộp (Idle Push)
+            }
+        }
     }
 
     // Gọi hàm này khi bị rớt map, kẹt góc, hoặc văng quá xa
@@ -1365,6 +1452,15 @@ public class PlayerController : MonoBehaviour
             {
                 // Bỏ qua HOÀN TOÀN va chạm ngang với nền One-way để không bị vướng đầu/vai
                 if (hit.collider.CompareTag("OneWay")) continue;
+
+                // BỎ QUA VA CHẠM VỚI HỘP NẾU ĐANG TRONG STATE PUSHING VÀ ĐẨY TỚI
+                if (currentState == PlayerState.Pushing && hit.collider.TryGetComponent(out IPushable hitPushable))
+                {
+                    if (currentPushable == hitPushable && Mathf.Sign(directionX) == Mathf.Sign(moveInput.x))
+                    {
+                        continue;
+                    }
+                }
 
                 if (!hit.collider.CompareTag("Unclimbable")) canClimbCurrentWall = true;
 
@@ -1653,7 +1749,9 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(TransitionManager.Instance.transitionTime + 0.5f);
 
         // ANIMATION START đã xong, giờ mới cho nhân vật hiện lại và hồi sinh thực sự
-        
+
+        if (currentRoom != null) currentRoom.Reset(); // Reset trạng thái phòng nếu cần
+
 
         // 1. Dịch chuyển nhân vật về điểm Checkpoint
         transform.position = currentRespawnPoint;

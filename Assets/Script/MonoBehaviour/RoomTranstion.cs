@@ -51,6 +51,8 @@ public class RoomTransitionScript : MonoBehaviour
             PlayerController player = collision.GetComponent<PlayerController>();
             if (player == null) return;
 
+            player.currentRoom = myRoomManager; // Cập nhật phòng hiện tại
+
             // 1. TẤM KHIÊN BẢO VỆ SPAWN/RESPAWN
             if (Time.unscaledTime - player.lastSpawnTime < safeTimeAfterSpawn)
             {
