@@ -136,6 +136,11 @@ public class PlayerController : MonoBehaviour
         get { return velocity; }
     }
 
+    [Header("Input Forgiveness")]
+    [Tooltip("Input forgiveness time for down input when jumping (0.05s)")]
+    [SerializeField] private float downInputBufferTime = 0.05f;
+    private float lastDownInputTime = -999f;
+
     [Header("Ability Unlocks & Counters")]
     [Tooltip("Maximum number of times to shoot grappling hand while on air")]
     public int maxGrappleCount = 2;
@@ -279,6 +284,11 @@ public class PlayerController : MonoBehaviour
 
             moveInput = Apply8WaySnap(rawInput);
 
+            if (moveInput.y < -0.1f)
+            {
+                lastDownInputTime = Time.time;
+            }
+
             if (CanMove)
                 CalculateHorizontalMovement();
             else
@@ -357,7 +367,7 @@ public class PlayerController : MonoBehaviour
                         velocity.y = targetGrappleNode.boostForce;
                         velocity.x = 0; // Tùy chọn: Xóa quán tính ngang để bay thẳng lên
 
-                        RechargeAbilities(); // Reset lại số lượt nhảy/bắn móc để người chơi bay lượn tiếp
+                        //RechargeAbilities(); // Reset lại số lượt nhảy/bắn móc để người chơi bay lượn tiếp
 
                         currentState = PlayerState.OnAir;
                         isGrounded = false;
@@ -714,79 +724,74 @@ public class PlayerController : MonoBehaviour
 
     private void ProcessJumpBuffer()
     {
-        // Nếu người chơi vừa bấm nhảy trong khoảng thời gian cho phép
-        if (Time.time - lastJumpInputTime <= jumpBufferTime && CanJump)
+        // 1. Kiểm tra xem có lệnh nhảy hợp lệ đang chờ không
+        bool hasBufferedJump = (Time.time - lastJumpInputTime <= jumpBufferTime);
+
+        // NẾU KHÔNG CÓ LỆNH NHẢY HOẶC KHÔNG ĐƯỢC PHÉP NHẢY -> Dừng ngay
+        if (!hasBufferedJump || !CanJump) return;
+
+        // ƯU TIÊN 1: RỚT XUỐNG SÀN (Có Input Forgiveness 0.05s)
+        bool isTryingToDrop = (moveInput.y < -0.1f) || (Time.time - lastDownInputTime <= downInputBufferTime);
+
+        if (isTryingToDrop && isGrounded)
         {
-            // ƯU TIÊN 0: ĐI XUỐNG ONE-WAY PLATFORM (Bấm Xuống + Nhảy)
-            if (moveInput.y < -0.1f && isGrounded)
-            {
-                // Cấp quyền tàng hình xuyên sàn One-way
-                ignoreOneWayTimer = oneWayDropGhostTime;
+            ignoreOneWayTimer = oneWayDropGhostTime;
+            lastJumpInputTime = -999f;
+            return; // Xử lý xong, thoát ngay lập tức!
+        }
 
-                // Tiêu thụ input nhảy để KHÔNG kích hoạt nhảy lên trời
-                lastJumpInputTime = -999f;
-                return; // Thoát hàm ngay lập tức
+        // ƯU TIÊN 3: NHẢY THƯỜNG (Từ mặt đất)
+        if (Time.time - lastGroundedTime <= coyoteTime)
+        {
+            // Nếu người chơi đang đẩy/kéo hộp mà bấm nhảy -> Tự động buông tay!
+            if (currentState == PlayerState.Pushing)
+            {
+                SetState(PlayerState.Idle);
+                currentPushable = null;
             }
 
-            // ƯU TIÊN 1: NHẢY THƯỜNG (Từ mặt đất)
-            // Kể cả khi đang sát tường nhưng chân vẫn chạm đất thì tính là nhảy thường
-            if (Time.time - lastGroundedTime <= coyoteTime)
+            Jump(false, 0, false);
+            lastJumpInputTime = -999f;
+            return; // Thoát hàm!
+        }
+
+        // ƯU TIÊN 2: NHẢY TƯỜNG (Wall Jump)
+        // (Lưu ý: Check nhảy tường trước nhảy đất để tránh lỗi khi đứng sát tường ở dưới đất)
+        if (Time.time - lastWallTouchTime <= wallCoyoteTime)
+        {
+            bool isHoldingTowardsWall = (moveInput.x != 0 && Mathf.Sign(moveInput.x) == lastWallDirX);
+            bool isHoldingUp = moveInput.y > 0.1f;
+            bool isNotHolding = moveInput.magnitude < 0.1f;
+            bool isNotHoldingHorizontal = Mathf.Abs(moveInput.x) < 0.1f;
+
+            if (input.IsGrabbing && (isHoldingTowardsWall || isHoldingUp || isNotHolding) && currentStamina > 0)
             {
-                Jump(false, 0, false);
-                lastJumpInputTime = -999f; // Hủy buffer
+                Jump(true, lastWallDirX, true); // Climb Jump
+            }
+            else if (isNotHoldingHorizontal)
+            {
+                Jump(true, lastWallDirX, false, true); // Neutral Jump
+            }
+            else
+            {
+                Jump(true, lastWallDirX, false); // Wall Leap
             }
 
-            // ƯU TIÊN 2: NHẢY TƯỜNG (Sử dụng Wall Coyote Time thay vì check va chạm trực tiếp)
-            // Cho phép nhảy nếu vừa rời tường chưa quá 0.1 giây
-            else if (Time.time - lastWallTouchTime <= wallCoyoteTime)
-            {
-                // Kiểm tra Input người chơi để quyết định loại nhảy tường (Leap hay Climb)
-                // Phải dùng lastWallDirX vì lúc này hitWall có thể đã bằng false
-                bool isHoldingTowardsWall = (moveInput.x != 0 && Mathf.Sign(moveInput.x) == lastWallDirX);
-                //bool isHoldingAwayFromWall = (moveInput.x != 0 && Mathf.Sign(moveInput.x) != lastWallDirX);
-                bool isHoldingUp = moveInput.y > 0.1f;
-                bool isNotHolding = moveInput.magnitude < 0.1f;
-                bool isNotHoldingHorizontal = Mathf.Abs(moveInput.x) < 0.1f; // NGƯỜI CHƠI KHÔNG BẤM TRÁI/PHẢI
+            lastJumpInputTime = -999f;
+            lastWallTouchTime = -999f;
+            return; // Thoát hàm!
+        }
 
-                // NẾU: Đang giữ nút Bám VÀ (cố tình ép vào tường HOẶC hướng lên HOẶC không giữ hướng di chuyển) VÀ còn thể lực
-                if (input.IsGrabbing && (isHoldingTowardsWall || isHoldingUp || isNotHolding) && currentStamina > 0)
-                {
-                    // Trèo nhảy lên (Wall Climb Jump)
-                    Jump(true, lastWallDirX, true);
-                }
 
-                // B. Nhảy trung lập (Neutral Wall Jump) - 🌟 TÍNH NĂNG MỚI: Không bấm hướng ngang
-                else if (isNotHoldingHorizontal)
-                {
-                    Jump(true, lastWallDirX, false, true); // Gọi Jump với tham số isNeutral = true
-                }
-                else
-                {
-                    // CÁC TRƯỜNG HỢP KHÁC: Không bấm, bấm nhầm, bấm ra xa... Đều vọt ra ngoài!
-                    // (Wall Leap)
-                    Jump(true, lastWallDirX, false);
-                }
+        
 
-                // Tiêu thụ lệnh nhảy để không nhảy đúp
-                lastJumpInputTime = -999f;
-                // QUAN TRỌNG: Xóa luôn trí nhớ tường để tránh bị spam nhảy tường trên không!
-                lastWallTouchTime = -999f;
-            }
-
-            // ƯU TIÊN 3: NHẢY TRÊN KHÔNG (Double Jump, Triple Jump...)
-            else if (currentAirJumps < maxAirJumps)
-            {
-                currentAirJumps++; // Trừ đi 1 lượt nhảy trên không
-
-                // Gọi lại hàm Jump thường. Nó sẽ tự động đè velocity.y = jumpForce, 
-                // tạo ra cảm giác nảy lên cực kỳ chuẩn xác dù nhân vật đang rơi nhanh cỡ nào!
-                Jump(false, 0, false);
-
-                lastJumpInputTime = -999f; // Hủy buffer để không nhảy đúp
-
-                // (Tùy chọn) TODO: Bạn có thể gọi một âm thanh/Particle System khói nổ riêng cho Double Jump ở đây
-                Debug.Log($"Air Jump performed! Performed {currentAirJumps}/{maxAirJumps} attempts.");
-            }
+        // ƯU TIÊN 4: NHẢY TRÊN KHÔNG (Air Jump / Double Jump)
+        if (currentAirJumps < maxAirJumps)
+        {
+            currentAirJumps++;
+            Jump(false, 0, false);
+            lastJumpInputTime = -999f;
+            Debug.Log($"Air Jump performed! Performed {currentAirJumps}/{maxAirJumps} attempts.");
         }
     }
 
