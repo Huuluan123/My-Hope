@@ -6,6 +6,7 @@ public class GrappleNode : MonoBehaviour, IRoomElement
     [Header("Grapple Settings")]
     public float cooldownTime = 3f;
     public bool isActive = true;
+    public float boostForce = 18.4f; // Ngang JumpForce của player
 
     [Header("Visual Feedback")]
     [SerializeField] private SpriteRenderer spriteRenderer;

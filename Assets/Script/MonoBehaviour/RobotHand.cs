@@ -112,7 +112,7 @@ public class RobotHand : MonoBehaviour
 
                     // Nếu node đang bật -> Đã bắt trúng!
                     node.OnGrappleSuccess(); // Báo cho node biết để nó bắt đầu đếm lùi 3 giây tắt
-                    AttachToTarget(hit.centroid, hit.transform);
+                    AttachToTarget(hit.centroid, hit.transform, node);
                     validHitFound = true;
                     break;
                 }
@@ -128,7 +128,7 @@ public class RobotHand : MonoBehaviour
                 }
 
                 // 3. Trúng tường đất/đá bình thường
-                AttachToTarget(hit.centroid, hit.transform);
+                AttachToTarget(hit.centroid, hit.transform, node);
                 validHitFound = true;
                 break;
             }
@@ -153,12 +153,12 @@ public class RobotHand : MonoBehaviour
     }
 
     // Tách riêng logic bám dính ra một hàm phụ để dùng chung cho Tường và GrappleNode
-    private void AttachToTarget(Vector2 hitPosition, Transform hitTransform)
+    private void AttachToTarget(Vector2 hitPosition, Transform hitTransform, GrappleNode node)
     {
         transform.position = hitPosition;
         isFlying = false;
         isAttached = true;
-        playerController.StartPullingToHand(transform.position, hitTransform);
+        playerController.StartPullingToHand(transform.position, hitTransform, node); // Gửi Node cho Playercontroller
     }
 
     public void FinishGrapple()

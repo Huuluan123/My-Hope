@@ -93,6 +93,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RoomTranstionScript
   roomCamera: {fileID: 7874856184278163302}
   pushDuration: 0.2
+  horizontalPushSpeed: 8
+  downwardPushSpeed: 8
+  upwardPushSpeed: 18
+  safeTimeAfterSpawn: 0.5
   drawRoomBoudary: 1
 --- !u!1 &6083493676450104377
 GameObject:
