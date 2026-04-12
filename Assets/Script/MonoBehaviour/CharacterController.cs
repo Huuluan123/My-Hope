@@ -30,6 +30,7 @@ public class PlayerController : MonoBehaviour
     #region Variables
     [Header("Components")]
     public static PlayerController Instance; // Biến Singleton
+    private Vector2 baseScale;
 
     // Các biến có thể điều chỉnh trong Unity Editor
     [Header("Movement stats")]
@@ -56,6 +57,7 @@ public class PlayerController : MonoBehaviour
     float verticalRaySpacing;
     float horizontalRaySpacing;
 
+    #region Gameplay Mechanics
     [Header("Wall mechanics")]
     [SerializeField] private bool isWallSliding;
     [SerializeField] private bool isWallClimbing;
@@ -115,6 +117,20 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float cornerCorrectionSpeed = 0.1f; // Khoảng cách đẩy lên mỗi frame (Pixel perfect)
     [SerializeField] private float ceilingTolerance = 0.15f; // Độ rộng tối đa của góc có thể lách qua (Tùy theo chiều rộng nhân vật)
     [SerializeField] private float ceilingNudgeAmount = 0.2f;
+
+    [Header("Fast Fall & Visuals")]
+    [SerializeField] private float fastMaxFallSpeed = -35f; // (Nên để tầm -35 hoặc -30)
+    [SerializeField] private float fastMaxAccel = 40f; // Gia tốc mở rộng giới hạn rơi
+    private float currentMaxFall; // Biến lưu trữ giới hạn rơi hiện tại
+
+    [Header("Wall Speed Retention")]
+    [SerializeField] private float wallSpeedRetentionTime = 0.06f; // Nhớ vận tốc trong 0.06 giây (khoảng 3-4 frame)
+    private float wallSpeedRetentionTimer;
+    private float wallSpeedRetained;
+
+    [Header("Jump Thru Assist")]
+    [SerializeField] private float jumpThruAssistSpeed = 4f; // Tốc độ đẩy trượt lên bục
+    #endregion
 
     [Header("Movement and control")]
     // Biến để lưu trữ giá trị di chuyển
@@ -217,11 +233,13 @@ public class PlayerController : MonoBehaviour
         // Not using Unity's physics for movement, we'll handle it manually
         rb.bodyType = RigidbodyType2D.Kinematic; 
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+        baseScale = new Vector2(Mathf.Abs(transform.localScale.x), Mathf.Abs(transform.localScale.y));
     }
 
     void Start()
     {
         CalculateRaySpacing();
+        currentMaxFall = maxFallSpeed;
     }
 
     void Update()
@@ -408,17 +426,66 @@ public class PlayerController : MonoBehaviour
         {
             float currentGravity = gravity;
 
+            // 1. APEX HANG (Lơ lửng đỉnh)
             if (Mathf.Abs(velocity.y) < apexHangThreshold && input.IsJumping)
             {
-                currentGravity *= apexHangMultiplier; // Giảm 50% lực hút
+                currentGravity *= apexHangMultiplier;
             }
 
-            // Nếu đang rơi nhanh hơn bình thường (VD: Người chơi bấm phím Xuống) -> (Tùy chọn Fast Fall nếu bạn muốn làm sau)
+            // 2. FAST FALL
+            float mf = maxFallSpeed;
+            float fmf = fastMaxFallSpeed;
 
-            // Áp dụng trọng lực
-            if (velocity.y > maxFallSpeed)
+            // NẾU: Đang đè phím Xuống VÀ Vận tốc rơi đã chạm ngưỡng Max Fall bình thường
+            if (moveInput.y < -0.1f && velocity.y <= mf)
+            {
+                // Từ từ nới rộng giới hạn rơi bằng FastMaxAccel
+                currentMaxFall = Mathf.MoveTowards(currentMaxFall, fmf, fastMaxAccel * Time.fixedDeltaTime);
+            }
+            else
+            {
+                // Trả giới hạn rơi về bình thường
+                currentMaxFall = Mathf.MoveTowards(currentMaxFall, mf, fastMaxAccel * Time.fixedDeltaTime);
+            }
+
+            // Áp dụng trọng lực: Ép vận tốc tiến về giới hạn currentMaxFall
+            if (velocity.y > currentMaxFall)
             {
                 velocity.y += currentGravity * Time.fixedDeltaTime;
+
+                // Chặn không cho rớt lố giới hạn (phòng trường hợp trọng lực quá lớn)
+                if (velocity.y < currentMaxFall) velocity.y = currentMaxFall;
+            }
+        }
+
+        // 3. TRÍ NHỚ QUÁN TÍNH TƯỜNG (Wall Speed Retention)
+        // Chạy ngay trước HorizonalCollisionCheck
+        if (wallSpeedRetentionTimer > 0)
+        {
+            // Nếu bẻ lái ngược lại -> Hủy trí nhớ
+            if (moveInput.x != 0 && Mathf.Sign(moveInput.x) == -Mathf.Sign(wallSpeedRetained))
+            {
+                wallSpeedRetentionTimer = 0;
+            }
+            else 
+            {
+                // Kiểm tra xem phía trước mặt đã hết chướng ngại vật chưa
+                float checkDir = Mathf.Sign(wallSpeedRetained);
+                Vector2 originTop = (checkDir == 1) ? rayCastOrigins.topRight : rayCastOrigins.topLeft;
+                Vector2 originBottom = (checkDir == 1) ? rayCastOrigins.bottomRight : rayCastOrigins.bottomLeft;
+                
+                bool hitWall = Physics2D.Raycast(originTop, Vector2.right * checkDir, skinWidth * 2, collisionMask) ||
+                               Physics2D.Raycast(originBottom, Vector2.right * checkDir, skinWidth * 2, collisionMask);
+                               
+                if (!hitWall)
+                {
+                    velocity.x = wallSpeedRetained; // Trả lại vận tốc
+                    wallSpeedRetentionTimer = 0;
+                }
+                else
+                {
+                    wallSpeedRetentionTimer -= Time.fixedDeltaTime; // Tiếp tục chờ
+                }
             }
         }
 
@@ -446,6 +513,19 @@ public class PlayerController : MonoBehaviour
             }
         }
         if (velocity.y != 0) VerticalCollisionCheck();
+
+        // 4. JUMP THRU ASSIST (Trợ lực nhảy xuyên one-way platform)
+        // Nếu đang bay lên hoặc ở đỉnh, và nằm CÙNG LÚC bên trong nền One-way
+        if (velocity.y >= 0 && !isGrounded)
+        {
+            Collider2D jumpThruHit = Physics2D.OverlapBox(col.bounds.center, col.bounds.size, 0f, collisionMask);
+            if (jumpThruHit != null && jumpThruHit.CompareTag("OneWay"))
+            {
+                // Đẩy người chơi trượt nhẹ lên trên để lọt qua nhanh hơn, chống kẹt
+                transform.position += Vector3.up * jumpThruAssistSpeed * Time.fixedDeltaTime;
+                rb.position = transform.position;
+            }
+        }
 
         // CODE ÉP HỘP CHẠY THEO PLAYER
         if (currentState == PlayerState.Pushing && currentPushable != null && velocity.x != 0)
@@ -477,27 +557,51 @@ public class PlayerController : MonoBehaviour
         rb.MovePosition(targetPosition);
 
         // Flip character
-        HandleSpriteFlipping();
+        HandleSpriteVisuals();
     }
 
-    private void HandleSpriteFlipping()
+    private void HandleSpriteVisuals()
     {
-        // ƯU TIÊN 1: Khi bám tường hoặc trượt tường -> BẮT BUỘC quay mặt vào tường
+        Vector3 finalScale = transform.localScale;
+
+        // --- 1. XỬ LÝ LẬT MẶT (X) ---
         if (isWallSliding || isWallClimbing)
         {
-            if (wallDirX != 0) // Kiểm tra an toàn
-            {
-                // Ép Scale X mang dấu của wallDirX (1 là phải, -1 là trái)
-                transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x) * wallDirX, transform.localScale.y, transform.localScale.z);
-            }
+            if (wallDirX != 0)
+                finalScale.x = baseScale.x * wallDirX; // Lật mặt ra ngoài hoặc úp vào tường
         }
-        // ƯU TIÊN 2: Đi bộ/Nhảy bình thường -> Quay mặt theo phím bấm
-        // (Chỉ áp dụng khi không bị khóa hướng do vừa nhảy bật tường ra)
         else if (moveInput.x != 0 && wallJumpInputTimer <= 0 && CanMove)
         {
-            float inputDirection = Mathf.Sign(moveInput.x);
-            transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x) * inputDirection, transform.localScale.y, transform.localScale.z);
+            finalScale.x = baseScale.x * Mathf.Sign(moveInput.x); // Lật theo hướng di chuyển
         }
+        else
+        {
+            finalScale.x = baseScale.x * Mathf.Sign(finalScale.x); // Đứng yên thì giữ nguyên hướng mặt hiện tại
+        }
+
+        // --- 2. XỬ LÝ SQUASH & STRETCH FAST FALL (Y) ---
+        // Nếu đang rơi nhanh và đè phím xuống
+        if (velocity.y < 0 && moveInput.y < -0.1f)
+        {
+            // Tính tỷ lệ rơi từ MaxFallSpeed -> FastMaxFallSpeed (0 -> 1)
+            float fallLerp = Mathf.InverseLerp(maxFallSpeed, fastMaxFallSpeed, velocity.y);
+            fallLerp = Mathf.Clamp01(fallLerp); // Chặn trong khoảng [0, 1]
+
+            // Ép bề ngang (X) nhỏ lại 50%, kéo bề dọc (Y) dài ra 150% so với BASE SCALE
+            float scaleXMultiplier = Mathf.Lerp(1f, 0.5f, fallLerp);
+            float scaleYMultiplier = Mathf.Lerp(1f, 1.5f, fallLerp);
+
+            finalScale.x = Mathf.Sign(finalScale.x) * (baseScale.x * scaleXMultiplier); // Giữ nguyên dấu lật mặt
+            finalScale.y = baseScale.y * scaleYMultiplier;
+        }
+        else
+        {
+            // Trả lại hình dáng bình thường dựa trên BASE SCALE thay vì số 1f
+            finalScale.x = Mathf.Sign(finalScale.x) * baseScale.x;
+            finalScale.y = baseScale.y;
+        }
+
+        transform.localScale = finalScale;
     }
 
     // Tính toán vận tốc ngang
@@ -740,7 +844,7 @@ public class PlayerController : MonoBehaviour
             return; // Xử lý xong, thoát ngay lập tức!
         }
 
-        // ƯU TIÊN 3: NHẢY THƯỜNG (Từ mặt đất)
+        // ƯU TIÊN 2: NHẢY THƯỜNG (Từ mặt đất)
         if (Time.time - lastGroundedTime <= coyoteTime)
         {
             // Nếu người chơi đang đẩy/kéo hộp mà bấm nhảy -> Tự động buông tay!
@@ -755,7 +859,7 @@ public class PlayerController : MonoBehaviour
             return; // Thoát hàm!
         }
 
-        // ƯU TIÊN 2: NHẢY TƯỜNG (Wall Jump)
+        // ƯU TIÊN 3: NHẢY TƯỜNG (Wall Jump)
         // (Lưu ý: Check nhảy tường trước nhảy đất để tránh lỗi khi đứng sát tường ở dưới đất)
         if (Time.time - lastWallTouchTime <= wallCoyoteTime)
         {
@@ -781,9 +885,6 @@ public class PlayerController : MonoBehaviour
             lastWallTouchTime = -999f;
             return; // Thoát hàm!
         }
-
-
-        
 
         // ƯU TIÊN 4: NHẢY TRÊN KHÔNG (Air Jump / Double Jump)
         if (currentAirJumps < maxAirJumps)
@@ -1474,6 +1575,17 @@ public class PlayerController : MonoBehaviour
             {
                 // Bỏ qua HOÀN TOÀN va chạm ngang với nền One-way để không bị vướng đầu/vai
                 if (hit.collider.CompareTag("OneWay")) continue;
+
+                // LƯU LẠI VẬN TỐC TƯỜNG (Wall Speed Retention)
+                // Nếu đang bay với tốc độ cực nhanh (Lớn hơn moveSpeed) và đập mặt vào tường góc hẹp
+                if (Mathf.Abs(velocity.x) > moveSpeed && hit.distance > 0)
+                {
+                    if (wallSpeedRetentionTimer <= 0) // Chỉ ghi nhận lần chạm đầu tiên
+                    {
+                        wallSpeedRetained = velocity.x;
+                        wallSpeedRetentionTimer = wallSpeedRetentionTime;
+                    }
+                }
 
                 // BỎ QUA VA CHẠM VỚI HỘP NẾU ĐANG TRONG STATE PUSHING VÀ ĐẨY TỚI
                 if (currentState == PlayerState.Pushing && hit.collider.TryGetComponent(out IPushable hitPushable))
