@@ -7,7 +7,7 @@ public class RobotHand : MonoBehaviour
     [Header("Settings")]
     public float flySpeed = 40f;
     public float maxDistance = 10f;
-    public LayerMask wallLayer;
+    public LayerMask hitLayer;
 
     [Header("References")]
     public Transform launchPosition; // Vị trí bắt đầu của tay robot
@@ -41,22 +41,20 @@ public class RobotHand : MonoBehaviour
 
         transform.position = startPos;
 
-        // 1. Tính toán góc xoay đơn giản dựa trên Vector đã được Controller làm tròn chuẩn
+        // 1. Tính toán góc xoay
         float angle = Mathf.Atan2(targetDirection.y, targetDirection.x) * Mathf.Rad2Deg;
         transform.rotation = Quaternion.Euler(0, 0, angle);
 
-        // 2. Xử lý lật hình (Tránh lỗi lộn ngược tay khi bắn sang nửa bên trái)
+        // 2. Xử lý lật hình
         Vector3 handScale = baseScale;
         handScale.x = Mathf.Abs(handScale.x); // Luôn giữ X dương
 
         if (targetDirection.x < 0)
         {
-            // Bắn sang trái -> lật trục Y lại để bù trừ cho góc xoay
-            handScale.y = -baseScale.y;
+            handScale.y = -baseScale.y; // Bắn sang trái -> lật trục Y
         }
         else
         {
-            // Bắn sang phải/lên/xuống -> giữ nguyên trục Y
             handScale.y = Mathf.Abs(handScale.y);
         }
 
@@ -95,33 +93,51 @@ public class RobotHand : MonoBehaviour
         {
             float step = flySpeed * Time.deltaTime;
 
-            // DÙNG CIRCLE-CAST: Quét trước va chạm trên đoạn đường chuẩn bị bay tới
-            RaycastHit2D hit = Physics2D.CircleCast(transform.position, 0.2f, targetDirection, step, wallLayer);
+            // Lấy tất cả vật thể nằm trên đường đạn để kiểm tra xuyên thấu
+            RaycastHit2D[] hits = Physics2D.CircleCastAll(transform.position, 0.2f, targetDirection, step, hitLayer);
 
-            if (hit)
+            bool validHitFound = false;
+
+            foreach (RaycastHit2D hit in hits)
             {
-                // Trúng unclimbable! Thu hồi tay về ngay lập tức
+                // Bỏ qua nếu lỡ quét trúng chính bản thân người chơi
+                if (hit.collider.CompareTag("Player")) continue;
+
+                // 1. Kiểm tra tương tác với Grapple Node
+                GrappleNode node = hit.collider.GetComponent<GrappleNode>();
+                if (node != null)
+                {
+                    // Nếu node đang tắt (xám) -> Dùng "continue" để bỏ qua nó và xét vật thể tiếp theo đằng sau
+                    if (!node.isActive) continue;
+
+                    // Nếu node đang bật -> Đã bắt trúng!
+                    node.OnGrappleSuccess(); // Báo cho node biết để nó bắt đầu đếm lùi 3 giây tắt
+                    AttachToTarget(hit.centroid, hit.transform, node);
+                    validHitFound = true;
+                    break;
+                }
+
+                // 2. Trúng unclimbable (Tường trơn) -> Thu hồi tay về ngay lập tức
                 if (hit.collider.CompareTag("Unclimbable"))
                 {
                     isFlying = false;
-                    isReturning = true; // Dội ngược tay về
-                    playerController.CancelGrapple(); // Huỷ hành động bắn tay nếu trúng phải tường không thể bám
-                    return;
+                    isReturning = true;
+                    playerController.CancelGrapple();
+                    validHitFound = true;
+                    break;
                 }
 
-                // Trúng tường! Dịch chuyển tay đến đúng điểm chạm (Sát mép tường, KHÔNG bao giờ lọt vào trong)
-                transform.position = hit.centroid;
-
-                isFlying = false;
-                isAttached = true;
-                playerController.StartPullingToHand(transform.position, hit.transform);
+                // 3. Trúng tường đất/đá bình thường
+                AttachToTarget(hit.centroid, hit.transform, node);
+                validHitFound = true;
+                break;
             }
-            else
+
+            // Nếu không quét trúng thứ gì có thể bám được, tiếp tục lao về phía trước
+            if (!validHitFound)
             {
-                // Không trúng, an tâm bay tiếp
                 transform.Translate(targetDirection * step, Space.World);
 
-                // Xoay bàn tay theo hướng bay
                 float angle = Mathf.Atan2(targetDirection.y, targetDirection.x) * Mathf.Rad2Deg;
                 transform.rotation = Quaternion.Euler(0, 0, angle);
 
@@ -134,6 +150,15 @@ public class RobotHand : MonoBehaviour
                 }
             }
         }
+    }
+
+    // Tách riêng logic bám dính ra một hàm phụ để dùng chung cho Tường và GrappleNode
+    private void AttachToTarget(Vector2 hitPosition, Transform hitTransform, GrappleNode node)
+    {
+        transform.position = hitPosition;
+        isFlying = false;
+        isAttached = true;
+        playerController.StartPullingToHand(transform.position, hitTransform, node); // Gửi Node cho Playercontroller
     }
 
     public void FinishGrapple()

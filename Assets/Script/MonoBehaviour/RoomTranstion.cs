@@ -7,16 +7,19 @@ public class RoomTransitionScript : MonoBehaviour
     [SerializeField] private CinemachineCamera roomCamera;
 
     [Header("Auto Walk Settings")]
-    [Tooltip("Time to push player (Seconds)")]
     [SerializeField] private float pushDuration = 0.2f;
-    [SerializeField] private float horizontalPushSpeed = 8f;   // Tốc độ lướt ngang
-    [SerializeField] private float downwardPushSpeed = 8f;     // Tốc độ rớt xuống
-    [SerializeField] private float upwardPushSpeed = 18f;      // Lực đẩy lên cực mạnh để qua mép
+    [SerializeField] private float horizontalPushSpeed = 8f;
+    [SerializeField] private float downwardPushSpeed = 8f;
+    [SerializeField] private float upwardPushSpeed = 18f;
+
+    [Header("Spawn Protection")]
+    [SerializeField] private float safeTimeAfterSpawn = 0.5f;
 
     private Collider2D roomCollider;
     private RoomManager myRoomManager;
-    private bool isPlayerInside = false; // Biến ghi nhớ trạng thái
     public bool drawRoomBoudary = true;
+
+    public static RoomTransitionScript ActiveRoom;
 
     private void Awake()
     {
@@ -27,19 +30,14 @@ public class RoomTransitionScript : MonoBehaviour
     {
         myRoomManager = GetComponentInParent<RoomManager>();
 
-        // KIỂM TRA LÚC SPAWN: Tìm người chơi xem có đang đứng trong phòng này không
+        // KIỂM TRA LÚC SPAWN
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
         {
-            // Nếu tọa độ người chơi nằm gọn bên trong Collider của phòng này
             if (roomCollider.bounds.Contains(player.transform.position))
             {
-                isPlayerInside = true;
-
-                // (Tùy chọn) Ép camera chuyển luôn sang phòng này ngay lúc bắt đầu game
+                ActiveRoom = this; // Đăng ký đây là phòng hiện tại
                 CameraManager.SwitchCamera(roomCamera);
-
-                //Reset Parallax lúc mới vào game
                 ParallaxCamera pCam = Camera.main.GetComponent<ParallaxCamera>();
                 if (pCam != null) pCam.ResetOldPosition();
             }
@@ -50,69 +48,63 @@ public class RoomTransitionScript : MonoBehaviour
     {
         if (collision.CompareTag("Player"))
         {
-            // Nếu nhân vật ĐÃ Ở SẴN trong phòng từ đầu, BỎ QUA lệnh đẩy!
-            if (isPlayerInside) return;
+            PlayerController player = collision.GetComponent<PlayerController>();
+            if (player == null) return;
 
-            // Đánh dấu là nhân vật vừa mới bước vào
-            isPlayerInside = true;
+            player.currentRoom = myRoomManager; // Cập nhật phòng hiện tại
 
-            // 1. Chuyển Camera
-            CameraManager.SwitchCamera(roomCamera);
-
-            //Reset Parallax khi đổi phòng
-            ParallaxCamera pCam = Camera.main.GetComponent<ParallaxCamera>();
-            if (pCam != null) pCam.ResetOldPosition();
-
-            // 2. Reset các toàn bộ vật thể trong phòng (nếu có)
-            if (myRoomManager != null)
+            // 1. TẤM KHIÊN BẢO VỆ SPAWN/RESPAWN
+            if (Time.unscaledTime - player.lastSpawnTime < safeTimeAfterSpawn)
             {
-                myRoomManager.OnRoomEntered();
+                ActiveRoom = this;
+                CameraManager.SwitchCamera(roomCamera);
+                ParallaxCamera pCam = Camera.main.GetComponent<ParallaxCamera>();
+                if (pCam != null) pCam.ResetOldPosition();
+                return;
             }
 
-            // 3. Ép đi lọt vào phòng (TÍNH THEO 4 CẠNH CỦA PHÒNG)
-            PlayerController player = collision.GetComponent<PlayerController>();
-            if (player != null)
+            // Nếu người chơi ĐÃ Ở SẴN trong phòng này rồi -> Bỏ qua
+            if (ActiveRoom == this) return;
+
+            // 2. 🌟 KIỂM TRA XEM CÓ ĐẾN TỪ PHÒNG KHÁC KHÔNG
+            // Nếu ActiveRoom != null, tức là người chơi vừa bước từ phòng A sang phòng B
+            // Nếu ActiveRoom == null, tức là người chơi vừa rơi từ vùng không gian trống vào
+            bool cameFromAnotherRoom = (ActiveRoom != null);
+
+            // Cập nhật lại định vị: Phòng hiện tại giờ là phòng này
+            ActiveRoom = this;
+
+            // 3. Chuyển Camera & Reset vật thể
+            float cameraBlendTime = 0.75f;
+            CinemachineBrain brain = Camera.main.GetComponent<CinemachineBrain>();
+            if (brain != null) cameraBlendTime = brain.DefaultBlend.Time;
+
+            CameraManager.SwitchCamera(roomCamera);
+            ParallaxCamera pCam2 = Camera.main.GetComponent<ParallaxCamera>();
+            if (pCam2 != null) pCam2.ResetOldPosition();
+
+            if (myRoomManager != null) myRoomManager.OnRoomEntered();
+
+            // 4. CHỈ ÉP ĐẨY NẾU NGƯỜI CHƠI ĐẾN TỪ PHÒNG KHÁC
+            if (cameFromAnotherRoom)
             {
                 Bounds bounds = roomCollider.bounds;
                 Vector3 playerPos = collision.transform.position;
 
-                // Đo khoảng cách từ nhân vật đến 4 vách tường
                 float distToLeft = Mathf.Abs(playerPos.x - bounds.min.x);
                 float distToRight = Mathf.Abs(playerPos.x - bounds.max.x);
                 float distToBottom = Mathf.Abs(playerPos.y - bounds.min.y);
                 float distToTop = Mathf.Abs(playerPos.y - bounds.max.y);
 
-                // Tìm cạnh gần nhất
                 float minDist = Mathf.Min(distToLeft, distToRight, distToBottom, distToTop);
 
                 Vector2 pushVelocity = Vector2.zero;
 
-                if (minDist == distToLeft)
-                {
-                    pushVelocity = new Vector2(horizontalPushSpeed, 0f); // Vào mép trái -> Đẩy sang phải
-                }
-                else if (minDist == distToRight)
-                {
-                    pushVelocity = new Vector2(-horizontalPushSpeed, 0f); // Vào mép phải -> Đẩy sang trái
-                }
-                else if (minDist == distToBottom)
-                {
-                    pushVelocity = new Vector2(0f, upwardPushSpeed); // Vào mép dưới -> Vọt mạnh lên trên
-                }
-                else if (minDist == distToTop)
-                {
-                    pushVelocity = new Vector2(0f, -downwardPushSpeed); // Vào mép trên -> Rớt xuống dưới
-                }
+                if (minDist == distToLeft) pushVelocity = new Vector2(horizontalPushSpeed, 0f);
+                else if (minDist == distToRight) pushVelocity = new Vector2(-horizontalPushSpeed, 0f);
+                else if (minDist == distToBottom) pushVelocity = new Vector2(0f, upwardPushSpeed);
+                else if (minDist == distToTop) pushVelocity = new Vector2(0f, -downwardPushSpeed);
 
-                // Đọc thời gian blend của camera để đồng bộ với thời gian đẩy
-                float cameraBlendTime = 0.75f; // Giá trị dự phòng
-                CinemachineBrain brain = Camera.main.GetComponent<CinemachineBrain>();
-                if (brain != null)
-                {
-                    cameraBlendTime = brain.DefaultBlend.Time;
-                }
-
-                // Gửi lệnh đẩy đi kèm theo thời gian chờ Camera
                 player.ForceWalkIntoRoom(pushVelocity, pushDuration, cameraBlendTime);
             }
         }
@@ -122,12 +114,16 @@ public class RoomTransitionScript : MonoBehaviour
     {
         if (collision.CompareTag("Player"))
         {
-            // Khi nhân vật bước TRỞ RA khỏi phòng, reset lại trí nhớ của phòng
-            isPlayerInside = false;
+            // 🌟 LOGIC CHỐNG XUNG ĐỘT (Race Condition):
+            // Nếu người chơi rời khỏi phòng này, VÀ phòng này vẫn đang được ghi nhận là phòng hiện tại
+            // -> Nghĩa là người chơi đã bước ra ngoài một "vùng trống" không thuộc về bất kỳ phòng nào.
+            if (ActiveRoom == this)
+            {
+                ActiveRoom = null;
+            }
         }
     }
 
-    // Hàm vẽ viền phòng
     private void OnDrawGizmos()
     {
         if (drawRoomBoudary)
@@ -135,10 +131,7 @@ public class RoomTransitionScript : MonoBehaviour
             Collider2D col = GetComponent<Collider2D>();
             if (col != null)
             {
-                // Chọn một màu nổi bật (VD: Màu vàng trong suốt)
                 Gizmos.color = new Color(1f, 0.92f, 0.016f, 0.5f);
-
-                // Vẽ một cái khung viền bao quanh toàn bộ Collider của phòng
                 Gizmos.DrawWireCube(col.bounds.center, col.bounds.size);
             }
         }
