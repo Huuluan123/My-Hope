@@ -58,7 +58,7 @@ public class PushableBox : MonoBehaviour, IPushable, IRoomElement
     // LOGIC KHI BỊ NGƯỜI CHƠI KÉO/ĐẨY
     public bool TryMove(float amount)
     {
-        Debug.Log("Try move box with amount: " + amount / Time.fixedDeltaTime);
+        //Debug.Log("Try move box with amount: " + amount / Time.fixedDeltaTime);
         if (amount == 0) return true;
 
         float direction = Mathf.Sign(amount);

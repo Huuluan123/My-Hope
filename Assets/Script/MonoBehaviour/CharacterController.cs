@@ -138,6 +138,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private PlayerState currentState;
     [SerializeField] private Vector2 moveInput;
     [SerializeField] private bool isGrounded; // Biến kiểm tra nhân vật có đang chạm đất không
+    [SerializeField] private bool isStandingOnOneWay;
     private bool wasGrounded;
     [SerializeField] private bool hitLeftWall;
     [SerializeField] private bool hitRightWall;
@@ -302,7 +303,7 @@ public class PlayerController : MonoBehaviour
 
             moveInput = Apply8WaySnap(rawInput);
 
-            if (moveInput.y < -0.1f)
+            if (moveInput.x == 0 && moveInput.y == -1)
             {
                 lastDownInputTime = Time.time;
             }
@@ -437,7 +438,7 @@ public class PlayerController : MonoBehaviour
             float fmf = fastMaxFallSpeed;
 
             // NẾU: Đang đè phím Xuống VÀ Vận tốc rơi đã chạm ngưỡng Max Fall bình thường
-            if (moveInput.y < -0.1f && velocity.y <= mf)
+            if (moveInput.x == 0 && moveInput.y == -1 && velocity.y <= mf)
             {
                 // Từ từ nới rộng giới hạn rơi bằng FastMaxAccel
                 currentMaxFall = Mathf.MoveTowards(currentMaxFall, fmf, fastMaxAccel * Time.fixedDeltaTime);
@@ -835,13 +836,19 @@ public class PlayerController : MonoBehaviour
         if (!hasBufferedJump || !CanJump) return;
 
         // ƯU TIÊN 1: RỚT XUỐNG SÀN (Có Input Forgiveness 0.05s)
-        bool isTryingToDrop = (moveInput.y < -0.1f) || (Time.time - lastDownInputTime <= downInputBufferTime);
+        // Chuẩn hóa tuyệt đối: Hướng phải BẰNG 0 (không ấn trái/phải) và Y BẰNG -1 (Kéo gạt hướng xuống dưới)
+        bool isTryingToDrop = (moveInput.x == 0 && moveInput.y == -1) || (Time.time - lastDownInputTime <= downInputBufferTime);
 
         if (isTryingToDrop && isGrounded)
         {
-            ignoreOneWayTimer = oneWayDropGhostTime;
-            lastJumpInputTime = -999f;
-            return; // Xử lý xong, thoát ngay lập tức!
+            // CHỈ CHO RỚT NẾU THỰC SỰ ĐỨNG TRÊN ONE-WAY
+            if (isStandingOnOneWay)
+            {
+                ignoreOneWayTimer = oneWayDropGhostTime;
+                lastJumpInputTime = -999f;
+                return; // Xử lý xong, thoát hàm
+            }
+            // Nếu đứng trên đất cứng, nó sẽ bỏ qua lệnh Drop này và chạy thẳng xuống lệnh Nhảy Thường bên dưới!
         }
 
         // ƯU TIÊN 2: NHẢY THƯỜNG (Từ mặt đất)
@@ -864,7 +871,7 @@ public class PlayerController : MonoBehaviour
         if (Time.time - lastWallTouchTime <= wallCoyoteTime)
         {
             bool isHoldingTowardsWall = (moveInput.x != 0 && Mathf.Sign(moveInput.x) == lastWallDirX);
-            bool isHoldingUp = moveInput.y > 0.1f;
+            bool isHoldingUp = (moveInput.y == 1);
             bool isNotHolding = moveInput.magnitude < 0.1f;
             bool isNotHoldingHorizontal = Mathf.Abs(moveInput.x) < 0.1f;
 
@@ -892,7 +899,7 @@ public class PlayerController : MonoBehaviour
             currentAirJumps++;
             Jump(false, 0, false);
             lastJumpInputTime = -999f;
-            Debug.Log($"Air Jump performed! Performed {currentAirJumps}/{maxAirJumps} attempts.");
+            //Debug.Log($"Air Jump performed! Performed {currentAirJumps}/{maxAirJumps} attempts.");
         }
     }
 
@@ -997,12 +1004,12 @@ public class PlayerController : MonoBehaviour
         else
         {
             // --- BƯỚC 2: XỬ LÝ LEO TRÈO BÌNH THƯỜNG (Khi đã bám chắc) ---
-            if (moveInput.y > 0)
+            if (moveInput.y == 1)
             {
                 velocity.y = moveInput.y * wallClimbSpeed;
                 CheckForLedge(); // Hàm này có thể dùng để gọi ClimbHop() khi đã leo hẳn lên mép
             }
-            else if (moveInput.y < 0)
+            else if (moveInput.y == -1)
             {
                 velocity.y = moveInput.y * wallClimbDownSpeed;
             }
@@ -1210,7 +1217,7 @@ public class PlayerController : MonoBehaviour
         if (currentState == PlayerState.Pushing)
         {
             // Nếu thả nút bám, rớt khỏi mặt đất, mất hộp, HOẶC NGƯỜI CHƠI BẤM LÊN (Muốn leo lên hộp)
-            if (!input.IsGrabbing || !isGrounded || currentPushable == null || moveInput.y > 0.1f)
+            if (!input.IsGrabbing || !isGrounded || currentPushable == null || moveInput.y == 1)
             {
                 currentPushable = null;
                 SetState(PlayerState.Idle);
@@ -1219,8 +1226,8 @@ public class PlayerController : MonoBehaviour
         }
 
         // 2. ĐIỀU KIỆN VÀO STATE PUSHING
-        // Chú ý: Chỉ được phép vào trạng thái đẩy nếu KHÔNG BẤM LÊN (moveInput.y <= 0.1f)
-        if (isGrounded && input.IsGrabbing && currentState != PlayerState.Pushing && currentStamina > 0 && moveInput.y <= 0.1f)
+        // Chú ý: Chỉ được phép vào trạng thái đẩy nếu KHÔNG BẤM LÊN (moveInput.y != 1)
+        if (isGrounded && input.IsGrabbing && currentState != PlayerState.Pushing && currentStamina > 0 && moveInput.y != 1)
         {
             float facingDir = Mathf.Sign(transform.localScale.x);
             Vector2 origin = col.bounds.center;
@@ -1444,9 +1451,13 @@ public class PlayerController : MonoBehaviour
         if (directionY == -1 || velocity.y > 0)
         {
             isGrounded = false;
+            isStandingOnOneWay = false;
         }
 
         Transform hitPlatform = null; // Biến tạm để lưu bệ đỡ nếu dẫm trúng trong frame này
+
+        bool foundSolid = false;
+        bool foundOneWay = false;
 
         for (int i = 0; i < verticalRayCount; i++)
         {
@@ -1474,6 +1485,13 @@ public class PlayerController : MonoBehaviour
 
                     // 3. Đang rớt xuống trong thời gian xuyên qua One-way platform (ignoreOneWayTimer > 0) -> Bỏ qua va chạm
                     if (ignoreOneWayTimer > 0) continue;
+
+                    foundOneWay = true; // Ghi nhận có chạm One-way Platform
+                }
+
+                else
+                {
+                    foundSolid = true; // Ghi nhận có chạm vào mặt đất bình thường (không phải One-way)
                 }
 
                 velocity.y = (hit.distance - skinWidth) * directionY / Time.fixedDeltaTime; // Tính lại vận tốc thực dựa trên quãng đường còn lại
@@ -1510,6 +1528,12 @@ public class PlayerController : MonoBehaviour
                     velocity.y = 0; // Tùy chọn: Đụng trần thì dừng hẳn lực nảy
                 }
             }
+        }
+
+        // Nếu dẫm lên One-way mà KHÔNG bị đè lên nền đất cứng (tránh lỗi mép lề)
+        if (isGrounded)
+        {
+            isStandingOnOneWay = foundOneWay && !foundSolid;
         }
 
         if (hitPlatform != null)
@@ -1778,7 +1802,7 @@ public class PlayerController : MonoBehaviour
 
                     transform.position += (Vector3)separationVector;
                     rb.position = (Vector2)transform.position;
-                    //Debug.Log("Resolved Overlap");
+                    Debug.Log("Resolved Overlap");
                     //if (isGrounded) Debug.Log("Is grounded during overlap resolution");
                 }
             }
