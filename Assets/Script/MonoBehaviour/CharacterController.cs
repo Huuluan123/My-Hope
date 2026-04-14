@@ -142,6 +142,8 @@ public class PlayerController : MonoBehaviour
     private bool wasGrounded;
     [SerializeField] private bool hitLeftWall;
     [SerializeField] private bool hitRightWall;
+    private bool hitCeiling;
+    private bool hitFloor;
     private bool canClimbCurrentWall;
 
     [Space]
@@ -366,6 +368,17 @@ public class PlayerController : MonoBehaviour
             return; // Đứng yên tuyệt đối trên không
         }
 
+        if (!CanMove && currentState != PlayerState.Grappling) return;
+
+        UpdateRayCastOrigin();
+
+        hitLeftWall = false;
+        hitRightWall = false;
+        isWallSliding = false;
+        hitCeiling = false;
+        hitFloor = false;
+
+
         // Xử lí kéo tới mục tiêu khi đang bị móc (Grappling)
         if (currentState == PlayerState.Grappling)
         {
@@ -374,52 +387,12 @@ public class PlayerController : MonoBehaviour
             if (grappleTarget != Vector2.zero)
             {
                 // Dịch chuyển nhân vật lao vút tới mục tiêu
-                transform.position = Vector2.MoveTowards(transform.position, grappleTarget, pullSpeed * Time.fixedDeltaTime);
-                rb.position = transform.position;
-
-                // Nếu chạm tay
-                if (Vector2.Distance(transform.position, grappleTarget) < 0.6f)
-                {
-                    if (targetGrappleNode != null)
-                    {
-                        // TỚI ĐÍCH LÀ GRAPPLE NODE -> BẬT TUNG LÊN!
-                        velocity.y = targetGrappleNode.boostForce;
-                        velocity.x = 0; // Tùy chọn: Xóa quán tính ngang để bay thẳng lên
-
-                        //RechargeAbilities(); // Reset lại số lượt nhảy/bắn móc để người chơi bay lượn tiếp
-
-                        currentState = PlayerState.OnAir;
-                        isGrounded = false;
-                        targetGrappleNode = null; // Xóa trí nhớ
-
-                        OnJumpPerformed?.Invoke(); // Gọi event phát Animation nhảy
-                    }
-                    else
-                    {
-                        // Đẩy người chơi về phía tường để bám
-                        transform.position = new Vector3(transform.position.x + (wallDirX * 0.3f), transform.position.y, transform.position.z);
-                        rb.position = transform.position;
-                        // Chuyển ngay sang bám tường
-                        currentState = PlayerState.OnAir;
-                        isGrounded = false;
-                    }
-
-                    grappleTarget = Vector2.zero; // Xóa mục tiêu
-                    if (robotHand != null) robotHand.FinishGrapple(); // Gọi tay thu hồi lại
-                }
+                Vector2 dir = (grappleTarget - (Vector2)transform.position).normalized;
+                velocity = dir * pullSpeed; // Cấp vận tốc cực mạnh về phía mục tiêu
             }
-            return; // Dừng hàm, KHÔNG chạy các code trọng lực và Raycast bên dưới
         }
 
-        if (!CanMove) return;
-
-        UpdateRayCastOrigin();
-
-        hitLeftWall = false;
-        hitRightWall = false;
-        isWallSliding = false;
-
-        if (currentState == PlayerState.Climbing)
+        else if (currentState == PlayerState.Climbing)
         {
             HandleWallClimbingPhysics();
         }
@@ -559,6 +532,56 @@ public class PlayerController : MonoBehaviour
 
         // Flip character
         HandleSpriteVisuals();
+
+        // KIỂM TRA ĐIỀU KIỆN DỪNG GRAPPLE SAU KHI ĐÃ TÍNH TOÁN VA CHẠM XONG
+        if (currentState == PlayerState.Grappling && grappleTarget != Vector2.zero)
+        {
+            // Khoảng cách còn lại (Dùng khoảng cách rất nhỏ để bù trừ frame-rate)
+            float distToTarget = Vector2.Distance(transform.position, grappleTarget);
+
+            // TÍNH TOÁN HƯỚNG BỊ KÉO CỦA Y
+            Vector2 pullDir = (grappleTarget - (Vector2)transform.position).normalized;
+
+            // CHỈ NGẮT DO SÀN NẾU ĐANG BỊ KÉO XUỐNG DƯỚI
+            // (Dùng < -0.1f thay vì < 0 để tránh sai số dấu phẩy động khi bắn ngang hoàn toàn)
+            bool isPullingDownward = pullDir.y < -0.1f;
+            bool validFloorHit = hitFloor && isPullingDownward;
+
+            // DỪNG LẠI NẾU: Tới nơi HOẶC Đập đầu vào tường/đất giữa chừng do Collision Check phát hiện
+            if (distToTarget <= (pullSpeed * Time.fixedDeltaTime) || hitLeftWall || hitRightWall || hitCeiling || validFloorHit)
+            {
+                if (targetGrappleNode != null)
+                {
+                    // TỚI ĐÍCH LÀ NODE -> BUNG LÊN
+                    velocity.y = targetGrappleNode.boostForce;
+                    velocity.x = 0;
+                    currentState = PlayerState.OnAir;
+                    isGrounded = false;
+                    targetGrappleNode = null;
+                    OnJumpPerformed?.Invoke();
+                }
+                else
+                {
+                    // ĐỤNG TƯỜNG HOẶC TỚI NƠI -> BÁM TƯỜNG (Hoặc Rớt xuống nếu tường không bám được)
+                    currentState = PlayerState.OnAir;
+                    if (!validFloorHit) isGrounded = false;
+                    velocity = Vector3.zero; // Xóa quán tính bay
+
+                    // Đảm bảo không đẩy vào tường nếu đang dừng vì đụng sàn hoặc trần
+                    if (!validFloorHit && !hitCeiling)
+                    {
+                        // Ép lún thêm 1 pixel để frame sau hàm CheckWallGrab chắc chắn bắt được
+                        if (hitLeftWall || hitRightWall)
+                            transform.position += Vector3.right * wallDirX * skinWidth;
+                    }
+
+                    rb.position = transform.position;
+                }
+
+                grappleTarget = Vector2.zero;
+                if (robotHand != null) robotHand.FinishGrapple();
+            }
+        }
     }
 
     private void HandleSpriteVisuals()
@@ -1190,12 +1213,15 @@ public class PlayerController : MonoBehaviour
     }
 
     // RobotHand gọi hàm này khi nó cắm trúng vách tường
-    public void StartPullingToHand(Vector2 targetPos, Transform wallHit, GrappleNode node = null)
+    public void StartPullingToHand(Vector2 pullDelta, Transform wallHit, GrappleNode node = null)
     {
-        grappleTarget = targetPos;
-        // Tự động nhận diện vách tường nằm bên nào để nhân vật úp mặt vào tường chuẩn xác
-        wallDirX = (grappleTarget.x > transform.position.x) ? 1 : -1;
-        targetGrappleNode = node; // 🌟 LƯU LẠI NODE
+        // Vị trí đích = Vị trí hiện tại của Player + Quãng đường bay của tay
+        grappleTarget = (Vector2)transform.position + pullDelta;
+        //Debug.Log("Pull delta: " + pullDelta + ", Target grapple position: " + grappleTarget);
+
+        // Hướng bay để ép mặt vào tường
+        wallDirX = (pullDelta.x > 0) ? 1 : -1;
+        targetGrappleNode = node; // LƯU LẠI NODE
     }
 
     // RobotHand gọi hàm này khi cắm trượt (bay hết cỡ không trúng gì)
@@ -1499,6 +1525,7 @@ public class PlayerController : MonoBehaviour
 
                 if (directionY == -1) // Đang rơi xuống
                 {
+                    hitFloor = true;
                     if (!wasGrounded)
                     {
                         // Chỉ phát âm thanh chạm đất nếu trước đó ĐANG RƠI hoặc ĐANG TRƯỢT TƯỜNG
@@ -1525,6 +1552,7 @@ public class PlayerController : MonoBehaviour
                 }
                 else // Đang nhảy lên đụng trần
                 {
+                    hitCeiling = true;
                     velocity.y = 0; // Tùy chọn: Đụng trần thì dừng hẳn lực nảy
                 }
             }
