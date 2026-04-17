@@ -56,10 +56,9 @@ public class PushableBox : MonoBehaviour, IPushable, IRoomElement
     }
 
     // LOGIC KHI BỊ NGƯỜI CHƠI KÉO/ĐẨY
-    public bool TryMove(float amount)
+    public float TryMove(float amount)
     {
-        //Debug.Log("Try move box with amount: " + amount / Time.fixedDeltaTime);
-        if (amount == 0) return true;
+        if (amount == 0) return 0f;
 
         float direction = Mathf.Sign(amount);
         float distance = Mathf.Abs(amount);
@@ -67,19 +66,18 @@ public class PushableBox : MonoBehaviour, IPushable, IRoomElement
         // Quét xem phía trước hộp có bức tường nào không
         RaycastHit2D hit = Physics2D.BoxCast(col.bounds.center, col.bounds.size, 0f, Vector2.right * direction, distance + skinWidth, collisionMask);
 
+        float actualMove = amount;
+
         if (hit)
         {
-            // Bị kẹt tường! Chỉ nhích đến sát tường rồi dừng lại
-            transform.position += Vector3.right * direction * (hit.distance - skinWidth);
-            rb.position = transform.position;
-            return false; // Báo cho Player biết là bị kẹt rồi, phải dừng lại!
+            // Bị kẹt tường! Tính toán quãng đường thực tế chỉ nhích đến sát tường
+            actualMove = (hit.distance - skinWidth) * direction;
         }
-        else
-        {
-            // Trống trải, thoải mái di chuyển
-            transform.position += Vector3.right * amount;
-            rb.position = transform.position;
-            return true;
-        }
+
+        // Cập nhật vị trí của hộp
+        transform.position += Vector3.right * actualMove;
+        rb.position = transform.position;
+
+        return actualMove; // Trả về quãng đường thực tế hộp đi được!
     }
 }

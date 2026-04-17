@@ -1,6 +1,6 @@
 public interface IPushable
 {
     // Hàm này nhận vào quãng đường (amount) cần di chuyển. 
-    // Trả về TRUE nếu đẩy/kéo thành công, FALSE nếu cái hộp bị kẹt vào tường.
-    bool TryMove(float amount);
+    // Trả về khoảng cách cần di chuyển
+    float TryMove(float amount);
 }

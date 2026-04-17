@@ -96,7 +96,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Push/Pull Mechanics")]
     [SerializeField] private float pushSpeedMultiplier = 0.5f; // Giảm 50% tốc độ khi đẩy hộp
-    [SerializeField] private float grabReachDistance = 0.1f;   // Tầm với tay ra lấy hộp
+    [SerializeField] private float grabReachDistance = 0.02f;   // Tầm với tay ra lấy hộp
     private IPushable currentPushable;
 
     [Header("Grappling Hand")]
@@ -501,16 +501,38 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+        bool isPullingBox = false;
+        float pullAmount = 0f;
+
         // CODE ÉP HỘP CHẠY THEO PLAYER
         if (currentState == PlayerState.Pushing && currentPushable != null && velocity.x != 0)
         {
             float pushAmount = velocity.x * Time.fixedDeltaTime;
-            bool canMoveBox = currentPushable.TryMove(pushAmount);
 
-            // Nếu cái hộp bị kẹt vào tường, Player cũng phải bị chặn đứng lại
-            if (!canMoveBox)
+            Transform boxTransform = ((Component)currentPushable).transform;
+            float dirToBox = Mathf.Sign(boxTransform.position.x - transform.position.x);
+            bool isPushingBox = Mathf.Sign(velocity.x) == dirToBox;
+
+            if (isPushingBox)
             {
-                velocity.x = 0;
+                // --- TRƯỜNG HỢP 1: ĐANG ĐẨY (HỘP ĐI TRƯỚC) ---
+                float actualBoxMove = currentPushable.TryMove(pushAmount);
+
+                // Ép vận tốc người chơi BẰNG CHÍNH XÁC quãng đường hộp đã đi!
+                velocity.x = actualBoxMove / Time.fixedDeltaTime;
+
+                // Failsafe: Nếu hộp đụng tường (không đi được), tự động bật cờ leo
+                if (Mathf.Abs(actualBoxMove) < 0.001f)
+                {
+                    if (velocity.x > 0 || moveInput.x > 0) hitRightWall = true;
+                    if (velocity.x < 0 || moveInput.x < 0) hitLeftWall = true;
+                }
+            }
+            else
+            {
+                // --- TRƯỜNG HỢP 2: ĐANG KÉO (NGƯỜI CHƠI SẼ ĐI TRƯỚC) ---
+                isPullingBox = true;
+                pullAmount = velocity.x * Time.fixedDeltaTime;
             }
         }
 
@@ -529,6 +551,12 @@ public class PlayerController : MonoBehaviour
 
         Vector3 targetPosition = (Vector3)rb.position + moveAmount;
         rb.MovePosition(targetPosition);
+
+        // DI CHUYỂN PUSHABLE SAU (Nếu đang kéo)
+        if (isPullingBox && currentPushable != null)
+        {
+            currentPushable.TryMove(pullAmount);
+        }
 
         // Flip character
         HandleSpriteVisuals();
@@ -1810,6 +1838,12 @@ public class PlayerController : MonoBehaviour
         {
             // Không đẩy nhân vật ra nếu đang xuyên qua nền One-way
             if (results[i].CompareTag("OneWay")) continue;
+
+            // Bỏ qua va chạm với Pushable đang cầm để chống giật khi kéo!
+            if (currentState == PlayerState.Pushing && currentPushable != null)
+            {
+                if (results[i].transform == ((Component)currentPushable).transform) continue;
+            }
 
             ColliderDistance2D diff = col.Distance(results[i]);
             if (diff.isOverlapped)
