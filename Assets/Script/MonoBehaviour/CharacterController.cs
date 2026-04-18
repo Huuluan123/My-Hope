@@ -241,6 +241,7 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
+        InitializeClosestCheckpoint();
         CalculateRaySpacing();
         currentMaxFall = maxFallSpeed;
     }
@@ -1927,6 +1928,33 @@ public class PlayerController : MonoBehaviour
     #endregion
 
     #region Respawn Handling
+    private void InitializeClosestCheckpoint()
+    {
+        // Tìm tất cả các checkpoint có trong level hiện tại. Chọn chế độ không sắp xếp để tối ưu hiệu năng
+        Checkpoint[] allCheckpoints = FindObjectsByType<Checkpoint>(FindObjectsSortMode.None);
+
+        if (allCheckpoints.Length == 0) return;
+
+        Checkpoint closestCheckpoint = null;
+        float minDistance = Mathf.Infinity;
+
+        // Duyệt qua 1 lần duy nhất để tìm điểm gần nhất
+        foreach (Checkpoint cp in allCheckpoints)
+        {
+            float distance = Vector3.Distance(transform.position, cp.transform.position);
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                closestCheckpoint = cp;
+            }
+        }
+
+        // Gán điểm hồi sinh
+        if (closestCheckpoint != null)
+        {
+            SetRespawnPoint(closestCheckpoint.transform.position);
+        }
+    }
     public void SetRespawnPoint(Vector2 newPoint)
     {
         currentRespawnPoint = newPoint;
