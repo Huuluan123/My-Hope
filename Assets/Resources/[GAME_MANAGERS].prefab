@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 6143938523374842907}
   - component: {fileID: 155440873158588088}
   - component: {fileID: -1587121967506083700}
+  - component: {fileID: 935135807104316972}
   m_Layer: 0
   m_Name: '[GAME_MANAGERS]'
   m_TagString: Untagged
@@ -49,6 +50,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c218f8127d9f3d40b2ca9778aa229f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
+  gameSpeed: 1
 --- !u!114 &4734011297502678574
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -144,3 +146,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c5192501826a70746ae88692948e6229, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SaveLoadManager
+--- !u!114 &935135807104316972
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1308000809469694418}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ef54c81396db1242a83909f668f77d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InputDeviceManager

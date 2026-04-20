@@ -43,10 +43,10 @@ public class DialogueManager : MonoBehaviour
     public Sprite keyboardIcon; // Icon nút C
     public Sprite xboxIcon;     // Icon nút A
     public Sprite ps5Icon;      // Icon nút X
+    public Sprite switchIcon;   // Icon nút B (Nintendo Switch)
 
     private VisualElement skipContainer;
     private VisualElement skipIcon;
-    private InputDevice currentDevice; // "Radar" theo dõi thiết bị hiện tại
 
     [Header("Skip Mechanic")]
     public float holdToSkipTime = 1.0f;
@@ -65,6 +65,15 @@ public class DialogueManager : MonoBehaviour
         }
     }
 
+    private void Start()
+    {
+        // Cập nhật Icon ngay khi game vừa bắt đầu để tránh bị sai lệch UI
+        if (InputDeviceManager.Instance != null)
+        {
+            UpdateSkipIcon(InputDeviceManager.Instance.CurrentDevice);
+        }
+    }
+
     private void Update()
     {
         // Đồng hồ đếm giờ cho tính năng Hold-to-Skip
@@ -79,7 +88,7 @@ public class DialogueManager : MonoBehaviour
         }
     }
 
-    #region Input & UI Device Radar (Chuẩn AAA)
+    #region Input & Event Subscription
 
     private void OnEnable()
     {
@@ -91,8 +100,11 @@ public class DialogueManager : MonoBehaviour
             nextLineAction.canceled += OnSkipCanceled;
         }
 
-        // BẬT RADAR: Lắng nghe mọi hành động nhập liệu trên toàn Game
-        InputSystem.onActionChange += OnAnyInputActivity;
+        // Lắng nghe sự kiện từ InputDeviceManager
+        if (InputDeviceManager.Instance != null)
+        {
+            InputDeviceManager.Instance.OnDeviceChanged += UpdateSkipIcon;
+        }
 
         // --- TRUY VẤN UI TOOLKIT ---
         var root = uiDocument.rootVisualElement;
@@ -103,7 +115,6 @@ public class DialogueManager : MonoBehaviour
         characterName = root.Q<Label>("character-name");
         dialogueArea = root.Q<Label>("dialogue-text");
 
-        // Lớp giáp bảo vệ: Báo lỗi nếu gõ sai tên ID trong UI Builder
         if (skipIcon == null) Debug.LogWarning("Can't find '#skip-icon' in UI Document");
         if (dialogueBox == null) Debug.LogWarning("Can't find '#dialogue-container' in UI Document.");
 
@@ -121,43 +132,34 @@ public class DialogueManager : MonoBehaviour
             nextLineAction.Disable();
         }
 
-        // TẮT RADAR để giải phóng bộ nhớ
-        InputSystem.onActionChange -= OnAnyInputActivity;
-    }
-
-    // Radar tự động nhận diện thiết bị
-    private void OnAnyInputActivity(object obj, InputActionChange change)
-    {
-        if (change == InputActionChange.ActionPerformed)
+        // Ngắt kết nối sự kiện khi bị Disable để chống rò rỉ bộ nhớ (Memory Leak)
+        if (InputDeviceManager.Instance != null)
         {
-            InputAction action = (InputAction)obj;
-            InputDevice device = action.activeControl.device;
-
-            if (device != currentDevice)
-            {
-                currentDevice = device;
-                UpdateSkipIcon(device);
-            }
+            InputDeviceManager.Instance.OnDeviceChanged -= UpdateSkipIcon;
         }
     }
 
-    // Hàm chuyên biệt để đổi ảnh Icon
-    private void UpdateSkipIcon(InputDevice device)
+    // HÀM ĐƯỢC GỌI TỪ EVENT CỦA INPUT DEVICE MANAGER
+    private void UpdateSkipIcon(DeviceType deviceType)
     {
         if (skipIcon == null) return;
 
-        if (device is UnityEngine.InputSystem.DualShock.DualShockGamepad ||
-            device is UnityEngine.InputSystem.DualShock.DualSenseGamepadHID)
+        switch (deviceType)
         {
-            skipIcon.style.backgroundImage = new StyleBackground(ps5Icon);
-        }
-        else if (device is Gamepad)
-        {
-            skipIcon.style.backgroundImage = new StyleBackground(xboxIcon);
-        }
-        else
-        {
-            skipIcon.style.backgroundImage = new StyleBackground(keyboardIcon);
+            case DeviceType.PlayStation:
+                skipIcon.style.backgroundImage = new StyleBackground(ps5Icon);
+                break;
+            case DeviceType.Xbox:
+                skipIcon.style.backgroundImage = new StyleBackground(xboxIcon);
+                break;
+            case DeviceType.Nintendo:
+                // Nếu chưa kịp vẽ icon Switch, nó sẽ lấy tạm icon Xbox làm mặc định để không bị lỗi trống hình
+                skipIcon.style.backgroundImage = new StyleBackground(switchIcon != null ? switchIcon : xboxIcon);
+                break;
+            case DeviceType.Keyboard:
+            default:
+                skipIcon.style.backgroundImage = new StyleBackground(keyboardIcon);
+                break;
         }
     }
 
