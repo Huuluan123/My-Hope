@@ -799,6 +799,7 @@ public class PlayerController : MonoBehaviour
     public void ForceWalkIntoRoom(Vector2 pushVelocity, float duration, float cameraTime)
     {
         if (currentState == PlayerState.Dead || currentState == PlayerState.ScriptedMove) return;
+        robotHand.FinishGrapple(); // Đảm bảo tay robot rút vào nếu đang móc
         StartCoroutine(RoomTransitionWalkRoutine(pushVelocity, duration, cameraTime));
     }
 
