@@ -113,10 +113,17 @@ public class PlayerController : MonoBehaviour
     private bool isWaitingForHopX; // Cờ đánh dấu đang chờ bung lực ngang
     private int hopDirX; // Hướng đẩy vào sàn
 
-    [Header("Corner Correction")]
+    [Header("Corner & Step Correction")]
     [SerializeField] private float cornerCorrectionSpeed = 0.1f; // Khoảng cách đẩy lên mỗi frame (Pixel perfect)
     [SerializeField] private float ceilingTolerance = 0.15f; // Độ rộng tối đa của góc có thể lách qua (Tùy theo chiều rộng nhân vật)
     [SerializeField] private float ceilingNudgeAmount = 0.2f;
+    [Space]
+    [Tooltip("Khoảng cách đẩy lên mỗi frame khi leo bậc (VD: 0.05f)")]
+    [SerializeField] private float stepCorrectionSpeed = 0.05f;
+    [Tooltip("Độ cao tối đa của gờ đất có thể tự động bước qua")]
+    [SerializeField] private float stepHeight = 0.25f;
+    [Tooltip("Nâng tia quét dưới cùng lên một chút để không quét trúng mặt phẳng ngang")]
+    [SerializeField] private float bottomRayOffset = 0.05f;
 
     [Header("Fast Fall & Visuals")]
     [SerializeField] private float fastMaxFallSpeed = -35f; // (Nên để tầm -35 hoặc -30)
@@ -464,14 +471,14 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+        // KIỂM TRA LEO BẬC THỀM TRƯỚC
+        if (CorrectStep(velocity))
+        {
+            // Nếu có leo bậc (bị đẩy lên cao), phải cập nhật lại gốc tia raycast ngay lập tức
+            UpdateRayCastOrigin();
+        }
+
         HorizonalCollisionCheck();
-
-        //if (!CorrectCorner(velocity))
-        //{
-        //    HorizonalCollisionCheck();
-        //}
-
-        //else Debug.Log("Corner corrected!");
 
         if (isWallSliding && !isWallClimbing)
         {
@@ -1724,49 +1731,58 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // Hàm trả về True nếu đã thực hiện sửa góc (đẩy nhân vật lên)
-    bool CorrectCorner(Vector2 moveVelocity)
+    // Hàm đẩy nhân vật lên khi vấp phải gờ đất nhỏ (Dịch chuyển tức thời - Pixel Perfect)
+    bool CorrectStep(Vector2 moveVelocity)
     {
-        // Chỉ sửa góc khi đang di chuyển vào tường hoặc nhảy lên
-        if (Mathf.Abs(moveVelocity.x) < 0.01f && moveVelocity.y <= 0) return false;
+        // Chỉ quét khi nhân vật đang di chuyển ngang
+        if (Mathf.Abs(moveVelocity.x) < 0.01f) return false;
 
-        // Xác định hướng đang lao tới
-        float directionX = (moveVelocity.x != 0) ? Mathf.Sign(moveVelocity.x) : wallDirX;
+        float directionX = Mathf.Sign(moveVelocity.x);
 
-        // Vị trí bắn tia: Đỉnh đầu
-        Vector2 origin = (directionX == 1) ? rayCastOrigins.topRight : rayCastOrigins.topLeft;
-
-        // 1. TIA ĐẦU (Head Ray): Kiểm tra xem đầu có thoáng không?
-        // Bắn dài hơn skinWidth một chút để dự đoán va chạm
+        // Bắn tia dài hơn vận tốc một chút để đoán trước va chạm
         float rayLength = Mathf.Abs(moveVelocity.x * Time.fixedDeltaTime) + skinWidth * 2;
-        RaycastHit2D hitHead = Physics2D.Raycast(origin, Vector2.right * directionX, rayLength, collisionMask);
 
-        if (hitHead && hitHead.collider.CompareTag("OneWay")) hitHead = default;
+        // Xác định góc dưới cùng (Trái hoặc Phải) tùy theo hướng đi
+        Vector2 baseOrigin = (directionX == 1) ? rayCastOrigins.bottomRight : rayCastOrigins.bottomLeft;
 
-        // Nếu đầu va phải tường -> Không phải là góc -> Không sửa được
-        if (hitHead) return false;
+        // 1. TIA DƯỚI (Bottom Ray): Nâng lên một chút để né mặt đất phẳng
+        Vector2 bottomOrigin = baseOrigin + Vector2.up * bottomRayOffset;
+        RaycastHit2D hitBottom = Physics2D.Raycast(bottomOrigin, Vector2.right * directionX, rayLength, collisionMask);
 
-        // 2. TIA THÂN (Body Ray): Kiểm tra xem vai/ngực có bị vướng không?
-        // Hạ thấp xuống một đoạn nhỏ (bạn có thể tạo biến cornerDetectOffset)
-        Vector2 bodyOrigin = origin + Vector2.down * 0.1f;
-        RaycastHit2D hitBody = Physics2D.Raycast(bodyOrigin, Vector2.right * directionX, rayLength, collisionMask);
+        // Bỏ qua nếu tia dưới chạm One-way platform (chỉ leo đất cứng)
+        if (hitBottom && hitBottom.collider.CompareTag("OneWay")) hitBottom = default;
 
-        if (hitBody && hitBody.collider.CompareTag("OneWay")) hitBody = default;
+        // Nếu tia dưới không chạm gì -> Không có gờ đất -> Bỏ qua
+        if (!hitBottom) return false;
 
-        // --- LOGIC SỬA GÓC ---
-        // Nếu ĐẦU THOÁNG (Miss) mà THÂN VƯỚNG (Hit) => Đang ở mép/góc
-        if (hitBody)
+        // 2. TIA TRÊN (Top Ray): Quét ở độ cao tối đa có thể leo
+        Vector2 topOrigin = baseOrigin + Vector2.up * stepHeight;
+        RaycastHit2D hitTop = Physics2D.Raycast(topOrigin, Vector2.right * directionX, rayLength, collisionMask);
+
+        if (hitTop && hitTop.collider.CompareTag("OneWay")) hitTop = default;
+
+        // LOGIC CHÍNH: Tia dưới đụng tường (Vấp ngón chân), nhưng Tia trên trống (Thoáng đầu gối)
+        if (hitBottom && !hitTop)
         {
-            // Đẩy nhân vật lên trên một chút để "trượt" qua mép
-            // Thay vì dùng velocity, ta dịch chuyển position trực tiếp để chính xác tuyệt đối
+            // 3. TIA ĐO CHIỀU CAO (Downward Ray): Bắn từ trên đỉnh cắm xuống mặt bậc thềm
+            // Tính toán X nhích vào bên trong bậc thềm một chút xíu (khoảng 0.02f)
+            float stepInnerX = baseOrigin.x + directionX * (hitBottom.distance + 0.02f);
+            Vector2 stepTopOrigin = new Vector2(stepInnerX, topOrigin.y);
 
-            transform.position += Vector3.up * cornerCorrectionSpeed;
+            // Bắn tia cắm xuống dưới để tìm bề mặt của bậc thềm
+            RaycastHit2D hitDown = Physics2D.Raycast(stepTopOrigin, Vector2.down, stepHeight, collisionMask);
 
-            // Cập nhật lại Physics Position
-            rb.position = transform.position;
+            if (hitDown && !hitDown.collider.CompareTag("OneWay"))
+            {
+                // Tính toán chính xác khoảng cách cần phải nhấc chân lên
+                float exactStepHeight = hitDown.point.y - baseOrigin.y;
 
-            // Trả về True để báo cho MoveCharacter biết: "Tao đã xử lý va chạm này rồi, đừng chặn velocity.x lại!"
-            return true;
+                // Dịch chuyển TỨC THỜI nhân vật lên bằng đúng chiều cao bậc thềm + bù sai số skinWidth
+                transform.position += Vector3.up * (exactStepHeight + skinWidth) + Vector3.right * directionX * skinWidth;
+                rb.position = transform.position; // Đồng bộ với Rigidbody
+
+                return true; // Báo hiệu đã xử lý leo bậc thành công
+            }
         }
 
         return false;
@@ -2065,6 +2081,10 @@ public class PlayerController : MonoBehaviour
 
         DrawClimbHopRays(originTop, direction);
 
+        Vector2 bottomLeft = new Vector2(bounds.min.x, bounds.min.y);
+        Vector2 bottomRight = new Vector2(bounds.max.x, bounds.min.y);
+        DrawStepCorrectionRays(bottomLeft, bottomRight, direction);
+
         Vector2 topLeft = new Vector2(bounds.min.x, bounds.max.y);
         Vector2 topRight = new Vector2(bounds.max.x, bounds.max.y);
         DrawCeilingCorrectionRays(topLeft, topRight);
@@ -2161,6 +2181,29 @@ public class PlayerController : MonoBehaviour
         Gizmos.color = Color.red;
         Gizmos.DrawLine(innerRight, innerRight + Vector2.up * ceilRayLength);
         Gizmos.DrawSphere(innerRight, 0.015f);
+    }
+
+    void DrawStepCorrectionRays(Vector2 bottomLeft, Vector2 bottomRight, float direction)
+    {
+        float rayLength = skinWidth * 5; // Độ dài tia (chỉ để nhìn cho rõ)
+        Vector2 baseOrigin = (direction == 1) ? bottomRight : bottomLeft;
+
+        Vector2 bottomOrigin = baseOrigin + Vector2.up * bottomRayOffset;
+        Vector2 topOrigin = baseOrigin + Vector2.up * stepHeight;
+
+        // Vẽ tia dưới (Màu Đỏ - Mong muốn chạm vách)
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(bottomOrigin, bottomOrigin + Vector2.right * direction * rayLength);
+        Gizmos.DrawSphere(bottomOrigin, 0.015f);
+
+        // Vẽ tia trên (Màu Xanh lá - Mong muốn không chạm)
+        Gizmos.color = Color.green;
+        Gizmos.DrawLine(topOrigin, topOrigin + Vector2.right * direction * rayLength);
+        Gizmos.DrawSphere(topOrigin, 0.015f);
+
+        // Nối 2 tia lại để thấy rõ chiều cao của bậc thềm
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawLine(bottomOrigin, topOrigin);
     }
     #endregion
     #endregion
