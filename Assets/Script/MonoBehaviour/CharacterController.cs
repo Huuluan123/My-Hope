@@ -591,6 +591,7 @@ public class PlayerController : MonoBehaviour
                     // TỚI ĐÍCH LÀ NODE -> BUNG LÊN
                     velocity.y = targetGrappleNode.boostForce;
                     velocity.x = 0;
+                    currentGrappleCount--; // Tăng thêm 1 lần phóng tay
                     currentState = PlayerState.OnAir;
                     isGrounded = false;
                     targetGrappleNode = null;

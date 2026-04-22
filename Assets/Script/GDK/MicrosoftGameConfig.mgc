@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Game xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  configVersion="1">
+  <Identity
+    Name="Hope"
+    Publisher="Me"
+    Version="1.0.0.0" />
+  <ShellVisuals
+    DefaultDisplayName="ms-resource:PackageTitle"
+    PublisherDisplayName="ms-resource:PublisherDisplayName"
+    StoreLogo="StoreLogo.png"
+    Square150x150Logo="Square150x150Logo.png"
+    Square44x44Logo="Square44x44Logo.png"
+    Square480x480Logo="Square480x480Logo.png"
+    Description="ms-resource:PackageDescription"
+    SplashScreenImage="SplashScreenImage.png" />
+  <Resources>
+    <Resource
+      Language="en-US" />
+  </Resources>
+  <MSAAppId>PleaseChangeMe</MSAAppId>
+  <TitleId>FFFFFFFF</TitleId>
+  <ExtendedAttributeList>
+    <ExtendedAttribute
+      Name="Scid"
+      Value="00000000-0000-0000-0000-0000FFFFFFFF" />
+  </ExtendedAttributeList>
+  <DevelopmentOnly />
+</Game>
