@@ -114,12 +114,12 @@ public class PlayerController : MonoBehaviour
     private int hopDirX; // Hướng đẩy vào sàn
 
     [Header("Corner & Step Correction")]
-    [SerializeField] private float cornerCorrectionSpeed = 0.1f; // Khoảng cách đẩy lên mỗi frame (Pixel perfect)
+    //[SerializeField] private float cornerCorrectionSpeed = 0.1f; // Khoảng cách đẩy lên mỗi frame (Pixel perfect)
     [SerializeField] private float ceilingTolerance = 0.15f; // Độ rộng tối đa của góc có thể lách qua (Tùy theo chiều rộng nhân vật)
     [SerializeField] private float ceilingNudgeAmount = 0.2f;
     [Space]
-    [Tooltip("Khoảng cách đẩy lên mỗi frame khi leo bậc (VD: 0.05f)")]
-    [SerializeField] private float stepCorrectionSpeed = 0.05f;
+    //[Tooltip("Khoảng cách đẩy lên mỗi frame khi leo bậc (VD: 0.05f)")]
+    //[SerializeField] private float stepCorrectionSpeed = 0.05f;
     [Tooltip("Độ cao tối đa của gờ đất có thể tự động bước qua")]
     [SerializeField] private float stepHeight = 0.25f;
     [Tooltip("Nâng tia quét dưới cùng lên một chút để không quét trúng mặt phẳng ngang")]
@@ -1305,6 +1305,39 @@ public class PlayerController : MonoBehaviour
                 velocity.x = 0;
             }
         }
+    }
+    #endregion
+
+    #region Spring Handling
+    /// <summary>
+    /// Called by Spring when player hits it. It will directly set the player's velocity to the bounce velocity on a certain direction provided by the spring.
+    /// </summary>
+    public void ApplyBounce(Vector2 bounceVelocity)
+    {
+        // 1. GHI ĐÈ TOÀN BỘ VẬN TỐC
+        // Ghi đè cả X và Y giúp quỹ đạo bay chuẩn xác 100% theo hướng lò xo chỉ định,
+        // triệt tiêu hoàn toàn quán tính chạy hoặc rơi trước đó của người chơi.
+        velocity = bounceVelocity;
+
+        // 2. CẬP NHẬT TRẠNG THÁI
+        SetState(PlayerState.OnAir);
+        isGrounded = false;
+        isWallClimbing = false;
+        isWallSliding = false;
+        lastGroundedTime = -999f;
+
+        // 3. XỬ LÝ SỰ KIỆN ANIMATION
+        // Chỉ kích hoạt Animation "Jump" nếu lò xo đẩy hướng lên trên (Y > 0)
+        // Nếu lò xo đẩy cắm đầu xuống đất (Y < 0), nhân vật nên giữ nguyên animation Rơi (Fall)
+        if (bounceVelocity.y > 0)
+        {
+            OnJumpPerformed?.Invoke();
+        }
+
+        // Bắt buộc đẩy nhân vật văng ra khỏi lò xo một chút xíu (Tránh lỗi kẹt va chạm)
+        // Khi bị đẩy ngang/xuống, nếu không nhích ra 1 pixel, tia raycast có thể vẫn kẹt trong lò xo
+        transform.position += (Vector3)bounceVelocity.normalized * 0.05f;
+        rb.position = transform.position;
     }
     #endregion
     #endregion
