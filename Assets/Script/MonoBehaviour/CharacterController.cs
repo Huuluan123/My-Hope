@@ -113,10 +113,17 @@ public class PlayerController : MonoBehaviour
     private bool isWaitingForHopX; // Cờ đánh dấu đang chờ bung lực ngang
     private int hopDirX; // Hướng đẩy vào sàn
 
-    [Header("Corner Correction")]
-    [SerializeField] private float cornerCorrectionSpeed = 0.1f; // Khoảng cách đẩy lên mỗi frame (Pixel perfect)
+    [Header("Corner & Step Correction")]
+    //[SerializeField] private float cornerCorrectionSpeed = 0.1f; // Khoảng cách đẩy lên mỗi frame (Pixel perfect)
     [SerializeField] private float ceilingTolerance = 0.15f; // Độ rộng tối đa của góc có thể lách qua (Tùy theo chiều rộng nhân vật)
     [SerializeField] private float ceilingNudgeAmount = 0.2f;
+    [Space]
+    //[Tooltip("Khoảng cách đẩy lên mỗi frame khi leo bậc (VD: 0.05f)")]
+    //[SerializeField] private float stepCorrectionSpeed = 0.05f;
+    [Tooltip("Độ cao tối đa của gờ đất có thể tự động bước qua")]
+    [SerializeField] private float stepHeight = 0.25f;
+    [Tooltip("Nâng tia quét dưới cùng lên một chút để không quét trúng mặt phẳng ngang")]
+    [SerializeField] private float bottomRayOffset = 0.05f;
 
     [Header("Fast Fall & Visuals")]
     [SerializeField] private float fastMaxFallSpeed = -35f; // (Nên để tầm -35 hoặc -30)
@@ -464,14 +471,14 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+        // KIỂM TRA LEO BẬC THỀM TRƯỚC
+        if (CorrectStep(velocity))
+        {
+            // Nếu có leo bậc (bị đẩy lên cao), phải cập nhật lại gốc tia raycast ngay lập tức
+            UpdateRayCastOrigin();
+        }
+
         HorizonalCollisionCheck();
-
-        //if (!CorrectCorner(velocity))
-        //{
-        //    HorizonalCollisionCheck();
-        //}
-
-        //else Debug.Log("Corner corrected!");
 
         if (isWallSliding && !isWallClimbing)
         {
@@ -584,7 +591,8 @@ public class PlayerController : MonoBehaviour
                     // TỚI ĐÍCH LÀ NODE -> BUNG LÊN
                     velocity.y = targetGrappleNode.boostForce;
                     velocity.x = 0;
-                    currentState = PlayerState.OnAir;
+                    currentGrappleCount--; // Tăng thêm 1 lần phóng tay
+                    SetState(PlayerState.OnAir);
                     isGrounded = false;
                     targetGrappleNode = null;
                     OnJumpPerformed?.Invoke();
@@ -592,7 +600,7 @@ public class PlayerController : MonoBehaviour
                 else
                 {
                     // ĐỤNG TƯỜNG HOẶC TỚI NƠI -> BÁM TƯỜNG (Hoặc Rớt xuống nếu tường không bám được)
-                    currentState = PlayerState.OnAir;
+                    SetState(PlayerState.OnAir);
                     if (!validFloorHit) isGrounded = false;
                     velocity = Vector3.zero; // Xóa quán tính bay
 
@@ -751,7 +759,7 @@ public class PlayerController : MonoBehaviour
     private IEnumerator AutoWalkRoutine(Transform targetPos, Transform lookAtTarget, Action onComplete)
     {
         //KHÓA INPUT (Ngăn người chơi bấm nút lúc đang đi tới chỗ NPC)
-        currentState = PlayerState.ScriptedMove;
+        SetState(PlayerState.ScriptedMove);
 
         // Chạy vòng lặp cho đến khi khoảng cách X < 0.05
         while (Mathf.Abs(transform.position.x - targetPos.position.x) > 0.05f)
@@ -792,6 +800,7 @@ public class PlayerController : MonoBehaviour
     public void ForceWalkIntoRoom(Vector2 pushVelocity, float duration, float cameraTime)
     {
         if (currentState == PlayerState.Dead || currentState == PlayerState.ScriptedMove) return;
+        robotHand.FinishGrapple(); // Đảm bảo tay robot rút vào nếu đang móc
         StartCoroutine(RoomTransitionWalkRoutine(pushVelocity, duration, cameraTime));
     }
 
@@ -1022,7 +1031,7 @@ public class PlayerController : MonoBehaviour
         }
 
         // Cập nhật trạng thái
-        currentState = PlayerState.OnAir;
+        SetState(PlayerState.OnAir);
         isGrounded = false;
         isWallClimbing = false; // Ngắt trạng thái leo ngay khi nhảy
         isWallSliding = false;
@@ -1090,7 +1099,7 @@ public class PlayerController : MonoBehaviour
         if (currentStamina <= 0)
         {
             currentStamina = 0;
-            currentState = PlayerState.OnAir;
+            SetState(PlayerState.OnAir);
             isWallClimbing = false;
         }
     }
@@ -1109,7 +1118,7 @@ public class PlayerController : MonoBehaviour
 
         if (input.IsGrabbing && isTouchingWall && currentStamina > 0 && canClimbCurrentWall)
         {
-            currentState = PlayerState.Climbing;
+            SetState(PlayerState.Climbing);
             isWallClimbing = true;
             isWallSliding = false; // Ưu tiên leo hơn trượt
             velocity.x = 0; // Dừng di chuyển khi bám tường
@@ -1157,7 +1166,7 @@ public class PlayerController : MonoBehaviour
         // Bật cờ chờ đẩy ngang
         isWaitingForHopX = true;
 
-        currentState = PlayerState.OnAir;
+        SetState(PlayerState.OnAir);
         isWallClimbing = false;
         isWallSliding = false;
         isGrounded = false;
@@ -1202,7 +1211,7 @@ public class PlayerController : MonoBehaviour
     {
         OnShootHand?.Invoke();
         // 1. ĐÓNG BĂNG VẬT LÝ VÀ CHUYỂN TRẠNG THÁI
-        currentState = PlayerState.GrappleFreeze;
+        SetState(PlayerState.GrappleFreeze);
         velocity = Vector3.zero; // Dừng toàn bộ vận tốc (trọng lực, quán tính)
 
         // 2. CHỜ 0.05s ĐỂ NGƯỜI CHƠI NHẬP HƯỚNG
@@ -1234,7 +1243,7 @@ public class PlayerController : MonoBehaviour
         }
 
         // 4. PHÓNG TAY VÀ KHÓA CHỜ
-        currentState = PlayerState.Grappling;
+        SetState(PlayerState.Grappling);
         if (robotHand != null)
         {
             robotHand.Shoot(shootDir, this);
@@ -1259,7 +1268,7 @@ public class PlayerController : MonoBehaviour
         // Hủy trạng thái Grapple để nhân vật rơi xuống lại
         if (currentState == PlayerState.Grappling || currentState == PlayerState.GrappleFreeze)
         {
-            currentState = PlayerState.OnAir;
+            SetState(PlayerState.OnAir);
             grappleTarget = Vector2.zero;
         }
     }
@@ -1298,12 +1307,57 @@ public class PlayerController : MonoBehaviour
         }
     }
     #endregion
+
+    #region Spring Handling
+    /// <summary>
+    /// Called by Spring when player hits it. It will directly set the player's velocity to the bounce velocity on a certain direction provided by the spring.
+    /// </summary>
+    public void ApplyBounce(Vector2 bounceVelocity)
+    {
+        // 1. GHI ĐÈ TOÀN BỘ VẬN TỐC
+        // Ghi đè cả X và Y giúp quỹ đạo bay chuẩn xác 100% theo hướng lò xo chỉ định,
+        // triệt tiêu hoàn toàn quán tính chạy hoặc rơi trước đó của người chơi.
+        velocity = bounceVelocity;
+
+        // 2. CẬP NHẬT TRẠNG THÁI
+        SetState(PlayerState.OnAir);
+        isGrounded = false;
+        isWallClimbing = false;
+        isWallSliding = false;
+        lastGroundedTime = -999f;
+
+        // 3. XỬ LÝ SỰ KIỆN ANIMATION
+        // Chỉ kích hoạt Animation "Jump" nếu lò xo đẩy hướng lên trên (Y > 0)
+        // Nếu lò xo đẩy cắm đầu xuống đất (Y < 0), nhân vật nên giữ nguyên animation Rơi (Fall)
+        if (bounceVelocity.y > 0)
+        {
+            OnJumpPerformed?.Invoke();
+        }
+
+        // Bắt buộc đẩy nhân vật văng ra khỏi lò xo một chút xíu (Tránh lỗi kẹt va chạm)
+        // Khi bị đẩy ngang/xuống, nếu không nhích ra 1 pixel, tia raycast có thể vẫn kẹt trong lò xo
+        transform.position += (Vector3)bounceVelocity.normalized * 0.05f;
+        rb.position = transform.position;
+    }
+    #endregion
     #endregion
 
     #region State Machine
     //Set trạng thái của người chơi
     public void SetState(PlayerState newState)
     {
+        // NẾU state cũ đang là Grappling/Freeze MÀ state mới bị ép đổi sang cái khác (vd: OnAir do dẫm lò xo)
+        bool wasGrappling = (currentState == PlayerState.Grappling || currentState == PlayerState.GrappleFreeze);
+        bool isChangingAway = (newState != PlayerState.Grappling && newState != PlayerState.GrappleFreeze);
+
+        if (wasGrappling && isChangingAway)
+        {
+            // Thu hồi tay ngay lập tức
+            if (robotHand != null) robotHand.FinishGrapple();
+            grappleTarget = Vector2.zero;
+        }
+        // ---------------------------------
+
         currentState = newState;
     }
 
@@ -1380,11 +1434,11 @@ public class PlayerController : MonoBehaviour
             // Nếu chạm đất: quyết định xem là Running hay Idle
             if (moveInput.x != 0)
             {
-                currentState = PlayerState.Running;
+                SetState(PlayerState.Running);
             }
             else
             {
-                currentState = PlayerState.Idle;
+                SetState(PlayerState.Idle);
             }
         }
         else
@@ -1392,11 +1446,11 @@ public class PlayerController : MonoBehaviour
             // Cập nhật trạng thái trượt tường cho Animation
             if (isWallSliding)
             {
-                currentState = PlayerState.Sliding;
+                SetState(PlayerState.Sliding);
             }
             else
             {
-                currentState = PlayerState.OnAir;
+                SetState(PlayerState.OnAir);
             }
         }
     }
@@ -1724,49 +1778,58 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // Hàm trả về True nếu đã thực hiện sửa góc (đẩy nhân vật lên)
-    bool CorrectCorner(Vector2 moveVelocity)
+    // Hàm đẩy nhân vật lên khi vấp phải gờ đất nhỏ (Dịch chuyển tức thời - Pixel Perfect)
+    bool CorrectStep(Vector2 moveVelocity)
     {
-        // Chỉ sửa góc khi đang di chuyển vào tường hoặc nhảy lên
-        if (Mathf.Abs(moveVelocity.x) < 0.01f && moveVelocity.y <= 0) return false;
+        // Chỉ quét khi nhân vật đang di chuyển ngang
+        if (Mathf.Abs(moveVelocity.x) < 0.01f) return false;
 
-        // Xác định hướng đang lao tới
-        float directionX = (moveVelocity.x != 0) ? Mathf.Sign(moveVelocity.x) : wallDirX;
+        float directionX = Mathf.Sign(moveVelocity.x);
 
-        // Vị trí bắn tia: Đỉnh đầu
-        Vector2 origin = (directionX == 1) ? rayCastOrigins.topRight : rayCastOrigins.topLeft;
-
-        // 1. TIA ĐẦU (Head Ray): Kiểm tra xem đầu có thoáng không?
-        // Bắn dài hơn skinWidth một chút để dự đoán va chạm
+        // Bắn tia dài hơn vận tốc một chút để đoán trước va chạm
         float rayLength = Mathf.Abs(moveVelocity.x * Time.fixedDeltaTime) + skinWidth * 2;
-        RaycastHit2D hitHead = Physics2D.Raycast(origin, Vector2.right * directionX, rayLength, collisionMask);
 
-        if (hitHead && hitHead.collider.CompareTag("OneWay")) hitHead = default;
+        // Xác định góc dưới cùng (Trái hoặc Phải) tùy theo hướng đi
+        Vector2 baseOrigin = (directionX == 1) ? rayCastOrigins.bottomRight : rayCastOrigins.bottomLeft;
 
-        // Nếu đầu va phải tường -> Không phải là góc -> Không sửa được
-        if (hitHead) return false;
+        // 1. TIA DƯỚI (Bottom Ray): Nâng lên một chút để né mặt đất phẳng
+        Vector2 bottomOrigin = baseOrigin + Vector2.up * bottomRayOffset;
+        RaycastHit2D hitBottom = Physics2D.Raycast(bottomOrigin, Vector2.right * directionX, rayLength, collisionMask);
 
-        // 2. TIA THÂN (Body Ray): Kiểm tra xem vai/ngực có bị vướng không?
-        // Hạ thấp xuống một đoạn nhỏ (bạn có thể tạo biến cornerDetectOffset)
-        Vector2 bodyOrigin = origin + Vector2.down * 0.1f;
-        RaycastHit2D hitBody = Physics2D.Raycast(bodyOrigin, Vector2.right * directionX, rayLength, collisionMask);
+        // Bỏ qua nếu tia dưới chạm One-way platform (chỉ leo đất cứng)
+        if (hitBottom && hitBottom.collider.CompareTag("OneWay")) hitBottom = default;
 
-        if (hitBody && hitBody.collider.CompareTag("OneWay")) hitBody = default;
+        // Nếu tia dưới không chạm gì -> Không có gờ đất -> Bỏ qua
+        if (!hitBottom) return false;
 
-        // --- LOGIC SỬA GÓC ---
-        // Nếu ĐẦU THOÁNG (Miss) mà THÂN VƯỚNG (Hit) => Đang ở mép/góc
-        if (hitBody)
+        // 2. TIA TRÊN (Top Ray): Quét ở độ cao tối đa có thể leo
+        Vector2 topOrigin = baseOrigin + Vector2.up * stepHeight;
+        RaycastHit2D hitTop = Physics2D.Raycast(topOrigin, Vector2.right * directionX, rayLength, collisionMask);
+
+        if (hitTop && hitTop.collider.CompareTag("OneWay")) hitTop = default;
+
+        // LOGIC CHÍNH: Tia dưới đụng tường (Vấp ngón chân), nhưng Tia trên trống (Thoáng đầu gối)
+        if (hitBottom && !hitTop)
         {
-            // Đẩy nhân vật lên trên một chút để "trượt" qua mép
-            // Thay vì dùng velocity, ta dịch chuyển position trực tiếp để chính xác tuyệt đối
+            // 3. TIA ĐO CHIỀU CAO (Downward Ray): Bắn từ trên đỉnh cắm xuống mặt bậc thềm
+            // Tính toán X nhích vào bên trong bậc thềm một chút xíu (khoảng 0.02f)
+            float stepInnerX = baseOrigin.x + directionX * (hitBottom.distance + 0.02f);
+            Vector2 stepTopOrigin = new Vector2(stepInnerX, topOrigin.y);
 
-            transform.position += Vector3.up * cornerCorrectionSpeed;
+            // Bắn tia cắm xuống dưới để tìm bề mặt của bậc thềm
+            RaycastHit2D hitDown = Physics2D.Raycast(stepTopOrigin, Vector2.down, stepHeight, collisionMask);
 
-            // Cập nhật lại Physics Position
-            rb.position = transform.position;
+            if (hitDown && !hitDown.collider.CompareTag("OneWay"))
+            {
+                // Tính toán chính xác khoảng cách cần phải nhấc chân lên
+                float exactStepHeight = hitDown.point.y - baseOrigin.y;
 
-            // Trả về True để báo cho MoveCharacter biết: "Tao đã xử lý va chạm này rồi, đừng chặn velocity.x lại!"
-            return true;
+                // Dịch chuyển TỨC THỜI nhân vật lên bằng đúng chiều cao bậc thềm + bù sai số skinWidth
+                transform.position += Vector3.up * (exactStepHeight + skinWidth) + Vector3.right * directionX * skinWidth;
+                rb.position = transform.position; // Đồng bộ với Rigidbody
+
+                return true; // Báo hiệu đã xử lý leo bậc thành công
+            }
         }
 
         return false;
@@ -2065,6 +2128,10 @@ public class PlayerController : MonoBehaviour
 
         DrawClimbHopRays(originTop, direction);
 
+        Vector2 bottomLeft = new Vector2(bounds.min.x, bounds.min.y);
+        Vector2 bottomRight = new Vector2(bounds.max.x, bounds.min.y);
+        DrawStepCorrectionRays(bottomLeft, bottomRight, direction);
+
         Vector2 topLeft = new Vector2(bounds.min.x, bounds.max.y);
         Vector2 topRight = new Vector2(bounds.max.x, bounds.max.y);
         DrawCeilingCorrectionRays(topLeft, topRight);
@@ -2161,6 +2228,29 @@ public class PlayerController : MonoBehaviour
         Gizmos.color = Color.red;
         Gizmos.DrawLine(innerRight, innerRight + Vector2.up * ceilRayLength);
         Gizmos.DrawSphere(innerRight, 0.015f);
+    }
+
+    void DrawStepCorrectionRays(Vector2 bottomLeft, Vector2 bottomRight, float direction)
+    {
+        float rayLength = skinWidth * 5; // Độ dài tia (chỉ để nhìn cho rõ)
+        Vector2 baseOrigin = (direction == 1) ? bottomRight : bottomLeft;
+
+        Vector2 bottomOrigin = baseOrigin + Vector2.up * bottomRayOffset;
+        Vector2 topOrigin = baseOrigin + Vector2.up * stepHeight;
+
+        // Vẽ tia dưới (Màu Đỏ - Mong muốn chạm vách)
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(bottomOrigin, bottomOrigin + Vector2.right * direction * rayLength);
+        Gizmos.DrawSphere(bottomOrigin, 0.015f);
+
+        // Vẽ tia trên (Màu Xanh lá - Mong muốn không chạm)
+        Gizmos.color = Color.green;
+        Gizmos.DrawLine(topOrigin, topOrigin + Vector2.right * direction * rayLength);
+        Gizmos.DrawSphere(topOrigin, 0.015f);
+
+        // Nối 2 tia lại để thấy rõ chiều cao của bậc thềm
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawLine(bottomOrigin, topOrigin);
     }
     #endregion
     #endregion

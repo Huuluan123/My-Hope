@@ -34,7 +34,7 @@ public class DialogueManager : MonoBehaviour
 
     // Các biến quản lý State
     private Story currentStory;
-    private bool isDialogueActive = false;
+    public bool isDialogueActive { get; private set; } = false;
     private bool isTyping = false;
     private Coroutine typingCoroutine;
     private InputAction nextLineAction;

@@ -81,6 +81,19 @@ public class RobotHand : MonoBehaviour
         lineRenderer.SetPosition(0, launchPosition.position);
         lineRenderer.SetPosition(1, transform.position);
 
+        // --- CƠ CHẾ AN TOÀN: ĐỨT DÂY DO QUÁ XA ---
+        // Cho phép dây dãn thêm một chút (ví dụ x1.2) so với maxDistance để tạo cảm giác dây thun
+        // Tránh việc đứt ngay lập tức khi nhân vật mới nhích ra 1 pixel
+        float currentDistance = Vector2.Distance(transform.position, playerController.transform.position);
+        if (currentDistance > maxDistance * 1.2f)
+        {
+            // Gọi hàm Cancel của Player thay vì tự tắt, để Player xả trạng thái rơi tự do
+            playerController.CancelGrapple();
+            FinishGrapple();
+            return;
+        }
+        // -------------------------------------------
+
         if (isAttached) return;
 
         // Xử lý khi tay đang thu hồi
