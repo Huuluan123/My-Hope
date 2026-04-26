@@ -592,7 +592,7 @@ public class PlayerController : MonoBehaviour
                     velocity.y = targetGrappleNode.boostForce;
                     velocity.x = 0;
                     currentGrappleCount--; // Tăng thêm 1 lần phóng tay
-                    currentState = PlayerState.OnAir;
+                    SetState(PlayerState.OnAir);
                     isGrounded = false;
                     targetGrappleNode = null;
                     OnJumpPerformed?.Invoke();
@@ -600,7 +600,7 @@ public class PlayerController : MonoBehaviour
                 else
                 {
                     // ĐỤNG TƯỜNG HOẶC TỚI NƠI -> BÁM TƯỜNG (Hoặc Rớt xuống nếu tường không bám được)
-                    currentState = PlayerState.OnAir;
+                    SetState(PlayerState.OnAir);
                     if (!validFloorHit) isGrounded = false;
                     velocity = Vector3.zero; // Xóa quán tính bay
 
@@ -759,7 +759,7 @@ public class PlayerController : MonoBehaviour
     private IEnumerator AutoWalkRoutine(Transform targetPos, Transform lookAtTarget, Action onComplete)
     {
         //KHÓA INPUT (Ngăn người chơi bấm nút lúc đang đi tới chỗ NPC)
-        currentState = PlayerState.ScriptedMove;
+        SetState(PlayerState.ScriptedMove);
 
         // Chạy vòng lặp cho đến khi khoảng cách X < 0.05
         while (Mathf.Abs(transform.position.x - targetPos.position.x) > 0.05f)
@@ -1031,7 +1031,7 @@ public class PlayerController : MonoBehaviour
         }
 
         // Cập nhật trạng thái
-        currentState = PlayerState.OnAir;
+        SetState(PlayerState.OnAir);
         isGrounded = false;
         isWallClimbing = false; // Ngắt trạng thái leo ngay khi nhảy
         isWallSliding = false;
@@ -1099,7 +1099,7 @@ public class PlayerController : MonoBehaviour
         if (currentStamina <= 0)
         {
             currentStamina = 0;
-            currentState = PlayerState.OnAir;
+            SetState(PlayerState.OnAir);
             isWallClimbing = false;
         }
     }
@@ -1118,7 +1118,7 @@ public class PlayerController : MonoBehaviour
 
         if (input.IsGrabbing && isTouchingWall && currentStamina > 0 && canClimbCurrentWall)
         {
-            currentState = PlayerState.Climbing;
+            SetState(PlayerState.Climbing);
             isWallClimbing = true;
             isWallSliding = false; // Ưu tiên leo hơn trượt
             velocity.x = 0; // Dừng di chuyển khi bám tường
@@ -1166,7 +1166,7 @@ public class PlayerController : MonoBehaviour
         // Bật cờ chờ đẩy ngang
         isWaitingForHopX = true;
 
-        currentState = PlayerState.OnAir;
+        SetState(PlayerState.OnAir);
         isWallClimbing = false;
         isWallSliding = false;
         isGrounded = false;
@@ -1211,7 +1211,7 @@ public class PlayerController : MonoBehaviour
     {
         OnShootHand?.Invoke();
         // 1. ĐÓNG BĂNG VẬT LÝ VÀ CHUYỂN TRẠNG THÁI
-        currentState = PlayerState.GrappleFreeze;
+        SetState(PlayerState.GrappleFreeze);
         velocity = Vector3.zero; // Dừng toàn bộ vận tốc (trọng lực, quán tính)
 
         // 2. CHỜ 0.05s ĐỂ NGƯỜI CHƠI NHẬP HƯỚNG
@@ -1243,7 +1243,7 @@ public class PlayerController : MonoBehaviour
         }
 
         // 4. PHÓNG TAY VÀ KHÓA CHỜ
-        currentState = PlayerState.Grappling;
+        SetState(PlayerState.Grappling);
         if (robotHand != null)
         {
             robotHand.Shoot(shootDir, this);
@@ -1268,7 +1268,7 @@ public class PlayerController : MonoBehaviour
         // Hủy trạng thái Grapple để nhân vật rơi xuống lại
         if (currentState == PlayerState.Grappling || currentState == PlayerState.GrappleFreeze)
         {
-            currentState = PlayerState.OnAir;
+            SetState(PlayerState.OnAir);
             grappleTarget = Vector2.zero;
         }
     }
@@ -1346,6 +1346,18 @@ public class PlayerController : MonoBehaviour
     //Set trạng thái của người chơi
     public void SetState(PlayerState newState)
     {
+        // NẾU state cũ đang là Grappling/Freeze MÀ state mới bị ép đổi sang cái khác (vd: OnAir do dẫm lò xo)
+        bool wasGrappling = (currentState == PlayerState.Grappling || currentState == PlayerState.GrappleFreeze);
+        bool isChangingAway = (newState != PlayerState.Grappling && newState != PlayerState.GrappleFreeze);
+
+        if (wasGrappling && isChangingAway)
+        {
+            // Thu hồi tay ngay lập tức
+            if (robotHand != null) robotHand.FinishGrapple();
+            grappleTarget = Vector2.zero;
+        }
+        // ---------------------------------
+
         currentState = newState;
     }
 
@@ -1422,11 +1434,11 @@ public class PlayerController : MonoBehaviour
             // Nếu chạm đất: quyết định xem là Running hay Idle
             if (moveInput.x != 0)
             {
-                currentState = PlayerState.Running;
+                SetState(PlayerState.Running);
             }
             else
             {
-                currentState = PlayerState.Idle;
+                SetState(PlayerState.Idle);
             }
         }
         else
@@ -1434,11 +1446,11 @@ public class PlayerController : MonoBehaviour
             // Cập nhật trạng thái trượt tường cho Animation
             if (isWallSliding)
             {
-                currentState = PlayerState.Sliding;
+                SetState(PlayerState.Sliding);
             }
             else
             {
-                currentState = PlayerState.OnAir;
+                SetState(PlayerState.OnAir);
             }
         }
     }
