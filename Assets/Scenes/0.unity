@@ -1075,11 +1075,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4892436201671028652, guid: 98251d6f545933d429af054e737147a7, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -10.1586
+      value: -394.72858
       objectReference: {fileID: 0}
     - target: {fileID: 4892436201671028652, guid: 98251d6f545933d429af054e737147a7, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.2799997
+      value: -11.48
       objectReference: {fileID: 0}
     - target: {fileID: 7419765808580983041, guid: 98251d6f545933d429af054e737147a7, type: 3}
       propertyPath: m_Name
@@ -1223,8 +1223,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37cb446f8df591b42943256f12dbdd6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParallaxLayer
-  parallaxFactor: 0.1
-  parallaxFactorY: 0.575
+  parallaxFactor: 0.2
+  parallaxFactorY: 1
 --- !u!1001 &256651859
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1358,11 +1358,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4892436201671028652, guid: 98251d6f545933d429af054e737147a7, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 126.18384
+      value: -258.38614
       objectReference: {fileID: 0}
     - target: {fileID: 4892436201671028652, guid: 98251d6f545933d429af054e737147a7, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.20833063
+      value: -9.408331
       objectReference: {fileID: 0}
     - target: {fileID: 7419765808580983041, guid: 98251d6f545933d429af054e737147a7, type: 3}
       propertyPath: m_Name
@@ -1655,11 +1655,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4892436201671028652, guid: 98251d6f545933d429af054e737147a7, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 33.392944
+      value: -351.17703
       objectReference: {fileID: 0}
     - target: {fileID: 4892436201671028652, guid: 98251d6f545933d429af054e737147a7, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.26674557
+      value: -9.466745
       objectReference: {fileID: 0}
     - target: {fileID: 7419765808580983041, guid: 98251d6f545933d429af054e737147a7, type: 3}
       propertyPath: m_Name
@@ -3499,8 +3499,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37cb446f8df591b42943256f12dbdd6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParallaxLayer
-  parallaxFactor: 0.3
-  parallaxFactorY: 0.6
+  parallaxFactor: 0.4
+  parallaxFactorY: 1
 --- !u!1001 &798583754
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3942,8 +3942,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37cb446f8df591b42943256f12dbdd6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParallaxLayer
-  parallaxFactor: 0.5
-  parallaxFactorY: 0.6
+  parallaxFactor: 0.8
+  parallaxFactorY: 1
 --- !u!1001 &940923833
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5925,8 +5925,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37cb446f8df591b42943256f12dbdd6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParallaxLayer
-  parallaxFactor: 0.2
-  parallaxFactorY: 0.6
+  parallaxFactor: 0.3
+  parallaxFactorY: 1
 --- !u!1 &1260877876
 GameObject:
   m_ObjectHideFlags: 0
@@ -6252,7 +6252,7 @@ Transform:
   m_GameObject: {fileID: 1261906042}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 369.27, y: 5.9700003, z: -10}
+  m_LocalPosition: {x: -15.299999, y: -3.2300003, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6367,11 +6367,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4892436201671028652, guid: 98251d6f545933d429af054e737147a7, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -87.788605
+      value: -472.35858
       objectReference: {fileID: 0}
     - target: {fileID: 4892436201671028652, guid: 98251d6f545933d429af054e737147a7, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.3045835
+      value: -11.504583
       objectReference: {fileID: 0}
     - target: {fileID: 7419765808580983041, guid: 98251d6f545933d429af054e737147a7, type: 3}
       propertyPath: m_Name
@@ -8694,8 +8694,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37cb446f8df591b42943256f12dbdd6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParallaxLayer
-  parallaxFactor: 0.6
-  parallaxFactorY: 0.6
+  parallaxFactor: 1
+  parallaxFactorY: 1
 --- !u!1001 &1910647036
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8865,8 +8865,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 37cb446f8df591b42943256f12dbdd6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ParallaxLayer
-  parallaxFactor: 0.4
-  parallaxFactorY: 0.6
+  parallaxFactor: 0.6
+  parallaxFactorY: 1
 --- !u!4 &1941724764 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3389532893646018034, guid: fac47886ee8237142b8077ac1d83aa6a, type: 3}
@@ -47670,11 +47670,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2894394463508414549, guid: 205ffbc8e31dc4d4d9c5851c774f9194, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 105.15384
+      value: 3.845539
       objectReference: {fileID: 0}
     - target: {fileID: 2894394463508414549, guid: 205ffbc8e31dc4d4d9c5851c774f9194, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 10.430992
+      value: 10.426939
       objectReference: {fileID: 0}
     - target: {fileID: 2894394463508414549, guid: 205ffbc8e31dc4d4d9c5851c774f9194, type: 3}
       propertyPath: m_LocalPosition.z
@@ -47839,11 +47839,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4173589304260275096, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 376.5
+      value: -8.07
       objectReference: {fileID: 0}
     - target: {fileID: 4173589304260275096, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 13.8
+      value: 4.6
       objectReference: {fileID: 0}
     - target: {fileID: 4173589304260275096, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
       propertyPath: m_LocalPosition.z
