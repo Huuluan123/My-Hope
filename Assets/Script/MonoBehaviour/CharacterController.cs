@@ -21,7 +21,6 @@ public enum PlayerState
     Grappling,
 
     Talking,
-    WaitingForCutscene,
     Dead,
     ScriptedMove
 }
@@ -146,7 +145,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private PlayerState currentState;
     [SerializeField] private Vector2 moveInput;
     [SerializeField] private bool isGrounded; // Biến kiểm tra nhân vật có đang chạm đất không
-    [HideInInspector] public bool IsGrounded => isGrounded;
     [SerializeField] private bool isStandingOnOneWay;
     private bool wasGrounded;
     [SerializeField] private bool hitLeftWall;
@@ -205,7 +203,6 @@ public class PlayerController : MonoBehaviour
 
     private CharacterInput input;
     [HideInInspector] public RoomManager currentRoom;
-    private CutsceneSequence pendingSequence;
 
     [Header("Failsafe Mechanics")]
     [SerializeField] private float stuckTimeout = 3f;
@@ -1373,8 +1370,7 @@ public class PlayerController : MonoBehaviour
                    currentState == PlayerState.OnAir ||
                    currentState == PlayerState.Sliding ||
                    currentState == PlayerState.Pushing ||
-                   currentState == PlayerState.Climbing ||
-                   currentState == PlayerState.WaitingForCutscene;
+                   currentState == PlayerState.Climbing;
         }
     }
 
@@ -1397,37 +1393,12 @@ public class PlayerController : MonoBehaviour
         {
             return currentState == PlayerState.Talking ||
                    currentState == PlayerState.Dead ||
-                   currentState == PlayerState.ScriptedMove ||
-                   currentState == PlayerState.WaitingForCutscene;
+                   currentState == PlayerState.ScriptedMove;
         }
-    }
-
-    // Chuẩn bị cho Cutscene: Lưu lại sequence đang chờ và chuyển sang state chờ cutscene
-    public void PrepareCutscene(CutsceneSequence sequence)
-    {
-        pendingSequence = sequence;
-        SetState(PlayerState.WaitingForCutscene);
-        velocity.x = 0; // Dừng mọi chuyển động ngang khi chuẩn bị cutscene
     }
 
     private void UpdatePhysicsState()
     {
-        // Kiểm tra nếu đang chờ rớt xuống đất để chạy Cutscene
-        if (currentState == PlayerState.WaitingForCutscene)
-        {
-            if (isGrounded)
-            {
-                if (pendingSequence != null)
-                {
-                    pendingSequence.PlayCutscene();
-                    pendingSequence = null;
-                    // Lưu ý: Thông thường khối lệnh đầu tiên của Cutscene 
-                    // sẽ gọi SetState(ScriptedMove) để giữ khóa Input.
-                }
-            }
-            return; // Thoát sớm để không bị logic Idle/Run ghi đè State
-        }
-
         // Nếu đang bận việc riêng (Talking/Dead) thì không can thiệp
         if (currentState == PlayerState.Talking || currentState == PlayerState.Dead
             || currentState == PlayerState.Grappling || currentState == PlayerState.GrappleFreeze
@@ -1955,6 +1926,7 @@ public class PlayerController : MonoBehaviour
                         separationVector.y = 0;
                     }
 
+                    Debug.Log("OVerlap Position Before: " + transform.position + ", Separation Vector: " + separationVector);
                     transform.position += (Vector3)separationVector;
                     rb.position = (Vector2)transform.position;
                     Debug.Log("Resolved Overlap");
@@ -1963,7 +1935,7 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
-    #endregion
+#endregion
 
     #region Raycast Origin Setup
     void UpdateRayCastOrigin()
