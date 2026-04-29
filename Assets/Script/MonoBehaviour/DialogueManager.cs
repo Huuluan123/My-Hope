@@ -192,9 +192,16 @@ public class DialogueManager : MonoBehaviour
 
     #region Dialogue Flow & Ink System
 
-    public void StartDialogue(TextAsset inkJSON)
+    public void StartDialogue(TextAsset inkJSON, string knotName = "")
     {
         currentStory = new Story(inkJSON.text);
+
+        if (!string.IsNullOrEmpty(knotName))
+        {
+            // Ép hệ thống Ink nhảy thẳng đến đúng cái Knot đó
+            currentStory.ChoosePathString(knotName);
+        }
+
         isDialogueActive = true;
 
         // Bung hộp thoại ra

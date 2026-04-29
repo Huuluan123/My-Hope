@@ -14,20 +14,26 @@ public class CutsceneTrigger : MonoBehaviour
         // Kiểm tra đúng người chơi và chưa từng chạy (nếu set playOnlyOnce)
         if (collision.CompareTag("Player") && (!hasPlayed || !playOnlyOnce))
         {
-            if (sequenceToPlay != null)
+            PlayerController player = collision.GetComponent<PlayerController>();
+            if (player == null || sequenceToPlay == null) return;
+
+            // XỬ LÝ LOGIC CHỜ TIẾP ĐẤT
+            if (player.IsGrounded)
             {
                 sequenceToPlay.PlayCutscene();
-
-                if (playOnlyOnce)
-                {
-                    hasPlayed = true;
-                    // Tắt luôn Collider để tiết kiệm hiệu năng tính toán vật lý của Unity
-                    GetComponent<Collider2D>().enabled = false;
-                }
+                // Khóa input ngay lập tức để tránh người chơi kịp nhảy ra khỏi vùng
+                player.SetState(PlayerState.ScriptedMove);
             }
             else
             {
-                Debug.LogWarning("You forgot to drag the CutsceneSequence into the Trigger!");
+                // Nếu đang trên không -> Đưa vào trạng thái chờ
+                player.PrepareCutscene(sequenceToPlay);
+            }
+
+            if (playOnlyOnce)
+            {
+                hasPlayed = true;
+                GetComponent<Collider2D>().enabled = false;
             }
         }
     }
