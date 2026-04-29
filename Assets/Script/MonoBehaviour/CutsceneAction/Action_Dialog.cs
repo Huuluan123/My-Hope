@@ -6,6 +6,8 @@ public class Action_Dialog : CutsceneAction
     [Header("Ink Story")]
     [Tooltip("File JSON chứa nội dung hội thoại xuất ra từ Inky")]
     public TextAsset inkJSON;
+    [Header("Ink Settings")]
+    public string knotName;
 
     public override IEnumerator Execute()
     {
@@ -17,7 +19,7 @@ public class Action_Dialog : CutsceneAction
         }
 
         // 2. Kích hoạt Hội thoại (Giống cách DialogueTrigger làm)
-        DialogueManager.Instance.StartDialogue(inkJSON);
+        DialogueManager.Instance.StartDialogue(inkJSON, knotName);
 
         // 3. VÒNG LẶP CHỜ ĐỢI
         // Dừng toàn bộ chuỗi Cutscene lại để chờ người chơi đọc và bấm nút qua thoại.

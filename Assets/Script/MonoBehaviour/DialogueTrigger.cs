@@ -8,6 +8,9 @@ public class DialogueTrigger : MonoBehaviour
     [Header("Ink JSON")]
     public TextAsset inkJSON;
 
+    [Header("Ink Settings")]
+    public string knotName;
+
     [Header("Cutscene Alignment")]
     public Transform standPosition;
 
@@ -89,9 +92,9 @@ public class DialogueTrigger : MonoBehaviour
     {
         ShowIcon(false);
         if (standPosition != null && PlayerController.Instance != null)
-            PlayerController.Instance.MoveToAndFace(standPosition, this.transform, () => DialogueManager.Instance.StartDialogue(inkJSON));
+            PlayerController.Instance.MoveToAndFace(standPosition, this.transform, () => DialogueManager.Instance.StartDialogue(inkJSON, knotName));
         else
-            DialogueManager.Instance.StartDialogue(inkJSON);
+            DialogueManager.Instance.StartDialogue(inkJSON, knotName);
     }
 
     private void ShowIcon(bool show)

@@ -5,7 +5,7 @@
 You wake up in the middle of nowhere. You don't know anything about this world.
 HELLO WORLD!
 Name: Hope. Mission: Save and love humans.
--> Tutorial
+->END
 
 === Tutorial ===
 # speaker: System
@@ -13,14 +13,15 @@ Arrows key or Joystick to move
 Press C or A button to jump
 Press Z or LT to grab walls
 Press X or RT to launch the stretchy hand
--> SaveTheBoy
+->END
 
 === SaveTheBoy ===
 # speaker: Boy
 HELP!
 # speaker: System
-Warning: Human in danger detected! Rescue mission initiated!
-->AfterSavingBoy
+Warning: Human in danger detected!
+Rescue mission initiated!
+->END
 
 == AfterSavingBoy ==
 # speaker: Boy
