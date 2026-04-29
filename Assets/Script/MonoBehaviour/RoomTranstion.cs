@@ -41,6 +41,11 @@ public class RoomTransitionScript : MonoBehaviour
                 ParallaxCamera pCam = Camera.main.GetComponent<ParallaxCamera>();
                 if (pCam != null) pCam.ResetOldPosition();
             }
+            else
+            {
+                // Nếu người chơi không ở trong phòng này lúc mới mở game, TẮT NÓ ĐI!
+                if (myRoomManager != null) myRoomManager.OnRoomExited();
+            }
         }
     }
 
@@ -66,7 +71,7 @@ public class RoomTransitionScript : MonoBehaviour
             // Nếu người chơi ĐÃ Ở SẴN trong phòng này rồi -> Bỏ qua
             if (ActiveRoom == this) return;
 
-            // 2. 🌟 KIỂM TRA XEM CÓ ĐẾN TỪ PHÒNG KHÁC KHÔNG
+            // 2. KIỂM TRA XEM CÓ ĐẾN TỪ PHÒNG KHÁC KHÔNG
             // Nếu ActiveRoom != null, tức là người chơi vừa bước từ phòng A sang phòng B
             // Nếu ActiveRoom == null, tức là người chơi vừa rơi từ vùng không gian trống vào
             bool cameFromAnotherRoom = (ActiveRoom != null);
@@ -114,7 +119,10 @@ public class RoomTransitionScript : MonoBehaviour
     {
         if (collision.CompareTag("Player"))
         {
-            // 🌟 LOGIC CHỐNG XUNG ĐỘT (Race Condition):
+            // Gọi RoomManager để tắt hết vật thể (IRoomElement hoặc có Tag là "RoomElement") trong phòng này đi
+            if (myRoomManager != null) myRoomManager.OnRoomExited();
+
+            // LOGIC CHỐNG XUNG ĐỘT (Race Condition):
             // Nếu người chơi rời khỏi phòng này, VÀ phòng này vẫn đang được ghi nhận là phòng hiện tại
             // -> Nghĩa là người chơi đã bước ra ngoài một "vùng trống" không thuộc về bất kỳ phòng nào.
             if (ActiveRoom == this)

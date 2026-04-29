@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public class RockSpawner : MonoBehaviour
+public class RockSpawner : MonoBehaviour, IRoomElement
 {
     [Header("Object Pooling")]
     [Tooltip("Kéo thả tất cả các viên đá bạn đã tạo sẵn (và tắt đi) trong Scene vào danh sách này.")]
@@ -97,4 +97,6 @@ public class RockSpawner : MonoBehaviour
         Gizmos.color = new Color(1f, 0f, 0f, 0.4f); // Màu đỏ trong suốt
         Gizmos.DrawCube(transform.position, new Vector3(spawnAreaWidth, 0.5f, 0f));
     }
+
+    public void ResetState() { }
 }

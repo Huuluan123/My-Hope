@@ -2092,7 +2092,7 @@ public class PlayerController : MonoBehaviour
 
         // ANIMATION START đã xong, giờ mới cho nhân vật hiện lại và hồi sinh thực sự
 
-        if (currentRoom != null) currentRoom.Reset(); // Reset trạng thái phòng nếu cần
+        if (currentRoom != null) currentRoom.OnRoomEntered(); // Reset trạng thái phòng nếu cần
 
 
         // 1. Dịch chuyển nhân vật về điểm Checkpoint
