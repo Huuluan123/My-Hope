@@ -331,6 +331,28 @@ public class PlayerController : MonoBehaviour
             else
                 velocity.x = 0;
         }
+
+        // --- KIỂM TRA INPUT NHẶT/THẢ ---
+        if (!IsInputDisabled && input.GrabWasPressed)
+        {
+            // TRƯỜNG HỢP 1: Đang cầm đồ -> Thả ra
+            if (currentlyHeldObject != null)
+            {
+                DropObject();
+            }
+            // TRƯỜNG HỢP 2: Tay trống -> Bắn tia tìm đồ
+            else
+            {
+                float facingDir = Mathf.Sign(transform.localScale.x);
+                Vector2 origin = col.bounds.center;
+                RaycastHit2D hit = Physics2D.Raycast(origin, Vector2.right * facingDir, col.bounds.extents.x + grabReachDistance, collisionMask);
+
+                if (hit && hit.collider.TryGetComponent(out IHoldable holdable))
+                {
+                    CatchObject(hit.collider.gameObject);
+                }
+            }
+        }
     }
 
     void FixedUpdate()
@@ -1282,6 +1304,9 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    #endregion
+
+    #region Holdable Object Handling
     public void CatchObject(GameObject obj)
     {
         IHoldable holdable = obj.GetComponent<IHoldable>();
@@ -1291,6 +1316,19 @@ public class PlayerController : MonoBehaviour
             holdable.OnPickedUp(holdSlot);
             // Chuyển sang animation "Ôm người" ở đây
             // animator.SetBool("isHolding", true);
+        }
+    }
+
+    public void DropObject()
+    {
+        if (currentlyHeldObject != null)
+        {
+            // Gọi hàm xử lý vật lý bên trong vật thể (trả về Dynamic, thoát khỏi cha)
+            currentlyHeldObject.OnDropped();
+            currentlyHeldObject = null;
+
+            // animator.SetBool("isHolding", false);
+            Debug.Log("Đã thả vật thể xuống!");
         }
     }
     #endregion

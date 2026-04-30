@@ -218,6 +218,9 @@ public class RobotHand : MonoBehaviour
 
     public void FinishGrapple()
     {
+        //Nếu tay đã tắt rồi thì ngắt luôn, không báo cho Player nữa
+        if (!gameObject.activeSelf) return;
+
         gameObject.SetActive(false);
 
         // Báo cho PlayerController biết là tay đã thu về xong
