@@ -34,6 +34,7 @@ public class CharacterInput : MonoBehaviour
     public Vector2 MoveInput => moveAction != null ? moveAction.ReadValue<Vector2>() : Vector2.zero;
     public bool IsGrabbing => grabAction != null && grabAction.IsPressed();
     public bool IsJumping => jumpAction != null && jumpAction.IsPressed();
+    public bool GrabWasPressed => grabAction != null && grabAction.WasPressedThisFrame();
 
     void OnEnable()
     {

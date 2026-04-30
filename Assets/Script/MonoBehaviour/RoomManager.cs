@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class RoomManager : MonoBehaviour
 {
@@ -21,18 +22,41 @@ public class RoomManager : MonoBehaviour
         }
     }
 
-    public void OnRoomExited()
+    public void OnRoomExited(float delayTime = 0f)
     {
-        // 1. Tìm tất cả các vật thể con mang hợp đồng
+        if (delayTime > 0f)
+        {
+            // Bắt đầu tiến trình đếm ngược ngầm
+            StartCoroutine(DisableRoomRoutine(delayTime));
+        }
+        else
+        {
+            // Nếu không có delay (như lúc mới bật game), tắt ngay lập tức
+            PerformDisable();
+        }
+    }
+
+    // Đây là Coroutine: Tiến trình đếm thời gian
+    private IEnumerator DisableRoomRoutine(float delayTime)
+    {
+        // Đợi đúng bằng thời gian Blend của Camera
+        yield return new WaitForSeconds(delayTime);
+
+        // Sau khi đợi xong, mới thực sự tắt đồ vật
+        PerformDisable();
+    }
+
+    // Đưa logic tắt đồ vật vào một hàm riêng biệt để code gọn gàng, tái sử dụng được
+    private void PerformDisable()
+    {
         IRoomElement[] allElements = GetComponentsInChildren<IRoomElement>(true);
 
-        // 2. Tắt chúng đi để tiết kiệm CPU
         foreach (IRoomElement element in allElements)
         {
             MonoBehaviour mono = element as MonoBehaviour;
             if (mono != null)
             {
-                mono.gameObject.SetActive(false); // TẮT VẬT THỂ
+                mono.gameObject.SetActive(false);
             }
         }
     }

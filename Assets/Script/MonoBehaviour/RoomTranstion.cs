@@ -119,8 +119,17 @@ public class RoomTransitionScript : MonoBehaviour
     {
         if (collision.CompareTag("Player"))
         {
+            // ĐỌC THỜI GIAN BLEND CỦA CINEMACHINE
+            float cameraBlendTime = 0.75f; // Đặt giá trị dự phòng mặc định
+            //CinemachineBrain brain = Camera.main.GetComponent<CinemachineBrain>();
+            //if (brain != null)
+            //{
+            //    cameraBlendTime = brain.DefaultBlend.Time;
+            //}
+
             // Gọi RoomManager để tắt hết vật thể (IRoomElement hoặc có Tag là "RoomElement") trong phòng này đi
-            if (myRoomManager != null) myRoomManager.OnRoomExited();
+            // Lưu ý: Ta không tắt ngay lập tức mà đợi đến khi camera blend xong mới tắt, để tránh việc người chơi vừa bước ra khỏi phòng đã thấy đồ vật trong phòng biến mất một cách đột ngột.
+            if (myRoomManager != null) myRoomManager.OnRoomExited(cameraBlendTime);
 
             // LOGIC CHỐNG XUNG ĐỘT (Race Condition):
             // Nếu người chơi rời khỏi phòng này, VÀ phòng này vẫn đang được ghi nhận là phòng hiện tại

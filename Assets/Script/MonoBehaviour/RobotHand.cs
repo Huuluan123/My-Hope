@@ -71,6 +71,11 @@ public class RobotHand : MonoBehaviour
         isAttached = false;
         isReturning = false;
         lineRenderer.positionCount = 2;
+
+        // Cập nhật vị trí dây NGAY LẬP TỨC tại frame số 0
+        // để đè lên ký ức dây của lần bắn trước đó
+        lineRenderer.SetPosition(0, launchPosition.position);
+        lineRenderer.SetPosition(1, transform.position);
     }
 
     void Update()
@@ -126,6 +131,17 @@ public class RobotHand : MonoBehaviour
             {
                 // Bỏ qua bản thân người chơi và sàn xuyên thấu (OneWay)
                 if (hit.collider.CompareTag("Player") || hit.collider.CompareTag("OneWay")) continue;
+
+                // KIỂM TRA NẾU TRÚNG VẬT THỂ CÓ THỂ KÉO (NPC)
+                IPullable pullable = hit.collider.GetComponent<IPullable>();
+                if (pullable != null)
+                {
+                    Debug.Log("Pullable hit: " + hit.collider.name);
+                    isFlying = false;
+                    pullable.OnPulled(launchPosition, flySpeed);
+                    isReturning = true;
+                    break;
+                }
 
                 // TÍNH TOÁN VỊ TRÍ BÁM (Centroid giúp deltaMove của Player cực kỳ chuẩn)
                 // hit.centroid là vị trí tâm của BoxCollider tại thời điểm va chạm
@@ -202,6 +218,16 @@ public class RobotHand : MonoBehaviour
 
     public void FinishGrapple()
     {
+        //Nếu tay đã tắt rồi thì ngắt luôn, không báo cho Player nữa
+        if (!gameObject.activeSelf) return;
+
         gameObject.SetActive(false);
+
+        // Báo cho PlayerController biết là tay đã thu về xong
+        // để giải phóng nhân vật khỏi trạng thái Grappling/GrappleFreeze
+        if (playerController != null)
+        {
+            playerController.CancelGrapple();
+        }
     }
 }

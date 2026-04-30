@@ -42,6 +42,7 @@ GameObject:
   - component: {fileID: 4235662911600839020}
   - component: {fileID: 1502763107120025746}
   - component: {fileID: 542217624907606331}
+  - component: {fileID: -3692163316312667965}
   m_Layer: 0
   m_Name: NPC
   m_TagString: Untagged
@@ -74,14 +75,23 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3037542797432965437}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c6653a86cf256aa4ca14e5d3f0b7ee53, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DialogueTrigger
   inkJSON: {fileID: 4900000, guid: 2b368bf21a5882142b9aa0c7eb49502a, type: 3}
-  chatIcon: {fileID: 6346542843473272711}
+  knotName: 
   standPosition: {fileID: 5637395830310802149}
+  iconTransform: {fileID: 0}
+  promptText: {fileID: 0}
+  keyboardIcon: 4
+  xboxIcon: 8
+  psIcon: 8
+  nintendoIcon: 7
+  duration: 0.25
+  floatingHeight: 0.2
+  previewDevice: 0
 --- !u!61 &542217624907606331
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -89,7 +99,7 @@ BoxCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3037542797432965437}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Density: 1
   m_Material: {fileID: 0}
@@ -128,6 +138,33 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 3.1248841, y: 3.146347}
   m_EdgeRadius: 0
+--- !u!50 &-3692163316312667965
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3037542797432965437}
+  m_BodyType: 0
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 0
 --- !u!1 &6346542843473272711
 GameObject:
   m_ObjectHideFlags: 0
