@@ -138,7 +138,12 @@ public class PlayerController : MonoBehaviour
 
     [Header("Jump Thru Assist")]
     [SerializeField] private float jumpThruAssistSpeed = 4f; // Tốc độ đẩy trượt lên bục
+
+    [Header("Holding System")]
+    public Transform holdSlot; // Object con của Robot làm vị trí nắm tay
+    private IHoldable currentlyHeldObject;
     #endregion
+
 
     [Header("Movement and control")]
     // Biến để lưu trữ giá trị di chuyển
@@ -1276,6 +1281,18 @@ public class PlayerController : MonoBehaviour
             grappleTarget = Vector2.zero;
         }
     }
+
+    public void CatchObject(GameObject obj)
+    {
+        IHoldable holdable = obj.GetComponent<IHoldable>();
+        if (holdable != null)
+        {
+            currentlyHeldObject = holdable;
+            holdable.OnPickedUp(holdSlot);
+            // Chuyển sang animation "Ôm người" ở đây
+            // animator.SetBool("isHolding", true);
+        }
+    }
     #endregion
 
     #region Push/pull mechanic handling
@@ -1354,15 +1371,14 @@ public class PlayerController : MonoBehaviour
         bool wasGrappling = (currentState == PlayerState.Grappling || currentState == PlayerState.GrappleFreeze);
         bool isChangingAway = (newState != PlayerState.Grappling && newState != PlayerState.GrappleFreeze);
 
+        currentState = newState;
+
         if (wasGrappling && isChangingAway)
         {
             // Thu hồi tay ngay lập tức
             if (robotHand != null) robotHand.FinishGrapple();
             grappleTarget = Vector2.zero;
         }
-        // ---------------------------------
-
-        currentState = newState;
     }
 
     public bool CanMove
