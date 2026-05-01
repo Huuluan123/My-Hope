@@ -3,7 +3,7 @@ using System.Collections;
 
 public class PlayerAnimation : MonoBehaviour
 {
-    private Animator animator;
+    [SerializeField] private Animator animator;
     private PlayerController controller;
     private SpriteRenderer spriteRenderer;
 
@@ -19,7 +19,7 @@ public class PlayerAnimation : MonoBehaviour
 
     private void Awake()
     {
-        animator = GetComponentInChildren<Animator>();
+        //animator = GetComponentInChildren<Animator>();
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
         controller = GetComponent<PlayerController>();
     }

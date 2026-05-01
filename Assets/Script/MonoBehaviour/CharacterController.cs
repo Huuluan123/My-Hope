@@ -332,8 +332,50 @@ public class PlayerController : MonoBehaviour
                 velocity.x = 0;
         }
 
+        // --- 1. POLLING: NHẢY (JUMP) ---
+        if (input.JumpWasPressedThisFrame)
+        {
+            if (CanMove || currentState == PlayerState.Talking)
+            {
+                lastJumpInputTime = Time.time;
+            }
+        }
+
+        // NHẢ NÚT NHẢY (Biến thiên độ cao)
+        if (input.JumpWasReleasedThisFrame)
+        {
+            if (velocity.y > 0)
+            {
+                velocity.y = velocity.y * variableJumpHeightMultiplier;
+            }
+        }
+
+        // --- 2. POLLING: BẮN TAY MÓC (GRAPPLE) ---
+        if (input.GrappleWasPressedThisFrame)
+        {
+            if (CanMove && currentState != PlayerState.GrappleFreeze && currentState != PlayerState.Grappling)
+            {
+                if (currentState == PlayerState.Idle && currentDialogueTrigger != null)
+                {
+                    currentDialogueTrigger.TriggerDialogue();
+                }
+                else
+                {
+                    if (!isGrounded && currentGrappleCount >= maxGrappleCount)
+                    {
+                        Debug.Log("All attempts to shoot grappling hand on air have been used up!");
+                    }
+                    else
+                    {
+                        if (!isGrounded) currentGrappleCount++;
+                        StartCoroutine(PerformGrappleWithLeniency());
+                    }
+                }
+            }
+        }
+
         // --- KIỂM TRA INPUT NHẶT/THẢ ---
-        if (!IsInputDisabled && input.GrabWasPressed)
+        if (!IsInputDisabled && input.GrabWasPressedThisFrame)
         {
             // TRƯỜNG HỢP 1: Đang cầm đồ -> Thả ra
             if (currentlyHeldObject != null)
@@ -1613,6 +1655,7 @@ public class PlayerController : MonoBehaviour
     // Xử lý Unity Timeline
     public void OnTimelineStart()
     {
+        StopAllCoroutines(); // Dừng hết mọi Coroutine đang chạy (tránh xung đột với AutoWalk hoặc các hiệu ứng thời gian khác có thể ghi đè PlayerState)
         // Đưa vào nhóm State bị cấm Input và cấm Vật lý
         SetState(PlayerState.ScriptedMove);
         velocity = Vector3.zero;
@@ -2221,27 +2264,6 @@ public class PlayerController : MonoBehaviour
         Vector2 topRight = new Vector2(bounds.max.x, bounds.max.y);
         DrawCeilingCorrectionRays(topLeft, topRight);
 
-    }
-
-    private void OnEnable()
-    {
-        // Đăng ký với CharacterInput
-        if (input != null)
-        {
-            input.JumpPerformed += OnJump;
-            input.JumpCanceled += OnJumpCanceled;
-            input.GrapplePerformed += OnGrappleInput;
-        }
-    }
-
-    private void OnDisable()
-    {
-        if (input != null)
-        {
-            input.JumpPerformed -= OnJump;
-            input.JumpCanceled -= OnJumpCanceled;
-            input.GrapplePerformed -= OnGrappleInput;
-        }
     }
 
     #region Custom Draw
