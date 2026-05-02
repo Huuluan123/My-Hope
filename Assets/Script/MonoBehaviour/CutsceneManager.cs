@@ -37,7 +37,8 @@ public class CutsceneManager : MonoBehaviour
 
     private void UnlockPlayer(PlayableDirector obj)
     {
-        if (PlayerController.Instance != null)
+        if (PlayerController.Instance != null
+            && PlayerController.Instance.GetCurrentState() == PlayerState.ScriptedMove)
         {
             // Chốt chặn an toàn: Nếu nhân vật đang bị chết (ví dụ rớt xuống vực trong cutscene),
             // thì không được phép ép nó sống dậy (Idle)

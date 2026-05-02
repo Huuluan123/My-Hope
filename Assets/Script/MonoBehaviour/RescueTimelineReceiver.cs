@@ -7,6 +7,7 @@ public class RescueTimelineReceiver : MonoBehaviour
     public PlayableDirector director;
     public Transform stopPoint;
     public Transform npc;
+    public Action_Dialog endDialogAction;
 
     [Header("QTE Setup")]
     public PromptAction qteButton;
@@ -79,12 +80,20 @@ public class RescueTimelineReceiver : MonoBehaviour
         // người chơi KHÔNG THỂ xen vào điều khiển!
     }
 
+    private void ForceDropNPC()
+    {
+        PlayerController.Instance.DropObject();
+    }
+
     // 4. SIGNAL: Kết thúc phim
     public void OnCutsceneEnd()
     {
+        ForceDropNPC();
+
         // Tới đây Timeline mới thả quyền điều khiển ra
         PlayerController.Instance.OnTimelineEnd();
 
         // Bạn có thể Load Scene ở đây
+        endDialogAction.ActivateDialogue();
     }
 }

@@ -136,6 +136,8 @@ public class GameManager : MonoBehaviour
             InputAction action = (InputAction)obj;
             InputDevice device = action.activeControl.device;
 
+            //Debug.Log(device.name);
+
             if (State == GameState.Pause)
             {
                 if (device is Gamepad || device is Keyboard)
@@ -165,6 +167,7 @@ public class GameManager : MonoBehaviour
                     {
                         if (Mouse.current != null)
                         {
+                            Debug.Log("Switching to mouse input, warping cursor to center.");
                             Mouse.current.WarpCursorPosition(new Vector2(Screen.width / 2f, Screen.height / 2f));
                         }
 

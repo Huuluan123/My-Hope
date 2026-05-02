@@ -932,6 +932,7 @@ public class PlayerController : MonoBehaviour
 
         // Mở khóa Input!
         SetState(PlayerState.Idle);
+        Debug.Log("Room transition complete. Player control returned.");
     }
 
     #region Jump Handling
@@ -991,6 +992,7 @@ public class PlayerController : MonoBehaviour
             if (currentState == PlayerState.Pushing)
             {
                 SetState(PlayerState.Idle);
+                Debug.Log("Player released pushable object. Idle state set");
                 currentPushable = null;
             }
 
@@ -1386,6 +1388,7 @@ public class PlayerController : MonoBehaviour
             {
                 currentPushable = null;
                 SetState(PlayerState.Idle);
+                Debug.Log("Player released pushable object. Idle state set");
                 return;
             }
         }
@@ -1459,6 +1462,11 @@ public class PlayerController : MonoBehaviour
             if (robotHand != null) robotHand.FinishGrapple();
             grappleTarget = Vector2.zero;
         }
+    }
+
+    public PlayerState GetCurrentState()
+    {
+        return currentState;
     }
 
     public bool CanMove
@@ -1565,6 +1573,7 @@ public class PlayerController : MonoBehaviour
             else
             {
                 SetState(PlayerState.Idle);
+                //Debug.Log("Player stop moving. Idle state set");
             }
         }
         else
@@ -1646,6 +1655,7 @@ public class PlayerController : MonoBehaviour
 
         // 5. Trả về trạng thái an toàn
         SetState(PlayerState.Idle);
+        Debug.Log("Emergency reset. Idle state set");
         isGrounded = false; // Reset để hàm VerticalCollisionCheck tự động tính lại vào frame sau
 
         // 6. Reset lại bộ đếm Watchdog
@@ -1665,6 +1675,7 @@ public class PlayerController : MonoBehaviour
     {
         // Đánh thức hệ thống vật lý
         SetState(PlayerState.Idle);
+        Debug.Log("Timeline ended. Idle state set");
 
         // Reset các trạng thái chạm đất để raycast tự cập nhật vào frame sau
         wasGrounded = false;
@@ -2053,7 +2064,7 @@ public class PlayerController : MonoBehaviour
                         separationVector.y = 0;
                     }
 
-                    Debug.Log("OVerlap Position Before: " + transform.position + ", Separation Vector: " + separationVector);
+                    //Debug.Log("OVerlap Position Before: " + transform.position + ", Separation Vector: " + separationVector);
                     transform.position += (Vector3)separationVector;
                     rb.position = (Vector2)transform.position;
                     Debug.Log("Resolved Overlap");
@@ -2219,6 +2230,7 @@ public class PlayerController : MonoBehaviour
 
         // 4. Trả lại quyền điều khiển
         SetState(PlayerState.Idle);
+        Debug.Log("Player respawned. Idle state set.");
     }
     #endregion
 
