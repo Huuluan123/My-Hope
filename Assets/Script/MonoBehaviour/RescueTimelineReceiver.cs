@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Playables;
 
@@ -95,5 +96,10 @@ public class RescueTimelineReceiver : MonoBehaviour
 
         // Bạn có thể Load Scene ở đây
         endDialogAction.ActivateDialogue();
+    }
+
+    public void PlayTransition()
+    {
+        TransitionManager.Instance.PlayTransition();
     }
 }

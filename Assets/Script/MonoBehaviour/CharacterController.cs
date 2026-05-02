@@ -2196,7 +2196,7 @@ public class PlayerController : MonoBehaviour
         // --- BẮT ĐẦU HỒI SINH ---
 
         // Đợi cho Animation Start chạy xong
-        yield return new WaitForSeconds(TransitionManager.Instance.transitionTime + 0.5f);
+        yield return new WaitForSeconds(TransitionManager.Instance.transitionTime);
 
         // ANIMATION START đã xong, giờ mới cho nhân vật hiện lại và hồi sinh thực sự
 

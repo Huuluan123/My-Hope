@@ -34,4 +34,16 @@ public class TransitionManager : MonoBehaviour
     {
         transitionAnimator.SetTrigger("End");
     }
+
+    public void PlayTransition()
+    {
+        StartCoroutine(TransitionCoroutine());
+    }
+
+    private IEnumerator TransitionCoroutine()
+    {
+        PlayStartTransition();
+        yield return new WaitForSeconds(transitionTime);
+        PlayEndTransition();
+    }
 }
