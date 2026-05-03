@@ -10,9 +10,9 @@ I have no idea. My memory is blank.
 # speaker: Boy
 What is your name by the way?
 # speaker: Hope
-I'm Hope. My mission is to save and love humans. That's all what in my memory.
+I'm Robot. My mission is to save and love humans. That's all what in my memory.
 # speaker: Boy
-I'm [name]. Nice to meet you, Hope!
+I'm Anna. Nice to meet you, Robot!
 There's a town not far from here. That's where I live. There are plenty of people there. Do you want to come with me?
 # speaker: Hope
 Sure, i guess!
