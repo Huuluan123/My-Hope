@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Users; // Thư viện để quản lý thiết bị
+using UnityEngine.SceneManagement;
 using System;
 
 public enum GameState
@@ -27,6 +28,8 @@ public class GameManager : MonoBehaviour
     private InputActionMap playerMap;
     private InputActionMap uiMap;
 
+    private bool isInMainMenu;
+
     void Awake()
     {
         if (Instance == null)
@@ -40,7 +43,7 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        Application.targetFrameRate = 165;
+        ApplyDeviceResolutionAndFPS();
         State = GameState.Running;
 
         // Khởi tạo Input
@@ -55,11 +58,11 @@ public class GameManager : MonoBehaviour
         uiMap?.Disable();
     }
 
-    private void Start()
-    {
-        Cursor.visible = false;
-        Cursor.lockState = CursorLockMode.Locked;
-    }
+    //private void Start()
+    //{
+    //    Cursor.visible = false;
+    //    Cursor.lockState = CursorLockMode.Locked;
+    //}
 
 #if UNITY_EDITOR
     //private void Update()
@@ -77,6 +80,7 @@ public class GameManager : MonoBehaviour
         }
         InputSystem.onActionChange += OnInputDeviceChanged;
         InputSystem.onDeviceChange += OnDeviceChange;
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void OnDisable()
@@ -87,6 +91,29 @@ public class GameManager : MonoBehaviour
             pauseAction.Disable();
         }
         InputSystem.onActionChange -= OnInputDeviceChanged;
+        InputSystem.onDeviceChange -= OnDeviceChange;
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    // Phân xử logic chuột mỗi khi chuyển Scene
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // Giả định Title Screen của bạn luôn nằm ở vị trí số 0 trong File -> Build Settings
+        isInMainMenu = (scene.buildIndex == 0);
+
+        if (isInMainMenu)
+        {
+            // Ở Title Screen: Ẩn chuột, nhưng KHÔNG khóa cứng (None) để nó không bị giật về giữa màn hình
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.None;
+            IsUsingPointer = false;
+        }
+        else
+        {
+            // Ở trong Game: Khóa cứng và giấu chuột đi
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+        }
     }
 
     private void OnPausePerformed(InputAction.CallbackContext context)
@@ -192,5 +219,37 @@ public class GameManager : MonoBehaviour
                 TogglePause();
             }
         }
+    }
+
+    private void ApplyDeviceResolutionAndFPS()
+    {
+        // 1. Lấy thông tin độ phân giải và tần số quét gốc của màn hình hiện tại
+        Resolution nativeRes = Screen.currentResolution;
+        int width = nativeRes.width;
+        int height = nativeRes.height;
+
+        // Xử lý lấy tần số quét (Hỗ trợ cả Unity bản mới và cũ)
+#if UNITY_2022_2_OR_NEWER
+        int refreshRate = Mathf.RoundToInt((float)nativeRes.refreshRateRatio.value);
+#else
+        int refreshRate = nativeRes.refreshRate;
+#endif
+
+        Debug.Log($"[GameManager] Phát hiện màn hình: {width}x{height} @ {refreshRate}Hz");
+
+        // 2. Gắn độ phân giải Fullscreen (Không viền) với tần số quét tương ứng
+#if UNITY_2022_2_OR_NEWER
+        Screen.SetResolution(width, height, FullScreenMode.FullScreenWindow, nativeRes.refreshRateRatio);
+#else
+        Screen.SetResolution(width, height, FullScreenMode.FullScreenWindow, refreshRate);
+#endif
+
+        // 3. QUAN TRỌNG: Tắt VSync của Unity để targetFrameRate có thể hoạt động chính xác
+        // Nếu vSyncCount = 1, Unity sẽ bỏ qua targetFrameRate và ép dính theo màn hình. 
+        // Tuy nhiên, việc ép bằng code (vSync = 0 + targetFrameRate) sẽ mang lại độ trễ Input (Input Delay) thấp hơn cho game Platformer!
+        QualitySettings.vSyncCount = 0;
+
+        // 4. Khóa FPS bằng đúng với tần số quét của màn hình
+        Application.targetFrameRate = refreshRate;
     }
 }
