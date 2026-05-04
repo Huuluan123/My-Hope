@@ -17,9 +17,9 @@ MonoBehaviour:
   gdkPlatformSettingsCsNamespace: 
   settingsList:
   - runtimePlatform: 2
-    targetMicrosoftGdk: 1
+    targetMicrosoftGdk: 0
     gameConfigAsset: {fileID: -944628639613478452, guid: 74dd5181efb0fd646ae2aa965298f822, type: 3}
     shellVisualsMode: 0
-    createScriptingDefine: 1
+    createScriptingDefine: 0
     createPackage: 0
     sideloadPackage: 0

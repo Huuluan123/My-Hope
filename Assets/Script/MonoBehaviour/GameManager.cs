@@ -104,9 +104,9 @@ public class GameManager : MonoBehaviour
         if (isInMainMenu)
         {
             // Ở Title Screen: Ẩn chuột, nhưng KHÔNG khóa cứng (None) để nó không bị giật về giữa màn hình
-            Cursor.visible = false;
+            Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
-            IsUsingPointer = false;
+            IsUsingPointer = true;
         }
         else
         {
