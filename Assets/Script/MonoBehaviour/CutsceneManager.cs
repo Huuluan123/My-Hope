@@ -1,31 +1,22 @@
 using UnityEngine;
 using UnityEngine.Playables;
 
+// Bắt buộc Object gắn script này phải có PlayableDirector
+[RequireComponent(typeof(PlayableDirector))]
 public class CutsceneManager : MonoBehaviour
 {
-    public static CutsceneManager Instance { get; private set; }
-    
-    public PlayableDirector director; // Kéo thả Timeline của bạn vào đây
+    private PlayableDirector director;
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-            return;
-        }
+        // Tự động tìm Timeline trên cùng GameObject, không cần kéo thả!
+        director = GetComponent<PlayableDirector>();
     }
+
     private void OnEnable()
     {
-        // Đăng ký sự kiện: Khi Timeline bắt đầu chạy -> Gọi hàm khóa Player
+        // Đăng ký sự kiện tự động
         director.played += LockPlayer;
-
-        // Đăng ký sự kiện: Khi Timeline dừng lại -> Gọi hàm mở khóa Player
         director.stopped += UnlockPlayer;
     }
 
@@ -39,16 +30,21 @@ public class CutsceneManager : MonoBehaviour
     {
         if (PlayerController.Instance != null)
         {
-            PlayerController.Instance.SetState(PlayerState.ScriptedMove);
-            // Xóa lực quán tính (dùng public method hoặc property nếu cần)
+            // Gọi hàm OnTimelineStart đã có trong CharacterController
+            PlayerController.Instance.OnTimelineStart();
         }
     }
 
     private void UnlockPlayer(PlayableDirector obj)
     {
-        if (PlayerController.Instance != null)
+        if (PlayerController.Instance != null
+            && PlayerController.Instance.GetCurrentState() == PlayerState.ScriptedMove)
         {
-            PlayerController.Instance.SetState(PlayerState.Idle);
+            // Chốt chặn an toàn: Nếu nhân vật đang bị chết (ví dụ rớt xuống vực trong cutscene),
+            // thì không được phép ép nó sống dậy (Idle)
+            // LƯU Ý: Đổi currentState trong CharacterController thành public để dùng dòng lệnh dưới, 
+            // HOẶC nếu không muốn public, bạn có thể xóa dòng if này đi.
+            PlayerController.Instance.OnTimelineEnd();
         }
     }
 }

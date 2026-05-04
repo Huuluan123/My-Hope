@@ -42,10 +42,10 @@ MonoBehaviour:
   Path: FMOD/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639109074344310537
+  lastModified: 639134974970017789
   FileSizes: []
   Exists: 1
---- !u!114 &-1184005835692883167
+--- !u!114 &-1501505905294722510
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -59,19 +59,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
   Path: event:/Main Theme
   Guid:
-    Data1: -866324017
-    Data2: 1149849954
-    Data3: -1233752661
-    Data4: 287241532
+    Data1: -281390036
+    Data2: 1187004161
+    Data3: 1492096135
+    Data4: -423482025
   Banks:
   - {fileID: -4893171304041935319}
   IsStream: 1
   Is3D: 0
-  IsOneShot: 1
+  IsOneShot: 0
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 0
+  Length: 165015
 --- !u!114 &-973785210174382274
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -115,29 +115,59 @@ MonoBehaviour:
   - {fileID: 8345543451865520628}
   - {fileID: -4893171304041935319}
   EditorEvents:
-  - {fileID: -1184005835692883167}
   - {fileID: -4923398468512384997}
   - {fileID: -973785210174382274}
   - {fileID: 6321964981666071516}
   - {fileID: 5988485510939275845}
+  - {fileID: 349461747655055120}
+  - {fileID: -1501505905294722510}
   EditorParameters: []
   MasterBanks:
   - {fileID: -4893171304041935319}
   StringsBanks:
   - {fileID: 8345543451865520628}
   cacheVersion: 131858
-  cacheTime: 639109074344310537
+  cacheTime: 639134974970029479
   SerializableEventsDict:
-  - key: event:/Main Theme
-    index: 0
   - key: event:/Jump
-    index: 1
+    index: 0
   - key: event:/Player_Footsteps
-    index: 2
+    index: 1
   - key: event:/Shoot Hand
-    index: 3
+    index: 2
   - key: event:/Land
+    index: 3
+  - key: event:/Action Theme
     index: 4
+  - key: event:/Main Theme
+    index: 5
+--- !u!114 &349461747655055120
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Action Theme
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Action Theme
+  Guid:
+    Data1: -866324017
+    Data2: 1149849954
+    Data3: -1233752661
+    Data4: 287241532
+  Banks:
+  - {fileID: -4893171304041935319}
+  IsStream: 1
+  Is3D: 0
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 669024
 --- !u!114 &5988485510939275845
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -207,8 +237,8 @@ MonoBehaviour:
   Path: FMOD/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639109074344310537
+  lastModified: 639134974970029479
   FileSizes:
   - Name: 
-    Value: 942
+    Value: 984
   Exists: 1

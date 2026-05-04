@@ -9,6 +9,12 @@ public class Action_Dialog : CutsceneAction
     [Header("Ink Settings")]
     public string knotName;
 
+    // Hàm này sẽ được gọi từ Timeline thông qua Signal
+    public void ActivateDialogue()
+    {
+        StartCoroutine(Execute());
+    }
+
     public override IEnumerator Execute()
     {
         // 1. Kiểm tra an toàn

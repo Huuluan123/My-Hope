@@ -194,6 +194,7 @@ public class DialogueManager : MonoBehaviour
 
     public void StartDialogue(TextAsset inkJSON, string knotName = "")
     {
+        StopAllCoroutines(); // Dừng mọi Coroutine đang chạy để tránh xung đột PlayerState
         currentStory = new Story(inkJSON.text);
 
         if (!string.IsNullOrEmpty(knotName))
@@ -208,6 +209,7 @@ public class DialogueManager : MonoBehaviour
         if (dialogueBox != null) dialogueBox.RemoveFromClassList(hiddenClassName);
 
         PlayerController.Instance.SetState(PlayerState.Talking);
+        Debug.Log("Talking state set");
         ContinueStory();
     }
 
@@ -288,6 +290,7 @@ public class DialogueManager : MonoBehaviour
 
         yield return new WaitForSeconds(0.3f);
         PlayerController.Instance.SetState(PlayerState.Idle);
+        Debug.Log("Dialogue ended, back to Idle state");
     }
 
     #endregion

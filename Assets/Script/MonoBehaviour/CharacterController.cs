@@ -2,7 +2,9 @@ using System;
 using System.Collections;
 using Unity.Cinemachine;
 using Unity.VisualScripting;
+#if UNITY_EDITOR
 using UnityEditor.Experimental.GraphView;
+#endif
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
@@ -332,8 +334,50 @@ public class PlayerController : MonoBehaviour
                 velocity.x = 0;
         }
 
+        // --- 1. POLLING: NHẢY (JUMP) ---
+        if (input.JumpWasPressedThisFrame)
+        {
+            if (CanMove || currentState == PlayerState.Talking)
+            {
+                lastJumpInputTime = Time.time;
+            }
+        }
+
+        // NHẢ NÚT NHẢY (Biến thiên độ cao)
+        if (input.JumpWasReleasedThisFrame)
+        {
+            if (velocity.y > 0)
+            {
+                velocity.y = velocity.y * variableJumpHeightMultiplier;
+            }
+        }
+
+        // --- 2. POLLING: BẮN TAY MÓC (GRAPPLE) ---
+        if (input.GrappleWasPressedThisFrame)
+        {
+            if (CanMove && currentState != PlayerState.GrappleFreeze && currentState != PlayerState.Grappling)
+            {
+                if (currentState == PlayerState.Idle && currentDialogueTrigger != null)
+                {
+                    currentDialogueTrigger.TriggerDialogue();
+                }
+                else
+                {
+                    if (!isGrounded && currentGrappleCount >= maxGrappleCount)
+                    {
+                        Debug.Log("All attempts to shoot grappling hand on air have been used up!");
+                    }
+                    else
+                    {
+                        if (!isGrounded) currentGrappleCount++;
+                        StartCoroutine(PerformGrappleWithLeniency());
+                    }
+                }
+            }
+        }
+
         // --- KIỂM TRA INPUT NHẶT/THẢ ---
-        if (!IsInputDisabled && input.GrabWasPressed)
+        if (!IsInputDisabled && input.GrabWasPressedThisFrame)
         {
             // TRƯỜNG HỢP 1: Đang cầm đồ -> Thả ra
             if (currentlyHeldObject != null)
@@ -890,6 +934,7 @@ public class PlayerController : MonoBehaviour
 
         // Mở khóa Input!
         SetState(PlayerState.Idle);
+        Debug.Log("Room transition complete. Player control returned.");
     }
 
     #region Jump Handling
@@ -949,6 +994,7 @@ public class PlayerController : MonoBehaviour
             if (currentState == PlayerState.Pushing)
             {
                 SetState(PlayerState.Idle);
+                Debug.Log("Player released pushable object. Idle state set");
                 currentPushable = null;
             }
 
@@ -1344,6 +1390,7 @@ public class PlayerController : MonoBehaviour
             {
                 currentPushable = null;
                 SetState(PlayerState.Idle);
+                Debug.Log("Player released pushable object. Idle state set");
                 return;
             }
         }
@@ -1417,6 +1464,11 @@ public class PlayerController : MonoBehaviour
             if (robotHand != null) robotHand.FinishGrapple();
             grappleTarget = Vector2.zero;
         }
+    }
+
+    public PlayerState GetCurrentState()
+    {
+        return currentState;
     }
 
     public bool CanMove
@@ -1523,6 +1575,7 @@ public class PlayerController : MonoBehaviour
             else
             {
                 SetState(PlayerState.Idle);
+                //Debug.Log("Player stop moving. Idle state set");
             }
         }
         else
@@ -1604,6 +1657,7 @@ public class PlayerController : MonoBehaviour
 
         // 5. Trả về trạng thái an toàn
         SetState(PlayerState.Idle);
+        Debug.Log("Emergency reset. Idle state set");
         isGrounded = false; // Reset để hàm VerticalCollisionCheck tự động tính lại vào frame sau
 
         // 6. Reset lại bộ đếm Watchdog
@@ -1613,6 +1667,7 @@ public class PlayerController : MonoBehaviour
     // Xử lý Unity Timeline
     public void OnTimelineStart()
     {
+        StopAllCoroutines(); // Dừng hết mọi Coroutine đang chạy (tránh xung đột với AutoWalk hoặc các hiệu ứng thời gian khác có thể ghi đè PlayerState)
         // Đưa vào nhóm State bị cấm Input và cấm Vật lý
         SetState(PlayerState.ScriptedMove);
         velocity = Vector3.zero;
@@ -1622,6 +1677,7 @@ public class PlayerController : MonoBehaviour
     {
         // Đánh thức hệ thống vật lý
         SetState(PlayerState.Idle);
+        Debug.Log("Timeline ended. Idle state set");
 
         // Reset các trạng thái chạm đất để raycast tự cập nhật vào frame sau
         wasGrounded = false;
@@ -2010,7 +2066,7 @@ public class PlayerController : MonoBehaviour
                         separationVector.y = 0;
                     }
 
-                    Debug.Log("OVerlap Position Before: " + transform.position + ", Separation Vector: " + separationVector);
+                    //Debug.Log("OVerlap Position Before: " + transform.position + ", Separation Vector: " + separationVector);
                     transform.position += (Vector3)separationVector;
                     rb.position = (Vector2)transform.position;
                     Debug.Log("Resolved Overlap");
@@ -2142,7 +2198,7 @@ public class PlayerController : MonoBehaviour
         // --- BẮT ĐẦU HỒI SINH ---
 
         // Đợi cho Animation Start chạy xong
-        yield return new WaitForSeconds(TransitionManager.Instance.transitionTime + 0.5f);
+        yield return new WaitForSeconds(TransitionManager.Instance.transitionTime);
 
         // ANIMATION START đã xong, giờ mới cho nhân vật hiện lại và hồi sinh thực sự
 
@@ -2176,6 +2232,7 @@ public class PlayerController : MonoBehaviour
 
         // 4. Trả lại quyền điều khiển
         SetState(PlayerState.Idle);
+        Debug.Log("Player respawned. Idle state set.");
     }
     #endregion
 
@@ -2221,27 +2278,6 @@ public class PlayerController : MonoBehaviour
         Vector2 topRight = new Vector2(bounds.max.x, bounds.max.y);
         DrawCeilingCorrectionRays(topLeft, topRight);
 
-    }
-
-    private void OnEnable()
-    {
-        // Đăng ký với CharacterInput
-        if (input != null)
-        {
-            input.JumpPerformed += OnJump;
-            input.JumpCanceled += OnJumpCanceled;
-            input.GrapplePerformed += OnGrappleInput;
-        }
-    }
-
-    private void OnDisable()
-    {
-        if (input != null)
-        {
-            input.JumpPerformed -= OnJump;
-            input.JumpCanceled -= OnJumpCanceled;
-            input.GrapplePerformed -= OnGrappleInput;
-        }
     }
 
     #region Custom Draw

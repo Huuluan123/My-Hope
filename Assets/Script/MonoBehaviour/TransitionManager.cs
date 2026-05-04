@@ -28,10 +28,24 @@ public class TransitionManager : MonoBehaviour
     public void PlayStartTransition()
     {
         transitionAnimator.SetTrigger("Start");
+        Debug.Log("Start transition triggered.");
     }
 
     public void PlayEndTransition()
     {
         transitionAnimator.SetTrigger("End");
+        Debug.Log("End transition triggered.");
+    }
+
+    public void PlayTransition()
+    {
+        StartCoroutine(TransitionCoroutine());
+    }
+
+    private IEnumerator TransitionCoroutine()
+    {
+        PlayStartTransition();
+        yield return new WaitForSeconds(transitionTime);
+        PlayEndTransition();
     }
 }

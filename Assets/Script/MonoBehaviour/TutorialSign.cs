@@ -157,4 +157,35 @@ public class TutorialSign : MonoBehaviour
             signContainer.DOScale(Vector3.zero, duration).SetEase(Ease.InBack);
         }
     }
+
+    /// <summary>
+    /// Hiển thị bảng Sign bằng Code (Dành cho Cutscene / QTE)
+    /// </summary
+    public void ShowCutscenePrompt(List<PromptAction> actions, string template)
+    {
+        // Ghi đè danh sách nút và chữ
+        iconList = actions;
+        //messageTemplate = template;
+
+        // Cập nhật giao diện ngay lập tức
+        if (InputDeviceManager.Instance != null)
+        {
+            RefreshUI(InputDeviceManager.Instance.CurrentDevice);
+        }
+
+        // Chạy hiệu ứng DoTween hiện lên
+        isPlayerInside = true;
+        signContainer.DOKill();
+        signContainer.DOScale(Vector3.one, duration).SetEase(Ease.OutBack);
+    }
+
+    /// <summary>
+    /// Ẩn bảng Sign bằng Code
+    /// </summary>
+    public void HideCutscenePrompt()
+    {
+        isPlayerInside = false;
+        signContainer.DOKill();
+        signContainer.DOScale(Vector3.zero, duration).SetEase(Ease.InBack);
+    }
 }
