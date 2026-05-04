@@ -42,7 +42,7 @@ MonoBehaviour:
   Path: FMOD/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639134483771163089
+  lastModified: 639134974970017789
   FileSizes: []
   Exists: 1
 --- !u!114 &-1501505905294722510
@@ -67,11 +67,11 @@ MonoBehaviour:
   - {fileID: -4893171304041935319}
   IsStream: 1
   Is3D: 0
-  IsOneShot: 1
+  IsOneShot: 0
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 0
+  Length: 165015
 --- !u!114 &-973785210174382274
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -127,7 +127,7 @@ MonoBehaviour:
   StringsBanks:
   - {fileID: 8345543451865520628}
   cacheVersion: 131858
-  cacheTime: 639134483771185617
+  cacheTime: 639134974970029479
   SerializableEventsDict:
   - key: event:/Jump
     index: 0
@@ -163,11 +163,11 @@ MonoBehaviour:
   - {fileID: -4893171304041935319}
   IsStream: 1
   Is3D: 0
-  IsOneShot: 1
+  IsOneShot: 0
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 0
+  Length: 669024
 --- !u!114 &5988485510939275845
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -237,7 +237,7 @@ MonoBehaviour:
   Path: FMOD/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639134483771185617
+  lastModified: 639134974970029479
   FileSizes:
   - Name: 
     Value: 984

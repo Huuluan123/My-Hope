@@ -208,6 +208,7 @@ GameObject:
   - component: {fileID: 315998039}
   - component: {fileID: 315998038}
   - component: {fileID: 315998041}
+  - component: {fileID: 315998042}
   m_Layer: 5
   m_Name: Btn_Play
   m_TagString: Untagged
@@ -341,6 +342,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TitleMenu
   gameSceneName: 0
+--- !u!114 &315998042
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 315998036}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dadc29bc26d14744cb64c1333636af31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIHoverSelect
 --- !u!1 &873598856
 GameObject:
   m_ObjectHideFlags: 0
@@ -354,6 +367,7 @@ GameObject:
   - component: {fileID: 873598859}
   - component: {fileID: 873598858}
   - component: {fileID: 873598861}
+  - component: {fileID: 873598862}
   m_Layer: 5
   m_Name: Btn_Exit
   m_TagString: Untagged
@@ -487,6 +501,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TitleMenu
   gameSceneName: 0
+--- !u!114 &873598862
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 873598856}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dadc29bc26d14744cb64c1333636af31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIHoverSelect
 --- !u!1 &877361919
 GameObject:
   m_ObjectHideFlags: 0
