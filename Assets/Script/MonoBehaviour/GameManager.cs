@@ -147,8 +147,28 @@ public class GameManager : MonoBehaviour
             playerMap?.Disable();
             uiMap?.Enable(); // Không cần dùng IEnumerator Delay nữa, cứ Enable thẳng!
 
-            Cursor.visible = true;
-            Cursor.lockState = CursorLockMode.None;
+            // CẬP NHẬT: Phân xử hiện thị chuột dựa vào thiết bị đang dùng
+            if (IsUsingPointer)
+            {
+                // Nếu đang dùng chuột: Bật chuột và mở khóa
+                Cursor.visible = true;
+                Cursor.lockState = CursorLockMode.None;
+            }
+            else
+            {
+                // Nếu đang dùng tay cầm/bàn phím: Giấu chuột đi
+                Cursor.visible = false;
+
+                // BẮT BUỘC dùng None (Không dùng Locked vì Locked sẽ ép chuột ra giữa màn hình)
+                Cursor.lockState = CursorLockMode.None;
+
+                // Ném chuột ra góc dưới cùng bên phải màn hình (ẩn đi)
+                if (Mouse.current != null)
+                {
+                    lastMouseWarpTime = Time.unscaledTime; // Chống dội ngược tín hiệu Warp
+                    Mouse.current.WarpCursorPosition(new Vector2(Screen.width, 0));
+                }
+            }
         }
         else if (State == GameState.Pause)
         {
