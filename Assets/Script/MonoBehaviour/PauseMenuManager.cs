@@ -95,6 +95,10 @@ public class PauseMenuManager : MonoBehaviour
 
     private void OnCancelPerformed(InputAction.CallbackContext context)
     {
+        // LỚP PHÒNG THỦ: Phớt lờ tín hiệu "thả phím" (Release)
+        // Chỉ nhận lệnh khi phím ĐANG ĐƯỢC ẤN XUỐNG
+        if (context.ReadValueAsButton() == false) return;
+
         // Chỉ xử lý khi Game ĐANG PAUSE (nghĩa là Menu đang được mở)
         if (GameManager.Instance != null && GameManager.Instance.State == GameState.Pause)
         {
@@ -107,18 +111,22 @@ public class PauseMenuManager : MonoBehaviour
             else
             {
                 GameManager.Instance.TogglePause();
+                Debug.Log("Cancel performed: Closing Pause Menu");
             }
         }
     }
 
     private void OnPauseResumePerformed(InputAction.CallbackContext context)
     {
+        if (context.ReadValueAsButton() == false) return;
+
         if (GameManager.Instance != null && GameManager.Instance.State == GameState.Pause)
         {
             // Nếu đang mở Menu chính (không phải Options) thì mới Resume
             if (!isOptionsMenuOpen)
             {
                 GameManager.Instance.TogglePause();
+                Debug.Log("Pause/Resume performed: Resuming game");
             }
             else
             {

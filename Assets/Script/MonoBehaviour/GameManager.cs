@@ -17,6 +17,8 @@ public class GameManager : MonoBehaviour
 
     public float gameSpeed = 1f;
 
+    private float lastToggleTime = 0f;
+
     public event Action<GameState> OnGameStateChanged;
 
     private InputAction pauseAction;
@@ -118,22 +120,33 @@ public class GameManager : MonoBehaviour
 
     private void OnPausePerformed(InputAction.CallbackContext context)
     {
+        // Thêm lớp phòng thủ: Chỉ nhận tín hiệu khi phím bắt đầu được ấn XUỐNG, 
+        // bỏ qua tín hiệu khi phím được thả LÊN hoặc bị nhiễu do map switch.
+        if (context.ReadValueAsButton() == false) return;
         TogglePause();
+        Debug.Log("Toogle Pause");
     }
 
     public void TogglePause()
     {
+        // 🌟 TẤM KHIÊN BẤT TỬ: Chặn mọi sự kiện Pause/Resume bị gọi liên tiếp nhau
+        // Sử dụng unscaledTime vì Time.time sẽ bị kẹt lại khi timeScale = 0
+        if (Time.unscaledTime - lastToggleTime < 0.2f)
+        {
+            return; // Đuổi về ngay lập tức, không cho chạy code bên dưới
+        }
+
+        lastToggleTime = Time.unscaledTime; // Cập nhật lại mốc thời gian
+
         if (State == GameState.Running)
         {
             Debug.Log("Game Paused!");
             State = GameState.Pause;
             Time.timeScale = 0f;
 
-            // LỚP PHÒNG THỦ: Ngắt điện Nhân vật, Cấp điện cho UI
             playerMap?.Disable();
-            uiMap?.Enable();
+            uiMap?.Enable(); // Không cần dùng IEnumerator Delay nữa, cứ Enable thẳng!
 
-            // HIỆN LẠI CHUỘT ĐỂ BẤM MENU
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
         }
@@ -143,16 +156,13 @@ public class GameManager : MonoBehaviour
             State = GameState.Running;
             Time.timeScale = 1f;
 
-            // LỚP PHÒNG THỦ: Trả lại quyền điều khiển cho Nhân vật, Tắt UI
-            playerMap?.Enable();
             uiMap?.Disable();
+            playerMap?.Enable(); // Không cần Delay nữa
 
-            // GIẤU CHUỘT ĐI KHI CHƠI TIẾP
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
         }
 
-        // Báo cho PauseMenuManager biết để bung/ẩn giao diện
         OnGameStateChanged?.Invoke(State);
     }
 
