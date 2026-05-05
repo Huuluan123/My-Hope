@@ -2,7 +2,9 @@
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Users; // Thư viện để quản lý thiết bị
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using System;
+using TMPro;
 
 public enum GameState
 {
@@ -24,6 +26,11 @@ public class GameManager : MonoBehaviour
     private InputAction pauseAction;
 
     public bool IsUsingPointer { get; private set; }
+
+#if UNITY_EDITOR
+    public bool isUsingPointer;
+#endif
+
     private float lastMouseWarpTime;
 
     // 🌟 THÊM MỚI: Các biến để chứa Bản đồ hành động
@@ -67,10 +74,11 @@ public class GameManager : MonoBehaviour
     //}
 
 #if UNITY_EDITOR
-    //private void Update()
-    //{
-    //    if (State != GameState.Pause) Time.timeScale = gameSpeed;
-    //}
+    private void Update()
+    {
+        //if (State != GameState.Pause) Time.timeScale = gameSpeed;
+        isUsingPointer = IsUsingPointer; // Cập nhật giá trị từ Inspector mỗi frame (Chỉ dùng trong Editor)
+    }
 #endif
 
     private void OnEnable()
@@ -115,6 +123,7 @@ public class GameManager : MonoBehaviour
             // Ở trong Game: Khóa cứng và giấu chuột đi
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
+            IsUsingPointer = false; // Mặc định tắt chuột trong gameplay, chỉ bật khi phát hiện thiết bị Pointer
         }
     }
 
@@ -140,6 +149,7 @@ public class GameManager : MonoBehaviour
 
         if (State == GameState.Running)
         {
+            // Pause game
             Debug.Log("Game Paused!");
             State = GameState.Pause;
             Time.timeScale = 0f;
@@ -170,6 +180,8 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
+
+        // Resume game
         else if (State == GameState.Pause)
         {
             Debug.Log("Game resumed!");
@@ -181,6 +193,7 @@ public class GameManager : MonoBehaviour
 
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
+            IsUsingPointer = false; // Mặc định tắt Pointer khi đang trong game
         }
 
         OnGameStateChanged?.Invoke(State);
