@@ -2222,7 +2222,7 @@ public class PlayerController : MonoBehaviour
         GetComponentInChildren<SpriteRenderer>().enabled = true;
 
         // Delay một chút để đủ tổng thời gian 1 giây
-        yield return new WaitForSeconds(0.4f);
+        //yield return new WaitForSeconds(0.4f);
 
         // KÍCH HOẠT ANIMATION END
         if (TransitionManager.Instance != null)

@@ -188,7 +188,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineConfiner2D
   BoundingShape2D: {fileID: 2153383039020267555}
-  Damping: 0.5
+  Damping: 0
   SlowingDistance: 5
   OversizeWindow:
     Enabled: 0
@@ -254,8 +254,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d90bd4594d0f27242bd7caac9a361f00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoomAutoParent
-  autoScanInEditor: 1
-  scanInterval: 0.5
 --- !u!114 &-898280293362999097
 MonoBehaviour:
   m_ObjectHideFlags: 0

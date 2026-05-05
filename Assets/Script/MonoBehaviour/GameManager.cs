@@ -206,9 +206,9 @@ public class GameManager : MonoBehaviour
             InputAction action = (InputAction)obj;
             InputDevice device = action.activeControl.device;
 
-            //Debug.Log(device.name);
-
-            if (State == GameState.Pause)
+            // 1. KHI ĐANG MỞ MENU (Pause Menu HOẶC Title Menu)
+            // Lúc này chúng ta cần xử lý cả việc Ẩn/Hiện con trỏ chuột
+            if (State == GameState.Pause || isInMainMenu)
             {
                 if (device is Gamepad || device is Keyboard)
                 {
@@ -216,17 +216,16 @@ public class GameManager : MonoBehaviour
                     if (IsUsingPointer)
                     {
                         IsUsingPointer = false;
-                        Cursor.visible = false;
+                        Cursor.visible = false; // Giấu chuột đi
 
                         if (Mouse.current != null)
                         {
-                            // Đánh dấu mốc thời gian vừa ném chuột đi (Dùng unscaledTime vì timeScale đang = 0)
+                            // Đánh dấu mốc thời gian vừa ném chuột đi
                             lastMouseWarpTime = Time.unscaledTime;
                             Mouse.current.WarpCursorPosition(new Vector2(Screen.width, 0));
                         }
                     }
                 }
-
                 else if (device is Pointer)
                 {
                     // BỎ QUA tín hiệu chuột nếu nó vừa bị Code dịch chuyển trong vòng 0.1 giây trước đó (Chống Warp Echo)
@@ -242,8 +241,22 @@ public class GameManager : MonoBehaviour
                         }
 
                         IsUsingPointer = true;
-                        Cursor.visible = true;
+                        Cursor.visible = true; // Hiện chuột lại
                     }
+                }
+            }
+
+            // 2. KHI ĐANG TRONG GAMEPLAY (Đang chơi bình thường)
+            // Chỉ cập nhật biến IsUsingPointer ngầm để biết đang dùng thiết bị gì, KHÔNG đụng đến Cursor (vì Cursor luôn bị khóa khi chơi)
+            else if (State == GameState.Running && !isInMainMenu)
+            {
+                if (device is Gamepad || device is Keyboard)
+                {
+                    IsUsingPointer = false;
+                }
+                else if (device is Pointer)
+                {
+                    IsUsingPointer = true;
                 }
             }
         }

@@ -207,7 +207,6 @@ GameObject:
   - component: {fileID: 315998040}
   - component: {fileID: 315998039}
   - component: {fileID: 315998038}
-  - component: {fileID: 315998041}
   - component: {fileID: 315998042}
   m_Layer: 5
   m_Name: Btn_Play
@@ -279,7 +278,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 315998041}
+      - m_Target: {fileID: 998126772}
         m_TargetAssemblyTypeName: TitleMenu, Assembly-CSharp
         m_MethodName: PlayGame
         m_Mode: 1
@@ -329,19 +328,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 315998036}
   m_CullTransparentMesh: 1
---- !u!114 &315998041
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 315998036}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 138dbaf368249e149a1962f3234664c8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TitleMenu
-  gameSceneName: 0
 --- !u!114 &315998042
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -366,7 +352,6 @@ GameObject:
   - component: {fileID: 873598860}
   - component: {fileID: 873598859}
   - component: {fileID: 873598858}
-  - component: {fileID: 873598861}
   - component: {fileID: 873598862}
   m_Layer: 5
   m_Name: Btn_Exit
@@ -438,7 +423,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 873598861}
+      - m_Target: {fileID: 998126772}
         m_TargetAssemblyTypeName: TitleMenu, Assembly-CSharp
         m_MethodName: QuitGame
         m_Mode: 1
@@ -488,19 +473,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 873598856}
   m_CullTransparentMesh: 1
---- !u!114 &873598861
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 873598856}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 138dbaf368249e149a1962f3234664c8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TitleMenu
-  gameSceneName: 0
 --- !u!114 &873598862
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -737,6 +709,7 @@ GameObject:
   - component: {fileID: 998126770}
   - component: {fileID: 998126769}
   - component: {fileID: 998126768}
+  - component: {fileID: 998126772}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -830,6 +803,20 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &998126772
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 998126767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 138dbaf368249e149a1962f3234664c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TitleMenu
+  gameSceneName: 0
+  btnPlay: {fileID: 315998038}
 --- !u!1 &1453468300
 GameObject:
   m_ObjectHideFlags: 0
