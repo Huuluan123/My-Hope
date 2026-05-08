@@ -18,7 +18,7 @@ public class RescueTimelineReceiver : MonoBehaviour
     private Animator playerAnimator;
     private Animator npcAnimator;
 
-    private void Awake()
+    private void Start()
     {
         if (PlayerController.Instance != null)
         {
@@ -61,6 +61,12 @@ public class RescueTimelineReceiver : MonoBehaviour
         if (npcAnimator != null) npcAnimator.speed = 1f;
 
         director.Play();
+
+        // Tấm khiên dự phòng: Nếu quên chưa tìm thấy tay, tìm lại ngay lúc này!
+        if (robotHand == null && PlayerController.Instance != null)
+        {
+            robotHand = PlayerController.Instance.GetComponentInChildren<RobotHand>(true);
+        }
 
         if (robotHand != null)
         {

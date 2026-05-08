@@ -2,7 +2,9 @@
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Users; // Thư viện để quản lý thiết bị
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using System;
+using TMPro;
 
 public enum GameState
 {
@@ -24,6 +26,11 @@ public class GameManager : MonoBehaviour
     private InputAction pauseAction;
 
     public bool IsUsingPointer { get; private set; }
+
+#if UNITY_EDITOR
+    public bool isUsingPointer;
+#endif
+
     private float lastMouseWarpTime;
 
     // 🌟 THÊM MỚI: Các biến để chứa Bản đồ hành động
@@ -67,10 +74,11 @@ public class GameManager : MonoBehaviour
     //}
 
 #if UNITY_EDITOR
-    //private void Update()
-    //{
-    //    if (State != GameState.Pause) Time.timeScale = gameSpeed;
-    //}
+    private void Update()
+    {
+        //if (State != GameState.Pause) Time.timeScale = gameSpeed;
+        isUsingPointer = IsUsingPointer; // Cập nhật giá trị từ Inspector mỗi frame (Chỉ dùng trong Editor)
+    }
 #endif
 
     private void OnEnable()
@@ -115,6 +123,7 @@ public class GameManager : MonoBehaviour
             // Ở trong Game: Khóa cứng và giấu chuột đi
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
+            IsUsingPointer = false; // Mặc định tắt chuột trong gameplay, chỉ bật khi phát hiện thiết bị Pointer
         }
     }
 
@@ -140,6 +149,7 @@ public class GameManager : MonoBehaviour
 
         if (State == GameState.Running)
         {
+            // Pause game
             Debug.Log("Game Paused!");
             State = GameState.Pause;
             Time.timeScale = 0f;
@@ -170,6 +180,8 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
+
+        // Resume game
         else if (State == GameState.Pause)
         {
             Debug.Log("Game resumed!");
@@ -181,6 +193,7 @@ public class GameManager : MonoBehaviour
 
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
+            IsUsingPointer = false; // Mặc định tắt Pointer khi đang trong game
         }
 
         OnGameStateChanged?.Invoke(State);
@@ -193,9 +206,9 @@ public class GameManager : MonoBehaviour
             InputAction action = (InputAction)obj;
             InputDevice device = action.activeControl.device;
 
-            //Debug.Log(device.name);
-
-            if (State == GameState.Pause)
+            // 1. KHI ĐANG MỞ MENU (Pause Menu HOẶC Title Menu)
+            // Lúc này chúng ta cần xử lý cả việc Ẩn/Hiện con trỏ chuột
+            if (State == GameState.Pause || isInMainMenu)
             {
                 if (device is Gamepad || device is Keyboard)
                 {
@@ -203,17 +216,16 @@ public class GameManager : MonoBehaviour
                     if (IsUsingPointer)
                     {
                         IsUsingPointer = false;
-                        Cursor.visible = false;
+                        Cursor.visible = false; // Giấu chuột đi
 
                         if (Mouse.current != null)
                         {
-                            // Đánh dấu mốc thời gian vừa ném chuột đi (Dùng unscaledTime vì timeScale đang = 0)
+                            // Đánh dấu mốc thời gian vừa ném chuột đi
                             lastMouseWarpTime = Time.unscaledTime;
                             Mouse.current.WarpCursorPosition(new Vector2(Screen.width, 0));
                         }
                     }
                 }
-
                 else if (device is Pointer)
                 {
                     // BỎ QUA tín hiệu chuột nếu nó vừa bị Code dịch chuyển trong vòng 0.1 giây trước đó (Chống Warp Echo)
@@ -229,8 +241,22 @@ public class GameManager : MonoBehaviour
                         }
 
                         IsUsingPointer = true;
-                        Cursor.visible = true;
+                        Cursor.visible = true; // Hiện chuột lại
                     }
+                }
+            }
+
+            // 2. KHI ĐANG TRONG GAMEPLAY (Đang chơi bình thường)
+            // Chỉ cập nhật biến IsUsingPointer ngầm để biết đang dùng thiết bị gì, KHÔNG đụng đến Cursor (vì Cursor luôn bị khóa khi chơi)
+            else if (State == GameState.Running && !isInMainMenu)
+            {
+                if (device is Gamepad || device is Keyboard)
+                {
+                    IsUsingPointer = false;
+                }
+                else if (device is Pointer)
+                {
+                    IsUsingPointer = true;
                 }
             }
         }
@@ -277,9 +303,9 @@ public class GameManager : MonoBehaviour
         // 3. QUAN TRỌNG: Tắt VSync của Unity để targetFrameRate có thể hoạt động chính xác
         // Nếu vSyncCount = 1, Unity sẽ bỏ qua targetFrameRate và ép dính theo màn hình. 
         // Tuy nhiên, việc ép bằng code (vSync = 0 + targetFrameRate) sẽ mang lại độ trễ Input (Input Delay) thấp hơn cho game Platformer!
-        QualitySettings.vSyncCount = 0;
+        QualitySettings.vSyncCount = 1;
 
         // 4. Khóa FPS bằng đúng với tần số quét của màn hình
-        Application.targetFrameRate = refreshRate;
+        //Application.targetFrameRate = refreshRate;
     }
 }

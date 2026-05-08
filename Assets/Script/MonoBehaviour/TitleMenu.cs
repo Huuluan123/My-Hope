@@ -1,12 +1,61 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class TitleMenu : MonoBehaviour
 {
     [Header("Settings")]
     [Tooltip("Scene to load after choosing Play")]
     public string gameSceneName = "0";
+
+    public Button btnPlay;
+
+    // BIẾN LƯU TRẠNG THÁI CŨ ĐỂ SO SÁNH
+    private bool wasUsingPointer = true;
+
+    private void Start()
+    {
+        // Khi vừa mở game lên, kiểm tra xem người chơi đang dùng gì
+        if (GameManager.Instance != null)
+        {
+            wasUsingPointer = GameManager.Instance.IsUsingPointer;
+
+            // Nếu mở game lên bằng tay cầm/bàn phím -> Focus ngay nút Play
+            if (!wasUsingPointer && btnPlay != null)
+            {
+                btnPlay.Select();
+                Debug.Log("Focus on Play button at start because player is using controller/keyboard");
+            }
+        }
+    }
+
+    private void Update()
+    {
+        // Nếu không có GameManager thì bỏ qua
+        if (GameManager.Instance == null) return;
+
+        bool isCurrentlyUsingPointer = GameManager.Instance.IsUsingPointer;
+
+        // NẾU VỪA CHUYỂN TỪ CHUỘT SANG TAY CẦM / BÀN PHÍM
+        if (wasUsingPointer == true && isCurrentlyUsingPointer == false)
+        {
+            if (EventSystem.current != null && btnPlay != null)
+            {
+                // Kiểm tra xem hiện tại có đang chọn nút nào khác không
+                // (Tránh trường hợp người chơi đang trỏ chuột ở nút Exit rồi cầm tay cầm bấm chọn thì bị giật về Play)
+                if (EventSystem.current.currentSelectedGameObject == null || !EventSystem.current.currentSelectedGameObject.activeInHierarchy)
+                {
+                    btnPlay.Select(); // Focus vào nút Play
+                    Debug.Log("Focus on playbutton because player switched from pointer to controller/keyboard");
+                }
+            }
+        }
+
+        // Cập nhật lại trạng thái để dành cho frame tiếp theo
+        wasUsingPointer = isCurrentlyUsingPointer;
+    }
 
     // Hàm gọi khi bấm nút Play
     public void PlayGame()

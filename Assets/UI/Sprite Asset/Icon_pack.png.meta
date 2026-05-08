@@ -14115,6 +14115,28 @@ TextureImporter:
       indices: 
       edges: []
       weights: []
+    - serializedVersion: 2
+      name: direction_RightUp
+      rect:
+        serializedVersion: 2
+        x: 447
+        y: 346
+        width: 48
+        height: 56
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 7234e72429da4c84e976739645a3706f
+      internalID: 2093934747
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
@@ -14661,6 +14683,7 @@ TextureImporter:
       PS_L3: 1756444378397767703
       PS_R1: 1419704287815353518
       PS_R3: 497481374487369504
+      direction_RightUp: 2093934747
       iconpack_251: -7154201378089266805
       key_C: -4576571324054500261
       key_Down: -4819332575426625845

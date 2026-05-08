@@ -24,6 +24,10 @@ public class RoomManager : MonoBehaviour
 
     public void OnRoomExited(float delayTime = 0f)
     {
+        // LỚP PHÒNG THỦ: Kiểm tra xem Object có đang bị tắt (do tắt game) hay không?
+        // Nếu đã bị tắt -> Lập tức thoát hàm, không chạy Coroutine nữa!
+        if (!gameObject.activeInHierarchy) return;
+
         if (delayTime > 0f)
         {
             // Bắt đầu tiến trình đếm ngược ngầm
