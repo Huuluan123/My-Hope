@@ -303,9 +303,9 @@ public class GameManager : MonoBehaviour
         // 3. QUAN TRỌNG: Tắt VSync của Unity để targetFrameRate có thể hoạt động chính xác
         // Nếu vSyncCount = 1, Unity sẽ bỏ qua targetFrameRate và ép dính theo màn hình. 
         // Tuy nhiên, việc ép bằng code (vSync = 0 + targetFrameRate) sẽ mang lại độ trễ Input (Input Delay) thấp hơn cho game Platformer!
-        QualitySettings.vSyncCount = 0;
+        QualitySettings.vSyncCount = 1;
 
         // 4. Khóa FPS bằng đúng với tần số quét của màn hình
-        Application.targetFrameRate = refreshRate;
+        //Application.targetFrameRate = refreshRate;
     }
 }

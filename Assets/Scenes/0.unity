@@ -1181,7 +1181,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 712873172}
     m_Modifications:
     - target: {fileID: 1478033606743170313, guid: fac47886ee8237142b8077ac1d83aa6a, type: 3}
       propertyPath: m_Name
@@ -1189,11 +1189,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3389532893646018034, guid: fac47886ee8237142b8077ac1d83aa6a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 606.09
+      value: -2.6799927
       objectReference: {fileID: 0}
     - target: {fileID: 3389532893646018034, guid: fac47886ee8237142b8077ac1d83aa6a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 20.383087
+      value: 4.173088
       objectReference: {fileID: 0}
     - target: {fileID: 3389532893646018034, guid: fac47886ee8237142b8077ac1d83aa6a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -6592,7 +6592,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 712873172}
     m_Modifications:
     - target: {fileID: 1478033606743170313, guid: fac47886ee8237142b8077ac1d83aa6a, type: 3}
       propertyPath: m_Name
@@ -6600,11 +6600,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3389532893646018034, guid: fac47886ee8237142b8077ac1d83aa6a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 618.07
+      value: 9.299988
       objectReference: {fileID: 0}
     - target: {fileID: 3389532893646018034, guid: fac47886ee8237142b8077ac1d83aa6a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 20.362852
+      value: 4.152853
       objectReference: {fileID: 0}
     - target: {fileID: 3389532893646018034, guid: fac47886ee8237142b8077ac1d83aa6a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -7139,6 +7139,11 @@ Transform:
   - {fileID: 636709151}
   m_Father: {fileID: 739798760}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!4 &836555776 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3389532893646018034, guid: fac47886ee8237142b8077ac1d83aa6a, type: 3}
+  m_PrefabInstance: {fileID: 704893841}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &850096990 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2938075163576352562, guid: 98251d6f545933d429af054e737147a7, type: 3}
@@ -7720,7 +7725,7 @@ MonoBehaviour:
     xboxIcon: 5
     psIcon: 5
     nintendoIcon: 6
-  previewDevice: 3
+  previewDevice: 2
   duration: 0.3
 --- !u!61 &965600980
 BoxCollider2D:
@@ -9113,7 +9118,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2228437378687686633, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_text
-      value: Hold <sprite name="nin_R"> + <sprite name="stick_Up"> to climb wall
+      value: Hold <sprite name="ps_L2"> + <sprite name="stick_Up"> to climb wall
       objectReference: {fileID: 0}
     - target: {fileID: 2879981476666497113, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_AnchorMax.y
@@ -9125,7 +9130,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2879981476666497113, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 1139.07
+      value: 1128.23
       objectReference: {fileID: 0}
     - target: {fileID: 2879981476666497113, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_SizeDelta.y
@@ -9161,7 +9166,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: previewDevice
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: messageTemplate
@@ -9173,7 +9178,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: iconList.Array.data[0].psIcon
-      value: 10
+      value: 11
       objectReference: {fileID: 0}
     - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: iconList.Array.data[1].psIcon
@@ -9201,7 +9206,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: iconList.Array.data[0].nintendoIcon
-      value: 10
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: iconList.Array.data[1].keyboardIcon
@@ -10610,6 +10615,11 @@ MonoBehaviour:
     RotationDamping: {x: 1, y: 1, z: 1}
     QuaternionDamping: 1
   FollowOffset: {x: 0, y: 0, z: -10}
+--- !u!4 &1262206131 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3389532893646018034, guid: fac47886ee8237142b8077ac1d83aa6a, type: 3}
+  m_PrefabInstance: {fileID: 121258696}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1267080335
 GameObject:
   m_ObjectHideFlags: 0
@@ -11320,7 +11330,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Press <sprite name="nin_B"> to Jump
+  m_text: Press <sprite name="ps_Cross"> to Jump
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -12389,7 +12399,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2228437378687686633, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_text
-      value: <sprite name="nin_B"> to get on
+      value: <sprite name="ps_Cross"> to get on
       objectReference: {fileID: 0}
     - target: {fileID: 2228437378687686633, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_fontSize
@@ -12445,7 +12455,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: previewDevice
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: messageTemplate
@@ -13010,23 +13020,24 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 726369445533974733, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 1483.53
+      value: 554.47
       objectReference: {fileID: 0}
     - target: {fileID: 726369445533974733, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 246.71
+      value: 453.95
       objectReference: {fileID: 0}
     - target: {fileID: 726369445533974733, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -330.34
+      value: -100.19
       objectReference: {fileID: 0}
     - target: {fileID: 726369445533974733, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 85.41
+      value: -58.11
       objectReference: {fileID: 0}
     - target: {fileID: 2228437378687686633, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_text
-      value: Press <sprite name="nin_Y"> to shoot grappling hand
+      value: <sprite name="stick_Right"> + <sprite name="nin_Y">\n\n <sprite name="direction_RightUp">
+        + <sprite name="nin_Y">\n to grapple
       objectReference: {fileID: 0}
     - target: {fileID: 2879981476666497113, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_AnchorMax.y
@@ -13038,7 +13049,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2879981476666497113, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 1423.98
+      value: 456.23
       objectReference: {fileID: 0}
     - target: {fileID: 2879981476666497113, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_SizeDelta.y
@@ -13046,11 +13057,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2879981476666497113, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 741.765
+      value: 277.235
       objectReference: {fileID: 0}
     - target: {fileID: 2879981476666497113, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -123.35501
+      value: -226.975
       objectReference: {fileID: 0}
     - target: {fileID: 5582864934114671772, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_Size.x
@@ -13078,23 +13089,47 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: messageTemplate
-      value: Press {grapple} to shoot grappling hand
+      value: '{right} + {grapple}\n\n {rightup} + {grapple}\n to grapple'
       objectReference: {fileID: 0}
     - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: iconList.Array.size
-      value: 1
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: iconList.Array.data[0].psIcon
       value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
+      propertyPath: iconList.Array.data[1].psIcon
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
+      propertyPath: iconList.Array.data[2].psIcon
+      value: 22
+      objectReference: {fileID: 0}
+    - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: iconList.Array.data[0].xboxIcon
       value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
+      propertyPath: iconList.Array.data[1].xboxIcon
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
+      propertyPath: iconList.Array.data[2].xboxIcon
+      value: 21
+      objectReference: {fileID: 0}
+    - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: iconList.Array.data[0].placeholder
       value: '{grapple}'
+      objectReference: {fileID: 0}
+    - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
+      propertyPath: iconList.Array.data[1].placeholder
+      value: '{right}'
+      objectReference: {fileID: 0}
+    - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
+      propertyPath: iconList.Array.data[2].placeholder
+      value: '{rightup}'
       objectReference: {fileID: 0}
     - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: iconList.Array.data[0].keyboardIcon
@@ -13103,6 +13138,22 @@ PrefabInstance:
     - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: iconList.Array.data[0].nintendoIcon
       value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
+      propertyPath: iconList.Array.data[1].keyboardIcon
+      value: 23
+      objectReference: {fileID: 0}
+    - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
+      propertyPath: iconList.Array.data[1].nintendoIcon
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
+      propertyPath: iconList.Array.data[2].keyboardIcon
+      value: 27
+      objectReference: {fileID: 0}
+    - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
+      propertyPath: iconList.Array.data[2].nintendoIcon
+      value: 21
       objectReference: {fileID: 0}
     - target: {fileID: 8036628457427311872, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_LocalPosition.x
@@ -13693,7 +13744,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2228437378687686633, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_text
-      value: <sprite name="nin_ZL"> + <sprite name="stick_Right"> to push
+      value: <sprite name="ps_L2"> + <sprite name="stick_Right"> to push
       objectReference: {fileID: 0}
     - target: {fileID: 2879981476666497113, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_AnchorMax.y
@@ -13705,7 +13756,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2879981476666497113, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 668.72
+      value: 678.61
       objectReference: {fileID: 0}
     - target: {fileID: 2879981476666497113, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_SizeDelta.y
@@ -13741,7 +13792,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: previewDevice
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: messageTemplate
@@ -14072,6 +14123,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2938075163576352562, guid: 620c016501565bc48ad5b589318b33c7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1294328299}
+    - targetCorrespondingSourceObject: {fileID: 2938075163576352562, guid: 620c016501565bc48ad5b589318b33c7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1262206131}
+    - targetCorrespondingSourceObject: {fileID: 2938075163576352562, guid: 620c016501565bc48ad5b589318b33c7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 836555776}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 6083493676450104377, guid: 620c016501565bc48ad5b589318b33c7, type: 3}
       insertIndex: -1
@@ -14160,7 +14217,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2228437378687686633, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_text
-      value: <sprite name="stick_Down"> + <sprite name="nin_B"> to drop
+      value: <sprite name="stick_Down"> + <sprite name="ps_Cross"> to drop
       objectReference: {fileID: 0}
     - target: {fileID: 2879981476666497113, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: m_AnchorMax.y
@@ -14192,7 +14249,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: previewDevice
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 6597022590050069371, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       propertyPath: messageTemplate
@@ -73834,5 +73891,3 @@ SceneRoots:
   - {fileID: 1267080337}
   - {fileID: 1203724953}
   - {fileID: 1488713799}
-  - {fileID: 121258696}
-  - {fileID: 704893841}
