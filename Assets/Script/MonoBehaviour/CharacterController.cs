@@ -261,6 +261,9 @@ public class PlayerController : MonoBehaviour
         InitializeClosestCheckpoint();
         CalculateRaySpacing();
         currentMaxFall = maxFallSpeed;
+
+        // Khởi động hệ thống Fail-safe ngay khi nhân vật xuất hiện
+        StartCoroutine(RoomFailSafeRoutine());
     }
 
     void Update()
@@ -1682,6 +1685,50 @@ public class PlayerController : MonoBehaviour
         // Reset các trạng thái chạm đất để raycast tự cập nhật vào frame sau
         wasGrounded = false;
         isGrounded = false;
+    }
+    #endregion
+
+    #region Room Transition Fail-safe
+    private IEnumerator RoomFailSafeRoutine()
+    {
+        // Tạo biến đếm thời gian 1 giây để tối ưu bộ nhớ (không dùng new liên tục)
+        WaitForSeconds wait = new WaitForSeconds(1f);
+
+        while (true)
+        {
+            yield return wait;
+
+            // Nếu game đang Pause thì không cần kiểm tra để tiết kiệm tài nguyên
+            if (GameManager.Instance != null && GameManager.Instance.State == GameState.Pause) continue;
+
+            CheckCurrentRoomFailSafe();
+        }
+    }
+
+    private void CheckCurrentRoomFailSafe()
+    {
+        // 1. Bắn tia kiểm tra xem TẠI VỊ TRÍ CHÍNH GIỮA của nhân vật đang có những Collider nào
+        Collider2D[] colliders = Physics2D.OverlapPointAll(transform.position);
+        RoomTransitionScript actualRoom = null;
+
+        // 2. Lọc ra Collider thuộc về ranh giới phòng
+        foreach (Collider2D col in colliders)
+        {
+            RoomTransitionScript room = col.GetComponent<RoomTransitionScript>();
+            if (room != null)
+            {
+                actualRoom = room;
+                break; // Tìm thấy phòng rồi thì dừng vòng lặp
+            }
+        }
+
+        // 3. SO SÁNH VÀ SỬA SAI
+        // Nếu tìm thấy phòng nhân vật đang đứng, VÀ phòng đó KHÁC với ActiveRoom hiện tại của hệ thống
+        if (actualRoom != null && RoomTransitionScript.ActiveRoom != actualRoom)
+        {
+            // Lập tức gọi hàm ép chuyển Camera về đúng phòng!
+            actualRoom.ForceRoomTransition(this);
+        }
     }
     #endregion
 
