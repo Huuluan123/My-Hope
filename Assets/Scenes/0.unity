@@ -14691,8 +14691,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b781a3c14934b184caa43655d14ba5f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MusicTrigger
-  actionType: 0
-  targetTrackName: Main Theme
+  actionType: 2
+  targetTrackName: Ending
   crossfadeDuration: 1
   playOnlyOnce: 1
 --- !u!1001 &1910647036

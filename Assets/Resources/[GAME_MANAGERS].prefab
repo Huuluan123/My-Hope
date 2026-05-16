@@ -52,6 +52,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   gameSpeed: 1
+  isUsingPointer: 0
 --- !u!114 &4734011297502678574
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -105,6 +106,14 @@ MonoBehaviour:
         Data3: -1233752661
         Data4: 287241532
       Path: event:/Action Theme
+  - trackName: Ending
+    fmodEvent:
+      Guid:
+        Data1: -293280387
+        Data2: 1186526282
+        Data3: -1972249940
+        Data4: -2064988533
+      Path: event:/Ending
 --- !u!114 &155440873158588088
 MonoBehaviour:
   m_ObjectHideFlags: 0

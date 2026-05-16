@@ -521,7 +521,7 @@ public class PlayerController : MonoBehaviour
         // Chạy ngay trước HorizonalCollisionCheck
         if (wallSpeedRetentionTimer > 0)
         {
-            // Nếu bẻ lái ngược lại -> Hủy trí nhớ
+            // Nếu bẻ lái ngược lại hoặc đang đang bay tới theo bàn tay -> Hủy trí nhớ
             if (moveInput.x != 0 && Mathf.Sign(moveInput.x) == -Mathf.Sign(wallSpeedRetained))
             {
                 wallSpeedRetentionTimer = 0;
@@ -680,6 +680,9 @@ public class PlayerController : MonoBehaviour
                     SetState(PlayerState.OnAir);
                     if (!validFloorHit) isGrounded = false;
                     velocity = Vector3.zero; // Xóa quán tính bay
+
+                    // FIX: Ép xóa sạch trí nhớ tường để tránh bị bắn văng ở frame sau
+                    wallSpeedRetentionTimer = 0;
 
                     // Đảm bảo không đẩy vào tường nếu đang dừng vì đụng sàn hoặc trần
                     if (!validFloorHit && !hitCeiling)
@@ -1900,7 +1903,8 @@ public class PlayerController : MonoBehaviour
 
                 // LƯU LẠI VẬN TỐC TƯỜNG (Wall Speed Retention)
                 // Nếu đang bay với tốc độ cực nhanh (Lớn hơn moveSpeed) và đập mặt vào tường góc hẹp
-                if (Mathf.Abs(velocity.x) > moveSpeed && hit.distance > 0)
+                // FIX: Không lưu trí nhớ tường nếu đang bị kéo bởi tay móc!
+                if (Mathf.Abs(velocity.x) > moveSpeed && hit.distance > 0 && currentState != PlayerState.Grappling)
                 {
                     if (wallSpeedRetentionTimer <= 0) // Chỉ ghi nhận lần chạm đầu tiên
                     {
