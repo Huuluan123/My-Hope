@@ -58,7 +58,7 @@ public class HapticManager : MonoBehaviour
             // FALLBACK (Chống ngốc): Giả sử bạn gọi hàm 4 tham số này, nhưng người chơi 
             // lại đang cắm tay PS4. Nó sẽ tự động rớt xuống đây và chỉ rung 2 motor cơ bản.
             gamepad.SetMotorSpeeds(lowFrequency, highFrequency);
-            Debug.Log("Rumbling with 2 motors (Non-Xbox)!");
+            //Debug.Log("Rumbling with 2 motors (Non-Xbox)!");
         }
 
         if (stopRumbleCoroutine != null) StopCoroutine(stopRumbleCoroutine);

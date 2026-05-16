@@ -141,6 +141,27 @@ public class RoomTransitionScript : MonoBehaviour
         }
     }
 
+    // Hàm ép hệ thống cập nhật lại phòng (Dùng cho Fail-safe)
+    public void ForceRoomTransition(PlayerController player)
+    {
+        // 1. Cập nhật lại định vị phòng
+        ActiveRoom = this;
+        if (player != null)
+        {
+            player.currentRoom = myRoomManager;
+        }
+
+        // 2. Ép Camera chuyển về phòng hiện tại
+        CameraManager.SwitchCamera(roomCamera);
+        ParallaxCamera pCam = Camera.main.GetComponent<ParallaxCamera>();
+        if (pCam != null) pCam.ResetOldPosition();
+
+        // 3. Kích hoạt lại đồ đạc trong phòng
+        if (myRoomManager != null) myRoomManager.OnRoomEntered();
+        
+        Debug.LogWarning($"[Fail-Safe] Đã ép Camera quay về phòng đúng: {gameObject.name}");
+    }
+
     private void OnDrawGizmos()
     {
         if (drawRoomBoudary)

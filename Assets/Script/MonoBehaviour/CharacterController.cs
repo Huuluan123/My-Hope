@@ -261,6 +261,9 @@ public class PlayerController : MonoBehaviour
         InitializeClosestCheckpoint();
         CalculateRaySpacing();
         currentMaxFall = maxFallSpeed;
+
+        // Khởi động hệ thống Fail-safe ngay khi nhân vật xuất hiện
+        StartCoroutine(RoomFailSafeRoutine());
     }
 
     void Update()
@@ -518,7 +521,7 @@ public class PlayerController : MonoBehaviour
         // Chạy ngay trước HorizonalCollisionCheck
         if (wallSpeedRetentionTimer > 0)
         {
-            // Nếu bẻ lái ngược lại -> Hủy trí nhớ
+            // Nếu bẻ lái ngược lại hoặc đang đang bay tới theo bàn tay -> Hủy trí nhớ
             if (moveInput.x != 0 && Mathf.Sign(moveInput.x) == -Mathf.Sign(wallSpeedRetained))
             {
                 wallSpeedRetentionTimer = 0;
@@ -677,6 +680,9 @@ public class PlayerController : MonoBehaviour
                     SetState(PlayerState.OnAir);
                     if (!validFloorHit) isGrounded = false;
                     velocity = Vector3.zero; // Xóa quán tính bay
+
+                    // FIX: Ép xóa sạch trí nhớ tường để tránh bị bắn văng ở frame sau
+                    wallSpeedRetentionTimer = 0;
 
                     // Đảm bảo không đẩy vào tường nếu đang dừng vì đụng sàn hoặc trần
                     if (!validFloorHit && !hitCeiling)
@@ -1685,6 +1691,50 @@ public class PlayerController : MonoBehaviour
     }
     #endregion
 
+    #region Room Transition Fail-safe
+    private IEnumerator RoomFailSafeRoutine()
+    {
+        // Tạo biến đếm thời gian 1 giây để tối ưu bộ nhớ (không dùng new liên tục)
+        WaitForSeconds wait = new WaitForSeconds(1f);
+
+        while (true)
+        {
+            yield return wait;
+
+            // Nếu game đang Pause thì không cần kiểm tra để tiết kiệm tài nguyên
+            if (GameManager.Instance != null && GameManager.Instance.State == GameState.Pause) continue;
+
+            CheckCurrentRoomFailSafe();
+        }
+    }
+
+    private void CheckCurrentRoomFailSafe()
+    {
+        // 1. Bắn tia kiểm tra xem TẠI VỊ TRÍ CHÍNH GIỮA của nhân vật đang có những Collider nào
+        Collider2D[] colliders = Physics2D.OverlapPointAll(transform.position);
+        RoomTransitionScript actualRoom = null;
+
+        // 2. Lọc ra Collider thuộc về ranh giới phòng
+        foreach (Collider2D col in colliders)
+        {
+            RoomTransitionScript room = col.GetComponent<RoomTransitionScript>();
+            if (room != null)
+            {
+                actualRoom = room;
+                break; // Tìm thấy phòng rồi thì dừng vòng lặp
+            }
+        }
+
+        // 3. SO SÁNH VÀ SỬA SAI
+        // Nếu tìm thấy phòng nhân vật đang đứng, VÀ phòng đó KHÁC với ActiveRoom hiện tại của hệ thống
+        if (actualRoom != null && RoomTransitionScript.ActiveRoom != actualRoom)
+        {
+            // Lập tức gọi hàm ép chuyển Camera về đúng phòng!
+            actualRoom.ForceRoomTransition(this);
+        }
+    }
+    #endregion
+
     #region Collision Handling
     void VerticalCollisionCheck()
     {
@@ -1853,7 +1903,8 @@ public class PlayerController : MonoBehaviour
 
                 // LƯU LẠI VẬN TỐC TƯỜNG (Wall Speed Retention)
                 // Nếu đang bay với tốc độ cực nhanh (Lớn hơn moveSpeed) và đập mặt vào tường góc hẹp
-                if (Mathf.Abs(velocity.x) > moveSpeed && hit.distance > 0)
+                // FIX: Không lưu trí nhớ tường nếu đang bị kéo bởi tay móc!
+                if (Mathf.Abs(velocity.x) > moveSpeed && hit.distance > 0 && currentState != PlayerState.Grappling)
                 {
                     if (wallSpeedRetentionTimer <= 0) // Chỉ ghi nhận lần chạm đầu tiên
                     {
