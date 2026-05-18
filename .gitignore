@@ -27,3 +27,4 @@ Thumbs.db
 # Ignore FMOD and Unity log files
 *.log
 fmod_editor.log
+Assets/Plugins/FMOD/Cache/

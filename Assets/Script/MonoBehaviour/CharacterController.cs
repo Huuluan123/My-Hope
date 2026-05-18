@@ -689,10 +689,12 @@ public class PlayerController : MonoBehaviour
                     {
                         // Ép lún thêm 1 pixel để frame sau hàm CheckWallGrab chắc chắn bắt được
                         if (hitLeftWall || hitRightWall)
-                            transform.position += Vector3.right * wallDirX * skinWidth;
+                            targetPosition += Vector3.right * wallDirX * skinWidth;
                     }
 
-                    rb.position = transform.position;
+                    // Fix: Dùng targetPositiond thay vì transform.position để lấy đúng position của frame hiện tại
+                    transform.position = targetPosition;
+                    rb.position = targetPosition;
                 }
 
                 grappleTarget = Vector2.zero;
