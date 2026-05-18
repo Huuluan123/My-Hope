@@ -423,6 +423,7 @@ public class PlayerController : MonoBehaviour
 
     #region Movement Handling
 
+    #region Basic Movement
     private Vector2 Apply8WaySnap(Vector2 rawInput)
     {
         float snapX = 0;
@@ -944,6 +945,7 @@ public class PlayerController : MonoBehaviour
         SetState(PlayerState.Idle);
         Debug.Log("Room transition complete. Player control returned.");
     }
+    #endregion
 
     #region Jump Handling
     // Phương thức xử lý nhảy input: chỉ lưu thời điểm ấn để dùng jump buffer

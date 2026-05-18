@@ -62,6 +62,13 @@ public class TitleMenu : MonoBehaviour
     {
         Time.timeScale = 1f;
 
+        // Tắt EventSystem ngay khi click để CHỐNG SPAM CLICK tuyệt đối
+        if (EventSystem.current != null)
+        {
+            EventSystem.current.enabled = false;
+            Debug.Log("[UI Protection] EventSystem disabled. All UI inputs are now locked.");
+        }
+
         // THỦ THUẬT: Yêu cầu TransitionManager (kẻ sống sót) chạy hộ Coroutine này.
         // Như vậy Coroutine sẽ không bị ngắt giữa chừng khi Scene hiện tại bị hủy!
         TransitionManager.Instance.StartCoroutine(LoadLevelRoutine());
