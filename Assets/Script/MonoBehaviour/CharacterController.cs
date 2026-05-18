@@ -2255,13 +2255,26 @@ public class PlayerController : MonoBehaviour
 
         if (currentRoom != null) currentRoom.OnRoomEntered(); // Reset trạng thái phòng nếu cần
 
+        // 1. TÍNH TOÁN KHOẢNG CÁCH DỊCH CHUYỂN (Dành cho Camera)
+        Vector3 deltaWarp = (Vector3)currentRespawnPoint - transform.position;
 
-        // 1. Dịch chuyển nhân vật về điểm Checkpoint
+        // 2. Dịch chuyển nhân vật về điểm Checkpoint
         transform.position = currentRespawnPoint;
         if (rb != null) rb.position = currentRespawnPoint; // Cập nhật cả Rigidbody cho chắc chắn
         lastSpawnTime = Time.unscaledTime;
 
-        // 2. Reset lại các chỉ số quan trọng
+        // 3. ÉP CINEMACHINE DỊCH CHUYỂN TỨC THỜI (SNAP)
+        CinemachineBrain brain = Camera.main.GetComponent<CinemachineBrain>();
+        if (brain != null && brain.ActiveVirtualCamera is CinemachineCamera activeCam)
+        {
+            // Báo cho camera biết mục tiêu vừa bị "dịch chuyển tức thời" một khoảng delta
+            activeCam.OnTargetObjectWarped(transform, deltaWarp);
+
+            // Xóa sạch mọi quán tính/vận tốc theo dõi cũ của camera trong frame này
+            activeCam.PreviousStateIsValid = false;
+        }
+
+        // 4. Reset lại các chỉ số quan trọng
         velocity = Vector3.zero;
         currentStamina = maxStamina; // Hồi đầy thể lực
         isGrounded = false; // Bắt buộc false để tính toán lại chạm đất an toàn
@@ -2269,7 +2282,7 @@ public class PlayerController : MonoBehaviour
         // Nếu tay móc đang bắn ra, thu hồi lại
         if (robotHand != null) robotHand.FinishGrapple();
 
-        // 3. Bật lại hình ảnh nhân vật
+        // 5. Bật lại hình ảnh nhân vật
         GetComponentInChildren<SpriteRenderer>().enabled = true;
 
         // Delay một chút để đủ tổng thời gian 1 giây

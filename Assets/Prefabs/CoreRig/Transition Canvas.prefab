@@ -250,7 +250,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TransitionManager
   transitionAnimator: {fileID: 2760624133503959158}
-  transitionTime: 1.25
+  transitionTime: 0.75
 --- !u!95 &2760624133503959158
 Animator:
   serializedVersion: 7
