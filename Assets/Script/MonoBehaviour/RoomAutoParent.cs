@@ -7,18 +7,42 @@ public class RoomAutoParent : MonoBehaviour
 
     public void AutoParentElements()
     {
-        if (roomBounds == null) roomBounds = GetComponentInChildren<BoxCollider2D>();
+        bool triggeredChildren = false;
 
-        if (roomBounds == null)
+        // 1. ỦY QUYỀN CHO CÁC PHÒNG CON (Recursive Delegation)
+        // Quét các Object con trực tiếp. Nếu nó cũng là một Phòng, ra lệnh cho nó tự gom đồ!
+        foreach (Transform child in transform)
         {
-            Debug.LogWarning($"[RoomAutoParent] Warning: Room {gameObject.name} doesn't have a BoxCollider2D to scan!");
-            return;
+            RoomAutoParent childRoom = child.GetComponent<RoomAutoParent>();
+            if (childRoom != null)
+            {
+                childRoom.AutoParentElements();
+                triggeredChildren = true;
+            }
         }
 
+        // 2. LẤY COLLIDER CỦA PHÒNG NÀY
+        // Ưu tiên GetComponent (lấy collider của chính nó) thay vì GetComponentInChildren.
+        // Vì nếu Object tổng "Rooms" dùng GetComponentInChildren, nó sẽ lấy nhầm Collider của phòng con!
+        if (roomBounds == null) roomBounds = GetComponent<BoxCollider2D>();
+        if (roomBounds == null) roomBounds = GetComponentInChildren<BoxCollider2D>();
+
+        // Nếu Object này không có Collider (Ví dụ: nó chỉ là Object "Rooms" tổng)
+        if (roomBounds == null)
+        {
+            // Chỉ báo lỗi nếu nó cũng KHÔNG có phòng con nào
+            if (!triggeredChildren)
+            {
+                Debug.LogWarning($"[RoomAutoParent] Warning: Room {gameObject.name} doesn't have a BoxCollider2D to scan!");
+            }
+            return; // Dừng lại, không chạy logic quét đồ bên dưới nữa
+        }
+
+        // 3. LOGIC GOM ĐỒ CỦA TỪNG PHÒNG RIÊNG LẺ
         int count = 0;
         Bounds bounds = roomBounds.bounds;
 
-        // 1. QUÉT THEO TAG ("LevelElement")
+        // QUÉT THEO TAG ("LevelElement")
         GameObject[] taggedObjects = GameObject.FindGameObjectsWithTag("LevelElement");
         foreach (GameObject obj in taggedObjects)
         {
@@ -26,7 +50,6 @@ public class RoomAutoParent : MonoBehaviour
 
             if (bounds.Contains(obj.transform.position))
             {
-                // Ghi nhận Undo (Ctrl+Z) cho Editor
 #if UNITY_EDITOR
                 UnityEditor.Undo.SetTransformParent(obj.transform, this.transform, "Auto Parent");
 #else
@@ -36,7 +59,7 @@ public class RoomAutoParent : MonoBehaviour
             }
         }
 
-        // 2. QUÉT THEO INTERFACE (IRoomElement)
+        // QUÉT THEO INTERFACE (IRoomElement)
         MonoBehaviour[] allScripts = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
         foreach (MonoBehaviour script in allScripts)
         {
@@ -58,15 +81,27 @@ public class RoomAutoParent : MonoBehaviour
             }
         }
 
+        // In Log thông báo
         if (count > 0)
             Debug.Log($"<color=#00FFFF>[Auto Parent]</color> Automatically grouped {count} objects into <b>{gameObject.name}</b>!");
-        else
+        else if (!triggeredChildren) // Tắt bớt log rác nếu đây là Object tổng
             Debug.Log($"<color=#FFFF00>[Auto Parent]</color> {gameObject.name} didn't find any new objects.");
     }
 
     // HÀM MỚI: Thả các vật thể ra ngoài (Unparent)
     public void ReleaseElements()
     {
+        // 1. ỦY QUYỀN CHO CÁC PHÒNG CON THẢ ĐỒ
+        foreach (Transform child in transform)
+        {
+            RoomAutoParent childRoom = child.GetComponent<RoomAutoParent>();
+            if (childRoom != null)
+            {
+                childRoom.ReleaseElements();
+            }
+        }
+
+        // 2. LOGIC THẢ ĐỒ CỦA PHÒNG NÀY
         int count = 0;
 
         // Quét ngược từ dưới lên để an toàn khi thay đổi danh sách con (Child Count)
@@ -74,7 +109,10 @@ public class RoomAutoParent : MonoBehaviour
         {
             Transform child = transform.GetChild(i);
 
-            // Chỉ thả những vật có đúng Tag hoặc Interface (Tránh thả nhầm Collider/Camera của phòng)
+            // BẢO VỆ CẤU TRÚC: Đừng thả các "Phòng con" ra khỏi Object tổng "Rooms"!
+            if (child.GetComponent<RoomAutoParent>() != null) continue;
+
+            // Chỉ thả những vật có đúng Tag hoặc Interface
             bool isLevelElement = child.CompareTag("LevelElement") || child.GetComponent<IRoomElement>() != null;
 
             if (isLevelElement)
