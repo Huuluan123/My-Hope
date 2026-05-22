@@ -96,6 +96,19 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WindowsStoreApps
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
@@ -106,19 +119,17 @@ TextureImporter:
         x: 0
         y: 0
         width: 16
-        height: 16
+        height: 12
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape:
-      - - {x: 8, y: 1}
-        - {x: 8, y: 4}
+      - - {x: 8, y: 4}
+        - {x: 8, y: 6}
+        - {x: -8, y: 6}
         - {x: -8, y: 4}
-        - {x: -8, y: -2}
-        - {x: -7, y: -3}
-        - {x: -2, y: -3}
       tessellationDetail: 0
       bones: []
       spriteID: 3e5a7d77a0c996db0800000000000000
@@ -134,17 +145,17 @@ TextureImporter:
         x: 16
         y: 0
         width: 16
-        height: 16
+        height: 12
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape:
-      - - {x: 8, y: 4}
+      - - {x: 8, y: 6}
+        - {x: -8, y: 6}
         - {x: -8, y: 4}
-        - {x: -8, y: 1}
-        - {x: 8, y: 1}
+        - {x: 8, y: 4}
       tessellationDetail: 0
       bones: []
       spriteID: 74e23c5b7156aa240b9e6cee879cbbb3
@@ -160,19 +171,17 @@ TextureImporter:
         x: 32
         y: 0
         width: 16
-        height: 16
+        height: 12
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
       physicsShape:
-      - - {x: 8, y: -1}
-        - {x: 8, y: 4}
+      - - {x: 8, y: 4}
+        - {x: 8, y: 6}
+        - {x: -8, y: 6}
         - {x: -8, y: 4}
-        - {x: -8, y: 1}
-        - {x: 3, y: -3}
-        - {x: 7, y: -3}
       tessellationDetail: 0
       bones: []
       spriteID: b3a4d8451444c1e4aa7aec29404e06d4

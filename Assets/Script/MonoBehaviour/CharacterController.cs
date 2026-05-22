@@ -610,9 +610,15 @@ public class PlayerController : MonoBehaviour
 
         // 4. JUMP THRU ASSIST (Trợ lực nhảy xuyên one-way platform)
         // Nếu đang bay lên hoặc ở đỉnh, và nằm CÙNG LÚC bên trong nền One-way
-        if (velocity.y >= 0 && !isGrounded)
+        if (velocity.y >= 0 && !isGrounded && GetCurrentState() != PlayerState.Climbing)
         {
-            Collider2D jumpThruHit = Physics2D.OverlapBox(col.bounds.center, col.bounds.size, 0f, collisionMask);
+            // TỐI ƯU: Thay vì kiểm tra cả body (col.bounds.center), ta chỉ kiểm tra phần dưới gót chân
+            Vector2 feetPos = new Vector2(col.bounds.center.x, col.bounds.min.y + 0.1f);
+            Vector2 checkSize = new Vector2(col.bounds.size.x, 0.2f); // Hộp kiểm tra mỏng dẹt ở chân
+
+            Collider2D jumpThruHit = Physics2D.OverlapBox(feetPos, checkSize, 0f, collisionMask);
+            DebugDrawBox(feetPos, checkSize, Color.magenta);
+
             if (jumpThruHit != null && jumpThruHit.CompareTag("OneWay"))
             {
                 // Đẩy người chơi trượt nhẹ lên trên để lọt qua nhanh hơn, chống kẹt
@@ -1755,14 +1761,26 @@ public class PlayerController : MonoBehaviour
 
     private void CheckCurrentRoomFailSafe()
     {
+        // BẢO VỆ XUNG ĐỘT: Kiểm tra xem Collider của Player có đang chạm vào phòng ActiveRoom không
+        if (RoomTransition.ActiveRoom != null)
+        {
+            Collider2D activeRoomCol = RoomTransition.ActiveRoom.GetComponent<Collider2D>();
+            if (activeRoomCol != null && activeRoomCol.bounds.Intersects(col.bounds))
+            {
+                // Nhân vật vẫn đang chạm vào phòng hiện tại (có thể đang đứng giữa 2 phòng)
+                // -> Quá trình chuyển cảnh đang diễn ra bình thường, Fail-safe KHÔNG ĐƯỢC can thiệp!
+                return;
+            }
+        }
+
         // 1. Bắn tia kiểm tra xem TẠI VỊ TRÍ CHÍNH GIỮA của nhân vật đang có những Collider nào
         Collider2D[] colliders = Physics2D.OverlapPointAll(transform.position);
-        RoomTransitionScript actualRoom = null;
+        RoomTransition actualRoom = null;
 
         // 2. Lọc ra Collider thuộc về ranh giới phòng
         foreach (Collider2D col in colliders)
         {
-            RoomTransitionScript room = col.GetComponent<RoomTransitionScript>();
+            RoomTransition room = col.GetComponent<RoomTransition>();
             if (room != null)
             {
                 actualRoom = room;
@@ -1772,7 +1790,7 @@ public class PlayerController : MonoBehaviour
 
         // 3. SO SÁNH VÀ SỬA SAI
         // Nếu tìm thấy phòng nhân vật đang đứng, VÀ phòng đó KHÁC với ActiveRoom hiện tại của hệ thống
-        if (actualRoom != null && RoomTransitionScript.ActiveRoom != actualRoom)
+        if (actualRoom != null && RoomTransition.ActiveRoom != actualRoom)
         {
             // Lập tức gọi hàm ép chuyển Camera về đúng phòng!
             actualRoom.ForceRoomTransition(this);
@@ -2390,6 +2408,7 @@ public class PlayerController : MonoBehaviour
     }
 
     #region Custom Draw
+#if UNITY_EDITOR
     void DrawClimbHopRays(Vector2 originTop, float direction)
     {
         // 1. Cấu hình giống hệt logic CheckForLedge
@@ -2482,8 +2501,25 @@ public class PlayerController : MonoBehaviour
         Gizmos.color = Color.yellow;
         Gizmos.DrawLine(bottomOrigin, topOrigin);
     }
-    #endregion
-    #endregion
+
+    // HÀM TỰ CHẾ: Vẽ một hộp chữ nhật bằng Debug.DrawLine
+    private void DebugDrawBox(Vector2 center, Vector2 size, Color color, float duration = 0f)
+    {
+        // Tính toán 4 góc của chiếc hộp
+        Vector2 topLeft = center + new Vector2(-size.x / 2, size.y / 2);
+        Vector2 topRight = center + new Vector2(size.x / 2, size.y / 2);
+        Vector2 bottomLeft = center + new Vector2(-size.x / 2, -size.y / 2);
+        Vector2 bottomRight = center + new Vector2(size.x / 2, -size.y / 2);
+
+        // Vẽ 4 cạnh nối lại với nhau
+        Debug.DrawLine(topLeft, topRight, color, duration);
+        Debug.DrawLine(topRight, bottomRight, color, duration);
+        Debug.DrawLine(bottomRight, bottomLeft, color, duration);
+        Debug.DrawLine(bottomLeft, topLeft, color, duration);
+    }
+#endif
+#endregion
+#endregion
 
     #region structs
     struct RayCastOrigin
