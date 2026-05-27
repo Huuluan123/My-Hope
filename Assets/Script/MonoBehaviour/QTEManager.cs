@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.Events;
 using System;
-using System.Collections.Generic;
 
 public class QTEManager : MonoBehaviour
 {
@@ -9,7 +8,7 @@ public class QTEManager : MonoBehaviour
 
     [Header("UI References")]
     [Tooltip("Kéo Object có chứa script TutorialSign vào đây")]
-    public TutorialSign qteSign; // Dùng TutorialSign thay cho Canvas cũ
+    public TutorialSign qteSign;
 
     private bool isQTEActive = false;
     private bool useTimer = false;
@@ -25,10 +24,8 @@ public class QTEManager : MonoBehaviour
         else Destroy(gameObject);
     }
 
-    /// <summary>
-    /// Kích hoạt QTE. Nhận tham số template để biết hiển thị chữ gì (Ví dụ: "{icon1}")
-    /// </summary>
-    public void StartQTE(Func<bool> inputCondition, PromptAction promptAction, string template, float timeLimit, UnityAction onSuccess)
+    // 🌟 SỬA: Bỏ tham số PromptAction khỏi hàm
+    public void StartQTE(Func<bool> inputCondition, string template, float timeLimit, UnityAction onSuccess)
     {
         isQTEActive = true;
         inputCheckMethod = inputCondition;
@@ -38,31 +35,28 @@ public class QTEManager : MonoBehaviour
         qteTimeLimit = timeLimit;
         qteTimer = timeLimit;
 
-        // Gọi TutorialSign hiện lên kèm hiệu ứng DoTween!
+        // 🌟 SỬA: Truyền thẳng template vào TutorialSign
         if (qteSign != null)
         {
-            List<PromptAction> actions = new List<PromptAction> { promptAction };
-            qteSign.ShowCutscenePrompt(actions, template);
+            qteSign.ShowCutscenePrompt(template);
         }
     }
 
     private void Update()
     {
-        // Nếu Game đang Pause (Bấm ESC) thì QTE cũng nghỉ ngơi
         if (GameManager.Instance != null && GameManager.Instance.State == GameState.Pause) return;
 
         if (!isQTEActive) return;
 
         if (useTimer)
         {
-            qteTimer -= Time.deltaTime; // Dùng deltaTime bình thường vì TimeScale = 1
+            qteTimer -= Time.deltaTime;
             if (qteTimer <= 0f)
             {
-                qteTimer = qteTimeLimit; // Hết giờ thì reset (Hoặc gọi onFail ở đây nếu muốn)
+                qteTimer = qteTimeLimit;
             }
         }
 
-        // Kiểm tra người chơi bấm nút
         if (inputCheckMethod != null && inputCheckMethod.Invoke())
         {
             EndQTE();
@@ -73,7 +67,6 @@ public class QTEManager : MonoBehaviour
     {
         isQTEActive = false;
 
-        // Tắt bảng Sign bằng DoTween
         if (qteSign != null)
         {
             qteSign.HideCutscenePrompt();
