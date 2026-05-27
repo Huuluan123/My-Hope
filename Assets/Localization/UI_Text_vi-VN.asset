@@ -34,6 +34,23 @@ MonoBehaviour:
     m_Localized: Hope
     m_Metadata:
       m_Items: []
+  - m_Id: 171146698948608
+    m_Localized: "Gi\u1EEF {jump} \u0111\u1EC3 nh\u1EA3y"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 181210331611136
+    m_Localized: "{jump} \u0111\u1EC3 leo l\xEAn"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 181516486443008
+    m_Localized: "{jump}+{down} \u0111\u1EC3 xu\u1ED1ng"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 181705280454656
+    m_Localized: "{right}+{grapple}\\n\\n{rightup}+{grapple}\\n\u0111\u1EC3 b\u1EAFn
+      tay m\xF3c"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

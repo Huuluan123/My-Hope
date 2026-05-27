@@ -31,6 +31,22 @@ MonoBehaviour:
     m_Key: btn-exit
     m_Metadata:
       m_Items: []
+  - m_Id: 171146698948608
+    m_Key: tuto-sign-jump
+    m_Metadata:
+      m_Items: []
+  - m_Id: 181210331611136
+    m_Key: tuto-sign-getOnPlatform
+    m_Metadata:
+      m_Items: []
+  - m_Id: 181516486443008
+    m_Key: tuto-sign-getDownPlatform
+    m_Metadata:
+      m_Items: []
+  - m_Id: 181705280454656
+    m_Key: tuto-sign-grapple
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

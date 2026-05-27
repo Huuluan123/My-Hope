@@ -1,35 +1,36 @@
 using UnityEngine;
 using TMPro;
 using DG.Tweening;
-using System.Text.RegularExpressions; // Thư viện dùng để dò tìm chữ trong ngoặc nhọn
+using System.Text.RegularExpressions;
+using UnityEngine.Localization;
 
 [ExecuteAlways]
 public class TutorialSign : MonoBehaviour
 {
     [Header("Global Database")]
-    [Tooltip("Kéo file GlobalInputDatabase vào đây")]
+    [Tooltip("Kéo file ScriptableObject GlobalInputDatabase vào đây")]
     [SerializeField] private InputDatabase inputDatabase;
+
+    [Header("Localization Settings")]
+    [SerializeField] private LocalizedString localizedMessage;
 
     [Header("UI References")]
     [SerializeField] private Transform signContainer;
     [SerializeField] private TextMeshProUGUI promptText;
-
-    [Header("Message Settings")]
-    [Tooltip("Ví dụ: Press {Jump} to jump, then press {Dash} to dash in mid-air.")]
-    [SerializeField][TextArea] private string messageTemplate = "Press {Jump} to Jump";
 
     [Header("Editor Preview")]
     [SerializeField] private DeviceType previewDevice = DeviceType.Keyboard;
     [SerializeField] private float duration = 0.3f;
 
     private bool isPlayerInside = false;
+    private string qteTemplateOverride = "";
+
+    // Biến lưu trữ chữ đã dịch sau khi hệ thống tải xong
+    private string currentTranslatedText = "";
 
     private void OnValidate()
     {
-        if (promptText != null && inputDatabase != null)
-        {
-            RefreshUI(previewDevice);
-        }
+        if (promptText != null && inputDatabase != null) RefreshUI(previewDevice);
     }
 
     void Awake()
@@ -42,41 +43,97 @@ public class TutorialSign : MonoBehaviour
 
     void OnEnable()
     {
-        if (Application.isPlaying && InputDeviceManager.Instance != null)
-            InputDeviceManager.Instance.OnDeviceChanged += RefreshUI;
+        if (Application.isPlaying)
+        {
+            if (InputDeviceManager.Instance != null)
+                InputDeviceManager.Instance.OnDeviceChanged += OnDeviceChangedHandler;
+
+            // 🌟 CHÌA KHÓA VÀNG Ở ĐÂY:
+            // Đăng ký nhận chữ. Nó sẽ TỰ ĐỘNG chờ hệ thống Load xong rồi mới gọi hàm OnStringChanged.
+            // Nó cũng TỰ ĐỘNG gọi lại hàm này mỗi khi người chơi đổi ngôn ngữ trong Settings!
+            if (localizedMessage != null && !localizedMessage.IsEmpty)
+            {
+                localizedMessage.StringChanged += OnStringChanged;
+            }
+        }
     }
 
     void OnDisable()
     {
-        if (Application.isPlaying && InputDeviceManager.Instance != null)
-            InputDeviceManager.Instance.OnDeviceChanged -= RefreshUI;
+        if (Application.isPlaying)
+        {
+            if (InputDeviceManager.Instance != null)
+                InputDeviceManager.Instance.OnDeviceChanged -= OnDeviceChangedHandler;
+
+            if (localizedMessage != null && !localizedMessage.IsEmpty)
+            {
+                localizedMessage.StringChanged -= OnStringChanged;
+            }
+        }
     }
 
     private void Start()
     {
-        if (Application.isPlaying && InputDeviceManager.Instance != null)
-            RefreshUI(InputDeviceManager.Instance.CurrentDevice);
+        // ❌ KHÔNG GỌI RefreshUI Ở ĐÂY NỮA VÌ DỮ LIỆU CHƯA TẢI XONG
+    }
+
+    // Sự kiện nổ ra khi biến LocalizedString lấy chữ thành công
+    private void OnStringChanged(string translatedText)
+    {
+        currentTranslatedText = translatedText; // Lưu lại câu thoại (VD: "Giữ {Jump} để nhảy")
+
+        DeviceType currentDevice = InputDeviceManager.Instance != null ? InputDeviceManager.Instance.CurrentDevice : DeviceType.Keyboard;
+        RefreshUI(currentDevice); // Tiến hành chèn Icon
+    }
+
+    private void OnDeviceChangedHandler(DeviceType device)
+    {
+        RefreshUI(device);
     }
 
     private void RefreshUI(DeviceType device)
     {
-        if (inputDatabase == null) return;
+        if (inputDatabase == null || promptText == null) return;
 
-        string finalMessage = messageTemplate;
+        string finalMessage = "";
 
-        // 🌟 KỸ THUẬT QUÉT TỰ ĐỘNG (Regex):
-        // Tìm tất cả các cụm chữ nằm trong dấu ngoặc nhọn { }
+        if (Application.isPlaying && isPlayerInside && !string.IsNullOrEmpty(qteTemplateOverride))
+        {
+            finalMessage = qteTemplateOverride;
+        }
+        else
+        {
+            if (Application.isPlaying)
+            {
+                // Lúc chơi game: Dùng chuỗi đã được hệ thống StringChanged lấy về an toàn
+                finalMessage = currentTranslatedText;
+            }
+            else
+            {
+                // Lúc ở màn hình Editor (Chưa bấm Play): Dùng lệnh ép lấy chữ để Preview
+                if (localizedMessage != null && !localizedMessage.IsEmpty)
+                {
+                    try { finalMessage = localizedMessage.GetLocalizedString(); }
+                    catch { finalMessage = "Preview not available in Editor"; }
+                }
+            }
+        }
+
+        if (string.IsNullOrEmpty(finalMessage))
+        {
+            promptText.text = "Pick a key in Localization Table";
+            return;
+        }
+
+        // BỘ QUÉT REGEX THẦN THÁNH
         MatchCollection matches = Regex.Matches(finalMessage, @"\{([^}]+)\}");
 
         foreach (Match match in matches)
         {
-            string fullTag = match.Value;      // Kết quả: "{Jump}"
-            string actionID = match.Groups[1].Value; // Kết quả: "Jump"
+            string fullTag = match.Value;
+            string actionID = match.Groups[1].Value;
 
-            // Hỏi Bộ Não xem thẻ Sprite của hành động "Jump" là gì?
             string spriteTag = inputDatabase.GetSpriteTag(actionID, device);
-
-            // Thay thế chữ {Jump} bằng thẻ <sprite name="xbox_A">
             finalMessage = finalMessage.Replace(fullTag, spriteTag);
         }
 
@@ -90,6 +147,8 @@ public class TutorialSign : MonoBehaviour
             isPlayerInside = true;
             signContainer.DOKill();
             signContainer.DOScale(Vector3.one, duration).SetEase(Ease.OutBack);
+
+            if (InputDeviceManager.Instance != null) RefreshUI(InputDeviceManager.Instance.CurrentDevice);
         }
     }
 
@@ -98,37 +157,30 @@ public class TutorialSign : MonoBehaviour
         if (Application.isPlaying && other.CompareTag("Player") && isPlayerInside)
         {
             isPlayerInside = false;
+            qteTemplateOverride = "";
             signContainer.DOKill();
             signContainer.DOScale(Vector3.zero, duration).SetEase(Ease.InBack);
         }
     }
 
-    /// <summary>
-    /// Hiển thị bảng Sign bằng Code (Dành cho Cutscene / QTE)
-    /// </summary>
     public void ShowCutscenePrompt(string template)
     {
-        // Ghi đè chữ hiện tại bằng chuỗi template truyền từ QTEManager hoặc Timeline
-        messageTemplate = template;
+        qteTemplateOverride = template;
 
-        // Cập nhật giao diện hiển thị ngay lập tức theo thiết bị đang cắm
         if (InputDeviceManager.Instance != null)
         {
             RefreshUI(InputDeviceManager.Instance.CurrentDevice);
         }
 
-        // Chạy hiệu ứng DoTween để bảng Sign phóng to hiện lên mượt mà
         isPlayerInside = true;
         signContainer.DOKill();
         signContainer.DOScale(Vector3.one, duration).SetEase(Ease.OutBack);
     }
 
-    /// <summary>
-    /// Ẩn bảng Sign bằng Code khi kết thúc QTE hoặc Cutscene
-    /// </summary>
     public void HideCutscenePrompt()
     {
         isPlayerInside = false;
+        qteTemplateOverride = "";
         signContainer.DOKill();
         signContainer.DOScale(Vector3.zero, duration).SetEase(Ease.InBack);
     }
