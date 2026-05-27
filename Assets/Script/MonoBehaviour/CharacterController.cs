@@ -2408,7 +2408,6 @@ public class PlayerController : MonoBehaviour
     }
 
     #region Custom Draw
-#if UNITY_EDITOR
     void DrawClimbHopRays(Vector2 originTop, float direction)
     {
         // 1. Cấu hình giống hệt logic CheckForLedge
@@ -2517,7 +2516,6 @@ public class PlayerController : MonoBehaviour
         Debug.DrawLine(bottomRight, bottomLeft, color, duration);
         Debug.DrawLine(bottomLeft, topLeft, color, duration);
     }
-#endif
 #endregion
 #endregion
 
