@@ -7,9 +7,17 @@
             <ui:Label text="Hello World" name="dialogue-text" enabled="true" style="color: rgb(255, 255, 255); -unity-font-style: bold; font-size: 20px; flex-wrap: nowrap; white-space: normal; height: auto;"/>
         </ui:VisualElement>
         <ui:VisualElement name="skip-container" class="skip-container" style="flex-grow: 1;">
-            <ui:Label text="&gt;&gt; Hold " style="-unity-font-style: bold;"/>
+            <ui:Label text="&gt;&gt; Hold " style="-unity-font-style: bold;">
+                <Bindings>
+                    <UnityEngine.Localization.LocalizedString property="text" table="GUID:17d9da7d471350e4e8a5244f46e88ff6" entry="Id(345032560345088)"/>
+                </Bindings>
+            </ui:Label>
             <ui:VisualElement name="skip-icon" style="flex-grow: 1; width: 25px; height: 25px;"/>
-            <ui:Label text="to skip" style="-unity-font-style: bold;"/>
+            <ui:Label text="to skip" style="-unity-font-style: bold;">
+                <Bindings>
+                    <UnityEngine.Localization.LocalizedString property="text" table="GUID:17d9da7d471350e4e8a5244f46e88ff6" entry="Id(345132510609408)"/>
+                </Bindings>
+            </ui:Label>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

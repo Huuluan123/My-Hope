@@ -1,12 +1,15 @@
 ﻿using UnityEngine;
 using TMPro;
 using DG.Tweening;
+using UnityEngine.Localization;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 [ExecuteAlways]
 public class DialogueTrigger : MonoBehaviour
 {
-    [Header("Ink JSON")]
-    public TextAsset inkJSON;
+    [Header("Ink JSON (Localized)")]
+    [Tooltip("Gán file Ink vào Asset Table rồi chọn Key ở đây")]
+    public LocalizedAsset<TextAsset> localizedInkJSON;
 
     [Header("Ink Settings")]
     public string knotName;
@@ -26,7 +29,7 @@ public class DialogueTrigger : MonoBehaviour
 
     [Header("Animation Settings")]
     [SerializeField] private float duration = 0.25f;
-    [SerializeField] private float floatingHeight = 0.2f; // Độ cao bập bềnh
+    [SerializeField] private float floatingHeight = 0.2f;
 
     [Header("Editor Preview")]
     [SerializeField] private DeviceType previewDevice = DeviceType.Keyboard;
@@ -66,7 +69,6 @@ public class DialogueTrigger : MonoBehaviour
         {
             RefreshUI(InputDeviceManager.Instance != null ? InputDeviceManager.Instance.CurrentDevice : DeviceType.Keyboard);
 
-            // 🌟 Bonus: Hiệu ứng icon bay bập bềnh nhẹ cho sinh động
             if (iconTransform != null)
                 iconTransform.DOLocalMoveY(originalIconPos.y + floatingHeight, 1f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine);
         }
@@ -88,13 +90,48 @@ public class DialogueTrigger : MonoBehaviour
         promptText.text = $"<sprite name=\"{spriteName}\">";
     }
 
+    // LOGIC LOAD FILE INK TỰ ĐỘNG
     public void TriggerDialogue()
     {
         ShowIcon(false);
-        if (standPosition != null && PlayerController.Instance != null)
-            PlayerController.Instance.MoveToAndFace(standPosition, this.transform, () => DialogueManager.Instance.StartDialogue(inkJSON, knotName));
+
+        // Chặn lỗi nếu quên chưa gán file INK trên Inspector
+        if (localizedInkJSON == null || localizedInkJSON.IsEmpty)
+        {
+            Debug.LogWarning("Chưa cấu hình Localized Ink JSON cho NPC này!");
+            return;
+        }
+
+        // BẢO VỆ STATE: Khóa chặt Player ngay lập tức trong vài mili-giây chờ ổ cứng đọc file Ink
+        if (PlayerController.Instance != null) PlayerController.Instance.SetState(PlayerState.Talking);
+
+        // Ra lệnh cho Unity tìm và tải file Ink tương ứng với ngôn ngữ hiện tại
+        var asyncOperation = localizedInkJSON.LoadAssetAsync();
+        asyncOperation.Completed += OnInkLoaded;
+    }
+
+    // Hàm được gọi tự động khi file Ink tải xong
+    private void OnInkLoaded(AsyncOperationHandle<TextAsset> handle)
+    {
+        if (handle.Status == AsyncOperationStatus.Succeeded)
+        {
+            TextAsset loadedInkFile = handle.Result;
+
+            // Truyền file đã load thành công sang cho DialogueManager như bình thường
+            if (standPosition != null && PlayerController.Instance != null)
+            {
+                PlayerController.Instance.MoveToAndFace(standPosition, this.transform, () => DialogueManager.Instance.StartDialogue(loadedInkFile, knotName));
+            }
+            else
+            {
+                DialogueManager.Instance.StartDialogue(loadedInkFile, knotName);
+            }
+        }
         else
-            DialogueManager.Instance.StartDialogue(inkJSON, knotName);
+        {
+            Debug.LogError("Lỗi: Không thể tải file INK! Hãy kiểm tra lại Asset Table.");
+            if (PlayerController.Instance != null) PlayerController.Instance.SetState(PlayerState.Idle);
+        }
     }
 
     private void ShowIcon(bool show)

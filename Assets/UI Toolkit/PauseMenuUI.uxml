@@ -12,6 +12,11 @@
                     <UnityEngine.Localization.LocalizedString property="text" table="GUID:17d9da7d471350e4e8a5244f46e88ff6" entry="Id(57259720704)"/>
                 </Bindings>
             </ui:Button>
+            <ui:Button text="English" name="btn-language" class="pause-button">
+                <Bindings>
+                    <UnityEngine.Localization.LocalizedString property="text" table="GUID:17d9da7d471350e4e8a5244f46e88ff6" entry="Id(327557881921536)"/>
+                </Bindings>
+            </ui:Button>
             <ui:Button text="Save &amp; Exit" name="btn-exit" class="pause-button">
                 <Bindings>
                     <UnityEngine.Localization.LocalizedString property="text" table="GUID:17d9da7d471350e4e8a5244f46e88ff6" entry="Id(80970121216)"/>

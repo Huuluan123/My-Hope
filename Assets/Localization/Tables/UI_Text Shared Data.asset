@@ -15,10 +15,6 @@ MonoBehaviour:
   m_TableCollectionName: UI_Text
   m_TableCollectionNameGuidString: 17d9da7d471350e4e8a5244f46e88ff6
   m_Entries:
-  - m_Id: 4028107980800
-    m_Key: game-name
-    m_Metadata:
-      m_Items: []
   - m_Id: 10744889344
     m_Key: btn-resume
     m_Metadata:
@@ -27,8 +23,44 @@ MonoBehaviour:
     m_Key: btn-options
     m_Metadata:
       m_Items: []
+  - m_Id: 327557881921536
+    m_Key: btn-language
+    m_Metadata:
+      m_Items: []
   - m_Id: 80970121216
     m_Key: btn-exit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 255189180350464
+    m_Key: tuto-sign-1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 255325176463360
+    m_Key: tuto-sign-2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 317347113074688
+    m_Key: tuto-sign-3
+    m_Metadata:
+      m_Items: []
+  - m_Id: 317508627333120
+    m_Key: tuto-sign-4
+    m_Metadata:
+      m_Items: []
+  - m_Id: 318310720864256
+    m_Key: tuto-sign-5
+    m_Metadata:
+      m_Items: []
+  - m_Id: 318476169379840
+    m_Key: tuto-sign-6
+    m_Metadata:
+      m_Items: []
+  - m_Id: 345032560345088
+    m_Key: Hold
+    m_Metadata:
+      m_Items: []
+  - m_Id: 345132510609408
+    m_Key: To skip
     m_Metadata:
       m_Items: []
   m_Metadata:

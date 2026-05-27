@@ -30,8 +30,40 @@ MonoBehaviour:
     m_Localized: Save & Exit
     m_Metadata:
       m_Items: []
-  - m_Id: 4028107980800
-    m_Localized: Project-1
+  - m_Id: 255189180350464
+    m_Localized: Hold {jump} to jump
+    m_Metadata:
+      m_Items: []
+  - m_Id: 255325176463360
+    m_Localized: '{jump} to get on'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 317347113074688
+    m_Localized: '{down} + {jump} to drop'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 317508627333120
+    m_Localized: Hold {grab} + {up} to climb wall
+    m_Metadata:
+      m_Items: []
+  - m_Id: 318310720864256
+    m_Localized: '{right} + {grapple}\n\n {rightup} + {grapple}\n to grapple'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 318476169379840
+    m_Localized: '{grab} + {right} to push'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 327557881921536
+    m_Localized: English
+    m_Metadata:
+      m_Items: []
+  - m_Id: 345032560345088
+    m_Localized: '>> Hold'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 345132510609408
+    m_Localized: to skip
     m_Metadata:
       m_Items: []
   references:

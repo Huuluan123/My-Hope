@@ -86,7 +86,7 @@ public class PlayerController : MonoBehaviour
     // Neutreal Wall Jump
     [SerializeField] private Vector2 neutralWallJumpForce = new Vector2(5f, 22f); // Lực đẩy ngang rất nhỏ, lực dọc lớn
     [SerializeField] private float neutralJumpStaminaCost = 10f; // Hình phạt thể lực
-    [SerializeField] private float neutralJumpInputLockTime = 0.1f; // Khóa input ngắn hơn nhảy tường thường
+    //[SerializeField] private float neutralJumpInputLockTime = 0.1f; // Khóa input ngắn hơn nhảy tường thường
 
     [Space]
 

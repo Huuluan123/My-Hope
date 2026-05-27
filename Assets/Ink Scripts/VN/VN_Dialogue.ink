@@ -1,0 +1,46 @@
+﻿-> Start
+
+=== Start ===
+# speaker: Hope
+You wake up in the middle of nowhere. You don't know anything about this world.
+HELLO WORLD!
+Name: Hope. Mission: Save and love humans.
+->END
+
+=== Tutorial ===
+# speaker: System
+Arrows key or Joystick to move
+Press C or A button to jump
+Press Z or LT to grab walls
+Press X or RT to launch the stretchy hand
+->END
+
+=== SaveTheBoy ===
+# speaker: Boy
+CỨU TÔI VỚI!
+# speaker: System
+CẢNH BÁO: Phát hiện con người đang gặp nguy hiểm!
+KÍCH HOẠT NHIỆM VỤ GIẢI CỨU!
+->END
+
+== AfterSavingBoy ==
+# speaker: Boy
+Thank you for saving me!
+# speaker: Hope
+My mission is to save and love humans. You are welcome!
+# speaker: Boy
+You seem nice and you are a robot, I see. Where do you come from?
+# speaker: Hope
+I have no idea. My memory is blank.
+# speaker: Boy
+What is your name by the way?
+# speaker: Hope
+I'm Hope. My mission is to save and love humans. That's all what in my memory.
+# speaker: Boy
+I'm [name]. Nice to meet you, Hope!
+There's a town not far from here. That's where I live. There are plenty of people there. Do you want to come with me?
+# speaker: Hope
+Sure, i guess!
+# speaker: System
+New location unlocked: [town] Town.
+-> END

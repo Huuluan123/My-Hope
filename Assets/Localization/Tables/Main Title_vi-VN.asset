@@ -10,28 +10,24 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
-  m_Name: UI_Text_vi-VN
+  m_Name: Main Title_vi-VN
   m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.StringTable
   m_LocaleId:
     m_Code: vi-VN
-  m_SharedData: {fileID: 11400000, guid: 17d9da7d471350e4e8a5244f46e88ff6, type: 2}
+  m_SharedData: {fileID: 11400000, guid: 1d8873bb14a51bd46b1380b7e870726b, type: 2}
   m_Metadata:
     m_Items: []
   m_TableData:
-  - m_Id: 10744889344
-    m_Localized: "Ti\u1EBFp t\u1EE5c"
+  - m_Id: 14414905344
+    m_Localized: "Ch\u01A1i"
     m_Metadata:
       m_Items: []
-  - m_Id: 57259720704
-    m_Localized: "Tu\u1EF3 ch\u1ECDn"
+  - m_Id: 54357262336
+    m_Localized: "Ti\u1EBFng Vi\u1EC7t"
     m_Metadata:
       m_Items: []
-  - m_Id: 80970121216
-    m_Localized: "L\u01B0u & Tho\xE1t"
-    m_Metadata:
-      m_Items: []
-  - m_Id: 4028107980800
-    m_Localized: Hope
+  - m_Id: 127707250688
+    m_Localized: "Tho\xE1t"
     m_Metadata:
       m_Items: []
   references:
