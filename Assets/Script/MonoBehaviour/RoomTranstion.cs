@@ -1,7 +1,7 @@
 using UnityEngine;
 using Unity.Cinemachine;
 
-public class RoomTransitionScript : MonoBehaviour
+public class RoomTransition : MonoBehaviour
 {
     [Header("Camera Settings")]
     [SerializeField] private CinemachineCamera roomCamera;
@@ -19,7 +19,7 @@ public class RoomTransitionScript : MonoBehaviour
     private RoomManager myRoomManager;
     public bool drawRoomBoudary = true;
 
-    public static RoomTransitionScript ActiveRoom;
+    public static RoomTransition ActiveRoom;
 
     private void Awake()
     {
@@ -119,13 +119,12 @@ public class RoomTransitionScript : MonoBehaviour
     {
         if (collision.CompareTag("Player"))
         {
+            // Fix: Đảm bảo chỉ có game object chính của Player (chứa PlayerController) mới được phép kích hoạt Exit
+            PlayerController player = collision.GetComponent<PlayerController>();
+            if (player == null) return;
+
             // ĐỌC THỜI GIAN BLEND CỦA CINEMACHINE
             float cameraBlendTime = 0.75f; // Đặt giá trị dự phòng mặc định
-            //CinemachineBrain brain = Camera.main.GetComponent<CinemachineBrain>();
-            //if (brain != null)
-            //{
-            //    cameraBlendTime = brain.DefaultBlend.Time;
-            //}
 
             // Gọi RoomManager để tắt hết vật thể (IRoomElement hoặc có Tag là "RoomElement") trong phòng này đi
             // Lưu ý: Ta không tắt ngay lập tức mà đợi đến khi camera blend xong mới tắt, để tránh việc người chơi vừa bước ra khỏi phòng đã thấy đồ vật trong phòng biến mất một cách đột ngột.

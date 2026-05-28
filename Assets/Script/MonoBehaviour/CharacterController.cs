@@ -86,7 +86,7 @@ public class PlayerController : MonoBehaviour
     // Neutreal Wall Jump
     [SerializeField] private Vector2 neutralWallJumpForce = new Vector2(5f, 22f); // Lực đẩy ngang rất nhỏ, lực dọc lớn
     [SerializeField] private float neutralJumpStaminaCost = 10f; // Hình phạt thể lực
-    [SerializeField] private float neutralJumpInputLockTime = 0.1f; // Khóa input ngắn hơn nhảy tường thường
+    //[SerializeField] private float neutralJumpInputLockTime = 0.1f; // Khóa input ngắn hơn nhảy tường thường
 
     [Space]
 
@@ -96,6 +96,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float currentStamina;
     [SerializeField] private float lowStaminaThreshold = 25f; // Dưới mức này sẽ báo động
     private bool isLowStaminaState; // Biến nhớ để không spam event liên tục
+
+    [Header("Wall Boost Mechanics")]
+    [SerializeField] private float wallBoostTime = 0.2f; // Thời gian cho phép đổi ý từ Climb Jump sang Wall Jump
+    private float wallBoostTimer;
+    private int wallBoostDir;
 
     [Header("Push/Pull Mechanics")]
     [SerializeField] private float pushSpeedMultiplier = 0.5f; // Giảm 50% tốc độ khi đẩy hộp
@@ -311,6 +316,35 @@ public class PlayerController : MonoBehaviour
         if (wallJumpInputTimer > 0)
         {
             wallJumpInputTimer -= Time.deltaTime;
+        }
+
+        // CƠ CHẾ MỚI: WALL BOOST VÀ HOÀN TRẢ THỂ LỰC
+        if (wallBoostTimer > 0)
+        {
+            wallBoostTimer -= Time.deltaTime;
+
+            // Nếu người chơi gạt hướng ra xa tường trong thời gian cho phép
+            if (moveInput.x != 0 && Mathf.Sign(moveInput.x) == wallBoostDir)
+            {
+                // 1. Chuyển thành quỹ đạo Wall Jump
+                velocity.x = wallBoostDir * wallJumpForce.x;
+                velocity.y = wallJumpForce.y;
+
+                // 2. HOÀN TRẢ THỂ LỰC! (Trả lại đúng 15f đã trừ ở Climb Jump)
+                currentStamina += 15f;
+                if (currentStamina > maxStamina) currentStamina = maxStamina;
+
+                // 3. Còng tay Input lại giống hệt như Wall Jump bình thường
+                wallBoostTimer = 0f;
+                wallJumpInputTimer = wallJumpInputLockTime;
+
+                // 4. Lật mặt
+                Vector3 scale = transform.localScale;
+                scale.x = Mathf.Abs(scale.x) * wallBoostDir;
+                transform.localScale = scale;
+
+                Debug.Log("<color=#00FF00>[Wall Boost]</color> Late direction input detected! Converted to Wall Jump & Refunded Stamina.");
+            }
         }
 
         if (IsInputDisabled)
@@ -576,9 +610,15 @@ public class PlayerController : MonoBehaviour
 
         // 4. JUMP THRU ASSIST (Trợ lực nhảy xuyên one-way platform)
         // Nếu đang bay lên hoặc ở đỉnh, và nằm CÙNG LÚC bên trong nền One-way
-        if (velocity.y >= 0 && !isGrounded)
+        if (velocity.y >= 0 && !isGrounded && GetCurrentState() != PlayerState.Climbing)
         {
-            Collider2D jumpThruHit = Physics2D.OverlapBox(col.bounds.center, col.bounds.size, 0f, collisionMask);
+            // TỐI ƯU: Thay vì kiểm tra cả body (col.bounds.center), ta chỉ kiểm tra phần dưới gót chân
+            Vector2 feetPos = new Vector2(col.bounds.center.x, col.bounds.min.y + 0.1f);
+            Vector2 checkSize = new Vector2(col.bounds.size.x, 0.2f); // Hộp kiểm tra mỏng dẹt ở chân
+
+            Collider2D jumpThruHit = Physics2D.OverlapBox(feetPos, checkSize, 0f, collisionMask);
+            DebugDrawBox(feetPos, checkSize, Color.magenta);
+
             if (jumpThruHit != null && jumpThruHit.CompareTag("OneWay"))
             {
                 // Đẩy người chơi trượt nhẹ lên trên để lọt qua nhanh hơn, chống kẹt
@@ -1065,36 +1105,43 @@ public class PlayerController : MonoBehaviour
                 currentStamina -= 15f; // Celeste trừ nhiều thể lực hơn cho cú nhảy này
                 climbJumpCooldownTimer = 0.2f;
                 //Debug.Log("Wall Climb jump!");
+
+                // Nếu người chơi nhảy mà không gạt cần ngang, cho họ 0.2 giây để đổi ý!
+                if (Mathf.Abs(moveInput.x) < 0.1f)
+                {
+                    wallBoostDir = -wallDir; // Hướng văng ra xa tường
+                    wallBoostTimer = wallBoostTime;
+                }
             }
             else if (isNeutral)
             {
                 // NEUTRAL WALL JUMP
-                // Đẩy ngược hướng tường với lực RẤT NHỎ
-                velocity.x = -wallDir * neutralWallJumpForce.x;
-                velocity.y = neutralWallJumpForce.y;
+                // Đẩy ngược hướng tường với lực Jump bình thường
+                velocity.x = -wallDir * wallJumpForce.x;
+                velocity.y = wallJumpForce.y;
 
                 // Áp dụng hình phạt thể lực
                 currentStamina -= neutralJumpStaminaCost;
 
-                // Khóa input ngắn để người chơi vẫn giữ được sự linh hoạt
-                wallJumpInputTimer = neutralJumpInputLockTime;
+                // Không khoá Input
+                wallJumpInputTimer = 0f;
 
                 // Quay mặt ra ngoài tường một chút
-                transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x) * (-wallDir), transform.localScale.y, transform.localScale.z);
+                Vector3 scale = transform.localScale;
+                scale.x = Mathf.Abs(scale.x) * (-wallDir);
+                transform.localScale = scale;
             }
             else
             {
                 // Wall Leap Jump
                 velocity.x = -wallDir * wallJumpForce.x;
                 velocity.y = wallJumpForce.y;
-                wallJumpInputTimer = wallJumpInputLockTime;
+                wallJumpInputTimer = wallJumpInputLockTime; // Khoá Input để đảm bảo quán tính bay theo đúng hướng, không bị bẻ lái giữa chừng
                 //Debug.Log("Wall Leap jump!");
 
                 Vector3 scale = transform.localScale;
                 scale.x = Mathf.Abs(scale.x) * (-wallDir);
                 transform.localScale = scale;
-                //currentStamina -= 10f;
-
             }
         }
         else
@@ -1714,14 +1761,26 @@ public class PlayerController : MonoBehaviour
 
     private void CheckCurrentRoomFailSafe()
     {
+        // BẢO VỆ XUNG ĐỘT: Kiểm tra xem Collider của Player có đang chạm vào phòng ActiveRoom không
+        if (RoomTransition.ActiveRoom != null)
+        {
+            Collider2D activeRoomCol = RoomTransition.ActiveRoom.GetComponent<Collider2D>();
+            if (activeRoomCol != null && activeRoomCol.bounds.Intersects(col.bounds))
+            {
+                // Nhân vật vẫn đang chạm vào phòng hiện tại (có thể đang đứng giữa 2 phòng)
+                // -> Quá trình chuyển cảnh đang diễn ra bình thường, Fail-safe KHÔNG ĐƯỢC can thiệp!
+                return;
+            }
+        }
+
         // 1. Bắn tia kiểm tra xem TẠI VỊ TRÍ CHÍNH GIỮA của nhân vật đang có những Collider nào
         Collider2D[] colliders = Physics2D.OverlapPointAll(transform.position);
-        RoomTransitionScript actualRoom = null;
+        RoomTransition actualRoom = null;
 
         // 2. Lọc ra Collider thuộc về ranh giới phòng
         foreach (Collider2D col in colliders)
         {
-            RoomTransitionScript room = col.GetComponent<RoomTransitionScript>();
+            RoomTransition room = col.GetComponent<RoomTransition>();
             if (room != null)
             {
                 actualRoom = room;
@@ -1731,7 +1790,7 @@ public class PlayerController : MonoBehaviour
 
         // 3. SO SÁNH VÀ SỬA SAI
         // Nếu tìm thấy phòng nhân vật đang đứng, VÀ phòng đó KHÁC với ActiveRoom hiện tại của hệ thống
-        if (actualRoom != null && RoomTransitionScript.ActiveRoom != actualRoom)
+        if (actualRoom != null && RoomTransition.ActiveRoom != actualRoom)
         {
             // Lập tức gọi hàm ép chuyển Camera về đúng phòng!
             actualRoom.ForceRoomTransition(this);
@@ -2441,8 +2500,24 @@ public class PlayerController : MonoBehaviour
         Gizmos.color = Color.yellow;
         Gizmos.DrawLine(bottomOrigin, topOrigin);
     }
-    #endregion
-    #endregion
+
+    // HÀM TỰ CHẾ: Vẽ một hộp chữ nhật bằng Debug.DrawLine
+    private void DebugDrawBox(Vector2 center, Vector2 size, Color color, float duration = 0f)
+    {
+        // Tính toán 4 góc của chiếc hộp
+        Vector2 topLeft = center + new Vector2(-size.x / 2, size.y / 2);
+        Vector2 topRight = center + new Vector2(size.x / 2, size.y / 2);
+        Vector2 bottomLeft = center + new Vector2(-size.x / 2, -size.y / 2);
+        Vector2 bottomRight = center + new Vector2(size.x / 2, -size.y / 2);
+
+        // Vẽ 4 cạnh nối lại với nhau
+        Debug.DrawLine(topLeft, topRight, color, duration);
+        Debug.DrawLine(topRight, bottomRight, color, duration);
+        Debug.DrawLine(bottomRight, bottomLeft, color, duration);
+        Debug.DrawLine(bottomLeft, topLeft, color, duration);
+    }
+#endregion
+#endregion
 
     #region structs
     struct RayCastOrigin

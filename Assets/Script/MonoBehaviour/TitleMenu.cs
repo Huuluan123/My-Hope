@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.Localization.Settings;
 
 public class TitleMenu : MonoBehaviour
 {
@@ -72,6 +73,30 @@ public class TitleMenu : MonoBehaviour
         // THỦ THUẬT: Yêu cầu TransitionManager (kẻ sống sót) chạy hộ Coroutine này.
         // Như vậy Coroutine sẽ không bị ngắt giữa chừng khi Scene hiện tại bị hủy!
         TransitionManager.Instance.StartCoroutine(LoadLevelRoutine());
+    }
+
+    // Hàm chuyển ngôn ngữ, gọi khi bấm nút Language
+    public void ToggleLanguage()
+    {
+        // Đảm bảo hệ thống Localization đã khởi tạo xong để tránh lỗi NullReference
+        if (!LocalizationSettings.InitializationOperation.IsDone) return;
+
+        // Lấy danh sách toàn bộ ngôn ngữ bạn đã thêm vào Project (Tiếng Anh, Tiếng Việt...)
+        var locales = LocalizationSettings.AvailableLocales.Locales;
+
+        // Nếu không có bảng dịch nào hoặc chỉ có 1 ngôn ngữ thì không làm gì cả
+        if (locales == null || locales.Count <= 1) return;
+
+        // Tìm vị trí (Index) của ngôn ngữ đang dùng hiện tại
+        int currentIndex = locales.IndexOf(LocalizationSettings.SelectedLocale);
+
+        // Toán học xoay vòng: Tăng index lên 1, nếu chạm giới hạn thì tự quay về 0
+        int nextIndex = (currentIndex + 1) % locales.Count;
+
+        // Ra lệnh cho Unity đổi ngôn ngữ!
+        LocalizationSettings.SelectedLocale = locales[nextIndex];
+
+        Debug.Log($"[Localization] Language switched to: {LocalizationSettings.SelectedLocale.Identifier.Code}");
     }
 
     // Hàm gọi khi bấm nút Exit

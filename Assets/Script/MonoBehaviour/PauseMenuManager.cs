@@ -1,6 +1,7 @@
 using UnityEngine;
-using UnityEngine.UIElements;
 using UnityEngine.InputSystem;
+using UnityEngine.Localization.Settings;
+using UnityEngine.UIElements;
 
 public class PauseMenuManager : MonoBehaviour
 {
@@ -10,6 +11,7 @@ public class PauseMenuManager : MonoBehaviour
     private VisualElement pauseOverlay;
     private Button btnResume;
     private Button btnOptions;
+    private Button btnLanguage;
     private Button btnExit;
 
     private InputAction cancelAction;
@@ -25,11 +27,13 @@ public class PauseMenuManager : MonoBehaviour
 
         btnResume = root.Q<Button>("btn-resume");
         btnOptions = root.Q<Button>("btn-options");
+        btnLanguage = root.Q<Button>("btn-language");
         btnExit = root.Q<Button>("btn-exit");
 
         // Gắn sự kiện Click cho các nút
         if (btnResume != null) btnResume.clicked += OnResumeClicked;
         if (btnOptions != null) btnOptions.clicked += OpenOptions;
+        if (btnLanguage != null) btnLanguage.clicked += OnLanguageButtonClicked;
         if (btnExit != null) btnExit.clicked += SaveAndExitGame;
 
         // ĐĂNG KÝ NGHE LỆNH TỪ GAMEMANAGER
@@ -67,6 +71,7 @@ public class PauseMenuManager : MonoBehaviour
 
         if (btnResume != null) btnResume.clicked -= OnResumeClicked;
         if (btnOptions != null) btnOptions.clicked -= OpenOptions;
+        if (btnLanguage != null) btnLanguage.clicked -= OnLanguageButtonClicked;
         if (btnExit != null) btnExit.clicked -= SaveAndExitGame;
         if (cancelAction != null) cancelAction.performed -= OnCancelPerformed;
         if (uiPauseAction != null) uiPauseAction.performed -= OnPauseResumePerformed;
@@ -207,6 +212,30 @@ public class PauseMenuManager : MonoBehaviour
         {
             btnOptions.Focus();
         }
+    }
+
+    // Hàm chuyển ngôn ngữ, gọi khi bấm nút Language
+    public void OnLanguageButtonClicked()
+    {
+        // Đảm bảo hệ thống Localization đã khởi tạo xong để tránh lỗi NullReference
+        if (!LocalizationSettings.InitializationOperation.IsDone) return;
+
+        // Lấy danh sách toàn bộ ngôn ngữ bạn đã thêm vào Project (Tiếng Anh, Tiếng Việt...)
+        var locales = LocalizationSettings.AvailableLocales.Locales;
+
+        // Nếu không có bảng dịch nào hoặc chỉ có 1 ngôn ngữ thì không làm gì cả
+        if (locales == null || locales.Count <= 1) return;
+
+        // Tìm vị trí (Index) của ngôn ngữ đang dùng hiện tại
+        int currentIndex = locales.IndexOf(LocalizationSettings.SelectedLocale);
+
+        // Toán học xoay vòng: Tăng index lên 1, nếu chạm giới hạn thì tự quay về 0
+        int nextIndex = (currentIndex + 1) % locales.Count;
+
+        // Ra lệnh cho Unity đổi ngôn ngữ!
+        LocalizationSettings.SelectedLocale = locales[nextIndex];
+
+        Debug.Log($"[Localization] Language switched to: {LocalizationSettings.SelectedLocale.Identifier.Code}");
     }
 
     private void SaveAndExitGame()

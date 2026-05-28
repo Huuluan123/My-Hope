@@ -11,8 +11,7 @@ public class RescueTimelineReceiver : MonoBehaviour
     public Action_Dialog endDialogAction;
 
     [Header("QTE Setup")]
-    public PromptAction qteButton;
-    public string qteMessageTemplate = "{icon1}";
+    public string qteMessageTemplate = "{Grapple}";
 
     private RobotHand robotHand;
     private Animator playerAnimator;
@@ -48,7 +47,6 @@ public class RescueTimelineReceiver : MonoBehaviour
 
         QTEManager.Instance.StartQTE(
             inputCondition: () => input.GrappleWasPressedThisFrame,
-            promptAction: qteButton,
             template: qteMessageTemplate,
             timeLimit: 0f,
             onSuccess: OnRescueSuccess

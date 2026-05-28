@@ -115,6 +115,8 @@ GameObject:
   - component: {fileID: 1438897312922236953}
   - component: {fileID: 2228437378687686633}
   - component: {fileID: 1500237073210697112}
+  - component: {fileID: 5028779481857958989}
+  - component: {fileID: 2286258935758743075}
   m_Layer: 5
   m_Name: PromptText
   m_TagString: Untagged
@@ -139,7 +141,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 416.98, y: -116.41}
-  m_SizeDelta: {x: 806.72, y: 0}
+  m_SizeDelta: {x: 768.78, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1438897312922236953
 CanvasRenderer:
@@ -255,6 +257,60 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ContentSizeFitter
   m_HorizontalFit: 2
   m_VerticalFit: 2
+--- !u!114 &5028779481857958989
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 625694643271639445}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a97a2317b53a87941880c4cc3474c28a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TMP_InputPreprocessor
+  inputDatabase: {fileID: 11400000, guid: 3d7a2cd648703cf4db3a478a046232e8, type: 2}
+  previewDevice: 0
+--- !u!114 &2286258935758743075
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 625694643271639445}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56eb0353ae6e5124bb35b17aff880f16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Components.LocalizeStringEvent
+  m_StringReference:
+    m_TableReference:
+      m_TableCollectionName: 
+    m_TableEntryReference:
+      m_KeyId: 0
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  m_FormatArguments: []
+  m_UpdateString:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 625694643271639445}
+        m_TargetAssemblyTypeName: 
+        m_MethodName: 
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 1
+  references:
+    version: 2
+    RefIds: []
 --- !u!1 &5250187233478847395
 GameObject:
   m_ObjectHideFlags: 0
@@ -434,5 +490,3 @@ MonoBehaviour:
   signContainer: {fileID: 726369445533974733}
   promptText: {fileID: 2228437378687686633}
   duration: 0.3
-  showEase: 27
-  hideEase: 26
