@@ -241,10 +241,14 @@ public class PlayerController : MonoBehaviour
     {
         lastSpawnTime = Time.unscaledTime;
 
-        if (Instance == null) Instance = this;
-        else
+        if (Instance == null)
         {
-            Destroy(Instance);
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else if (Instance != this)
+        {
+            Destroy(gameObject);
             return;
         }
 
@@ -984,6 +988,66 @@ public class PlayerController : MonoBehaviour
         // Mở khóa Input!
         SetState(PlayerState.Idle);
         Debug.Log("Room transition complete. Player control returned.");
+    }
+
+    // Xử lý hiệu ứng đẩy đa hướng khi vừa Load Scene
+    public void ForceWalkIntoScene(Vector2 pushVelocity, float walkDuration)
+    {
+        if (currentState == PlayerState.Dead) return;
+
+        // Đảm bảo rút dây móc nếu có trước khi chuyển cảnh
+        if (robotHand != null) robotHand.FinishGrapple();
+
+        StartCoroutine(SceneTransitionWalkRoutine(pushVelocity, walkDuration));
+    }
+
+    private IEnumerator SceneTransitionWalkRoutine(Vector2 pushVelocity, float duration)
+    {
+        // 1. Khóa Input của người chơi
+        SetState(PlayerState.ScriptedMove);
+
+        // 2. Xử lý Lật mặt và Animation
+        if (pushVelocity.x != 0)
+        {
+            OnRunChanged?.Invoke(true); // Bật Animation chạy
+            Vector3 scale = transform.localScale;
+            scale.x = Mathf.Abs(scale.x) * Mathf.Sign(pushVelocity.x);
+            transform.localScale = scale;
+        }
+
+        if (pushVelocity.y > 0)
+        {
+            OnJumpPerformed?.Invoke(); // Bật Animation Nhảy nếu bị bắn lên trời
+        }
+
+        // 3. Vòng lặp ép di chuyển (Vượt qua bóng tối)
+        float elapsedTime = 0f;
+        while (elapsedTime < duration)
+        {
+            // Ghi đè hoàn toàn quán tính bằng lực đẩy của cánh cửa
+            velocity = pushVelocity;
+
+            // Vật lý phụ: Nếu chỉ bị đẩy ngang trên không, vẫn cho phép rơi nhẹ xuống
+            if (pushVelocity.y == 0 && !isGrounded && velocity.y > maxFallSpeed)
+            {
+                velocity.y += gravity * Time.fixedDeltaTime;
+            }
+
+            // Thực thi di chuyển
+            Vector3 moveAmount = velocity * Time.fixedDeltaTime;
+            rb.MovePosition(transform.position + moveAmount);
+
+            elapsedTime += Time.deltaTime;
+            yield return new WaitForFixedUpdate();
+        }
+
+        // 4. Kết thúc: Trả quyền kiểm soát
+        if (pushVelocity.x != 0) OnRunChanged?.Invoke(false);
+
+        velocity.x = 0; // Dừng đi ngang
+        if (pushVelocity.y > 0) velocity.y = 0; // Dừng bay lên để rơi tự do xuống
+
+        SetState(PlayerState.Idle);
     }
     #endregion
 

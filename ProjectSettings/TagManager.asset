@@ -23,7 +23,7 @@ TagManager:
   - Grapple Node
   - Pushable
   - Pullable
-  - 
+  - Background
   - 
   - 
   - 
@@ -43,6 +43,12 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: Background
+    uniqueID: 3326993331
+    locked: 0
+  - name: Tilemap
+    uniqueID: 1207993399
+    locked: 0
   - name: Default
     uniqueID: 0
     locked: 0

@@ -30,11 +30,17 @@ public class RoomTransition : MonoBehaviour
     {
         myRoomManager = GetComponentInParent<RoomManager>();
 
-        // KIỂM TRA LÚC SPAWN
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
+        if (PlayerController.Instance != null)
         {
-            if (roomCollider.bounds.Contains(player.transform.position))
+            // Ép Cinemachine Camera của phòng này phải bám theo Player thật!
+            if (roomCamera != null)
+            {
+                roomCamera.Follow = PlayerController.Instance.transform;
+                roomCamera.LookAt = PlayerController.Instance.transform;
+            }
+
+            // Kiểm tra xem Player thật có đang nằm trong phòng này không
+            if (roomCollider.bounds.Contains(PlayerController.Instance.transform.position))
             {
                 ActiveRoom = this; // Đăng ký đây là phòng hiện tại
                 CameraManager.SwitchCamera(roomCamera);
