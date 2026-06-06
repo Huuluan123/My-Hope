@@ -35,6 +35,16 @@ public class PlayerController : MonoBehaviour
     public static PlayerController Instance; // Biến Singleton
     private Vector2 baseScale;
 
+    [Header("Squash & Stretch (Visuals)")]
+    [Tooltip("Kéo object chứa Sprite (Child) vào đây")]
+    public Transform spriteTransform;
+
+    [Tooltip("Tốc độ đàn hồi lấy lại vóc dáng ban đầu (Càng cao càng nhanh)")]
+    [SerializeField] private float scaleLerpSpeed = 10f;
+
+    // Biến lưu trữ scale đàn hồi hiện tại của Sprite
+    private Vector2 currentSpriteScale = Vector2.one;
+
     // Các biến có thể điều chỉnh trong Unity Editor
     [Header("Movement stats")]
     [SerializeField] private float moveSpeed;
@@ -263,6 +273,17 @@ public class PlayerController : MonoBehaviour
         rb.bodyType = RigidbodyType2D.Kinematic; 
         rb.interpolation = RigidbodyInterpolation2D.Interpolate;
         baseScale = new Vector2(Mathf.Abs(transform.localScale.x), Mathf.Abs(transform.localScale.y));
+
+        // TỰ ĐỘNG TÌM SPRITE TRANSFORM NẾU BỎ QUÊN CHƯA GÁN
+        if (spriteTransform == null)
+        {
+            SpriteRenderer sr = GetComponentInChildren<SpriteRenderer>();
+            if (sr != null) spriteTransform = sr.transform;
+        }
+
+        // KÍCH HOẠT SQUASH & STRETCH KHI NHẢY VÀ CHẠM ĐẤT
+        // Nhảy lên: Người ốm lại (X nhỏ) và dãn dài ra (Y lớn)
+        OnJumpPerformed += () => ApplySquashStretch(0.5f, 1.5f);
     }
 
     void Start()
@@ -750,46 +771,58 @@ public class PlayerController : MonoBehaviour
 
     private void HandleSpriteVisuals()
     {
+        // 1. XỬ LÝ LẬT MẶT TRÊN PARENT TRANSFORM (Để BoxCollider lật theo)
         Vector3 finalScale = transform.localScale;
 
-        // --- 1. XỬ LÝ LẬT MẶT (X) ---
         if (isWallSliding || isWallClimbing)
         {
             if (wallDirX != 0)
-                finalScale.x = baseScale.x * wallDirX; // Lật mặt ra ngoài hoặc úp vào tường
+                finalScale.x = baseScale.x * wallDirX; // Quay mặt ra/vào tường
         }
         else if (moveInput.x != 0 && wallJumpInputTimer <= 0 && CanMove)
         {
-            finalScale.x = baseScale.x * Mathf.Sign(moveInput.x); // Lật theo hướng di chuyển
+            finalScale.x = baseScale.x * Mathf.Sign(moveInput.x); // Quay mặt theo hướng chạy
         }
         else
         {
-            finalScale.x = baseScale.x * Mathf.Sign(finalScale.x); // Đứng yên thì giữ nguyên hướng mặt hiện tại
+            finalScale.x = baseScale.x * Mathf.Sign(finalScale.x); // Giữ nguyên mặt
         }
 
-        // --- 2. XỬ LÝ SQUASH & STRETCH FAST FALL (Y) ---
-        // Nếu đang rơi nhanh và đè phím xuống
+        // Giữ nguyên trục Y của Parent để không ảnh hưởng hitbox
+        finalScale.y = baseScale.y;
+        transform.localScale = finalScale;
+
+
+        // 2. XỬ LÝ SQUASH & STRETCH TRÊN CHILD SPRITE (Chỉ ảnh hưởng hình ảnh)
+        // Cố gắng tự động phục hồi về tỷ lệ chuẩn (1, 1) theo thời gian
+        currentSpriteScale.x = Mathf.Lerp(currentSpriteScale.x, 1f, scaleLerpSpeed * Time.deltaTime);
+        currentSpriteScale.y = Mathf.Lerp(currentSpriteScale.y, 1f, scaleLerpSpeed * Time.deltaTime);
+
+        Vector2 finalSpriteScale = currentSpriteScale;
+
+        // Đè thêm hiệu ứng biến dạng liên tục nếu đang rơi siêu tốc (Fast Fall)
         if (velocity.y < 0 && moveInput.y < -0.1f)
         {
-            // Tính tỷ lệ rơi từ MaxFallSpeed -> FastMaxFallSpeed (0 -> 1)
             float fallLerp = Mathf.InverseLerp(maxFallSpeed, fastMaxFallSpeed, velocity.y);
-            fallLerp = Mathf.Clamp01(fallLerp); // Chặn trong khoảng [0, 1]
+            fallLerp = Mathf.Clamp01(fallLerp);
 
-            // Ép bề ngang (X) nhỏ lại 50%, kéo bề dọc (Y) dài ra 150% so với BASE SCALE
-            float scaleXMultiplier = Mathf.Lerp(1f, 0.5f, fallLerp);
-            float scaleYMultiplier = Mathf.Lerp(1f, 1.5f, fallLerp);
-
-            finalScale.x = Mathf.Sign(finalScale.x) * (baseScale.x * scaleXMultiplier); // Giữ nguyên dấu lật mặt
-            finalScale.y = baseScale.y * scaleYMultiplier;
+            // Rơi càng nhanh, hình ảnh càng nhọn
+            finalSpriteScale.x *= Mathf.Lerp(1f, 0.5f, fallLerp);
+            finalSpriteScale.y *= Mathf.Lerp(1f, 1.5f, fallLerp);
         }
-        else
+
+        // Áp dụng lên Sprite Component (Nếu có)
+        if (spriteTransform != null)
         {
-            // Trả lại hình dáng bình thường dựa trên BASE SCALE thay vì số 1f
-            finalScale.x = Mathf.Sign(finalScale.x) * baseScale.x;
-            finalScale.y = baseScale.y;
+            // Trục Z giữ là 1f để không lỗi hiển thị 2D
+            spriteTransform.localScale = new Vector3(finalSpriteScale.x, finalSpriteScale.y, 1f);
         }
+    }
 
-        transform.localScale = finalScale;
+    // Hàm nhận lực tác động để làm méo Sprite
+    public void ApplySquashStretch(float scaleX, float scaleY)
+    {
+        currentSpriteScale = new Vector2(scaleX, scaleY);
     }
 
     // Tính toán vận tốc ngang
