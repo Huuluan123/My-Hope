@@ -614,22 +614,22 @@ public class PlayerController : MonoBehaviour
 
         // 4. JUMP THRU ASSIST (Trợ lực nhảy xuyên one-way platform)
         // Nếu đang bay lên hoặc ở đỉnh, và nằm CÙNG LÚC bên trong nền One-way
-        if (velocity.y >= 0 && !isGrounded && GetCurrentState() != PlayerState.Climbing)
-        {
-            // TỐI ƯU: Thay vì kiểm tra cả body (col.bounds.center), ta chỉ kiểm tra phần dưới gót chân
-            Vector2 feetPos = new Vector2(col.bounds.center.x, col.bounds.min.y + 0.1f);
-            Vector2 checkSize = new Vector2(col.bounds.size.x, 0.2f); // Hộp kiểm tra mỏng dẹt ở chân
+        //if (velocity.y >= 0 && !isGrounded && GetCurrentState() != PlayerState.Climbing)
+        //{
+        //    // TỐI ƯU: Thay vì kiểm tra cả body (col.bounds.center), ta chỉ kiểm tra phần dưới gót chân
+        //    Vector2 feetPos = new Vector2(col.bounds.center.x, col.bounds.min.y + 0.1f);
+        //    Vector2 checkSize = new Vector2(col.bounds.size.x, 0.2f); // Hộp kiểm tra mỏng dẹt ở chân
 
-            Collider2D jumpThruHit = Physics2D.OverlapBox(feetPos, checkSize, 0f, collisionMask);
-            DebugDrawBox(feetPos, checkSize, Color.magenta);
+        //    Collider2D jumpThruHit = Physics2D.OverlapBox(feetPos, checkSize, 0f, collisionMask);
+        //    DebugDrawBox(feetPos, checkSize, Color.magenta);
 
-            if (jumpThruHit != null && jumpThruHit.CompareTag("OneWay"))
-            {
-                // Đẩy người chơi trượt nhẹ lên trên để lọt qua nhanh hơn, chống kẹt
-                transform.position += Vector3.up * jumpThruAssistSpeed * Time.fixedDeltaTime;
-                rb.position = transform.position;
-            }
-        }
+        //    if (jumpThruHit != null && jumpThruHit.CompareTag("OneWay"))
+        //    {
+        //        // Đẩy người chơi trượt nhẹ lên trên để lọt qua nhanh hơn, chống kẹt
+        //        transform.position += Vector3.up * jumpThruAssistSpeed * Time.fixedDeltaTime;
+        //        rb.position = transform.position;
+        //    }
+        //}
 
         bool isPullingBox = false;
         float pullAmount = 0f;
@@ -1262,11 +1262,26 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            // --- BƯỚC 2: XỬ LÝ LEO TRÈO BÌNH THƯỜNG (Khi đã bám chắc) ---
             if (moveInput.y == 1)
             {
-                velocity.y = moveInput.y * wallClimbSpeed;
-                CheckForLedge(); // Hàm này có thể dùng để gọi ClimbHop() khi đã leo hẳn lên mép
+                if (CheckForLedge()) // Nếu đã leo tới mép tường
+                {
+                    if (ClimbHopBlockedCheck())
+                    {
+                        // Phía trên có cạm bẫy hoặc trần nhà -> Không cho leo lố, khóa vận tốc!
+                        velocity.y = 0;
+                    }
+                    else
+                    {
+                        // Trống trải an toàn -> Bật lên mặt gờ
+                        PerformClimbHop();
+                    }
+                }
+                else
+                {
+                    // Vẫn đang ở giữa vách tường -> Tiếp tục leo
+                    velocity.y = moveInput.y * wallClimbSpeed;
+                }
             }
             else if (moveInput.y == -1)
             {
@@ -1329,25 +1344,57 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void CheckForLedge()
+    // Trả về 0: Vẫn còn tường -> Leo bình thường
+    // Trả về 1: Hết tường và TRỐNG TRẢI -> Thực hiện Climb Hop
+    // Trả về 2: Hết tường nhưng BỊ CHẶN trên đầu -> Dừng lại
+    // Kiểm tra xem đã leo tới mép tường chưa (Hết tường trước mặt)
+    private bool CheckForLedge()
     {
-        // Chỉ kiểm tra khi đang bám tường hoặc trượt tường
-        if (!isWallClimbing && !isWallSliding) return;
+        if (!isWallClimbing && !isWallSliding) return false;
 
-        // Logic Raycast kiểm tra mép (như bạn đã làm với Gizmos)
         float rayLength = skinWidth * 2;
         Vector2 originTop = (wallDirX == 1) ? rayCastOrigins.topRight : rayCastOrigins.topLeft;
 
-        // Bắn tia ngay trên đỉnh đầu
-        Vector2 rayPos = originTop + Vector2.up * 0.1f; // Nhích lên 1 xíu
-        RaycastHit2D hitLedge = Physics2D.Raycast(rayPos, Vector2.right * wallDirX, rayLength, collisionMask);
+        // Bắn tia ngang ngay trên đỉnh đầu
+        Vector2 rayPosWall = originTop + Vector2.up * 0.1f;
+        RaycastHit2D hitWallAbove = Physics2D.Raycast(rayPosWall, Vector2.right * wallDirX, rayLength, collisionMask);
 
-        // NẾU: Đang bám tường (hitBody trúng) NHƯNG Trên đầu lại thoáng (hitLedge trượt)
-        // VÀ: Người chơi đang bấm LÊN (Input.y > 0) hoặc đang leo lên
-        if (!hitLedge && velocity.y >= 0) // Celeste còn check Input.MoveY != 1 (xuống)
+        // Nếu KHÔNG chạm tường -> Đã tới mép (trả về true)
+        return !hitWallAbove;
+    }
+
+    // Kiểm tra xem phía trên có vật cản (Trần nhà, Gai nhọn...) chặn việc leo lọt lên gờ không
+    // Kiểm tra xem phía trên có vật cản (Trần nhà, Gai nhọn...) chặn việc leo lọt lên gờ không
+    private bool ClimbHopBlockedCheck()
+    {
+        Vector2 originTop = (wallDirX == 1) ? rayCastOrigins.topRight : rayCastOrigins.topLeft;
+
+        // 1. KIỂM TRA TRẦN NHÀ (Vẫn dùng collisionMask vì nó là địa hình cứng)
+        float clearanceHeight = 0.6f;
+        RaycastHit2D hitCeiling = Physics2D.Raycast(originTop, Vector2.up, clearanceHeight, collisionMask);
+        if (hitCeiling) return true; // Bị trần nhà chặn
+
+        // 2. KIỂM TRA LedgeBlocker TRÊN MẶT GỜ (Không cần trapMask nữa!)
+        Vector2 rayPosTrap = originTop + (Vector2.up * 0.15f);
+        float trapCheckDepth = 0.5f;
+
+        // Bắn tia xuyên thấu qua TẤT CẢ các vật thể trong cự ly 0.5f
+        RaycastHit2D[] hits = Physics2D.RaycastAll(rayPosTrap, Vector2.right * wallDirX, trapCheckDepth);
+
+        foreach (RaycastHit2D hit in hits)
         {
-            PerformClimbHop();
+            // Hỏi từng vật thể xem nó có mang mảnh ghép "Chặn đường" không
+            LedgeBlocker blocker = hit.collider.GetComponent<LedgeBlocker>();
+
+            // Nếu có, và nó xác nhận là muốn chặn người chơi này
+            if (blocker != null && blocker.HopBlockCheck(this))
+            {
+                return true; // Chặn ngay lập tức!
+            }
         }
+
+        // Không có trần nhà, cũng không có LedgeBlocker nào chặn
+        return false;
     }
 
     private void PerformClimbHop()
@@ -1721,7 +1768,7 @@ public class PlayerController : MonoBehaviour
 
         // 2. Xử lý Event Leo trèo (Chỉ khi đang Climbing VÀ có di chuyển tay)
         // Lưu ý: Dùng Mathf.Abs > 0.1f để tránh lỗi rung tay cầm (stick drift) nếu có
-        bool isClimbing = (currentState == PlayerState.Climbing && moveInput.y > 0.1f);
+        bool isClimbing = (currentState == PlayerState.Climbing && velocity.y >= 0.1f);
         OnClimbChanged?.Invoke(isClimbing);
 
         // 3. Xử lý Event Chạy và Cập nhật trạng thái chạm đất cho Animation
@@ -2474,37 +2521,38 @@ public class PlayerController : MonoBehaviour
     #region Custom Draw
     void DrawClimbHopRays(Vector2 originTop, float direction)
     {
-        // 1. Cấu hình giống hệt logic CheckForLedge
-        // Nếu bạn đã đưa 0.1f ra biến riêng thì thay vào đây nhé
         float verticalOffset = 0.1f;
-        float rayLength = skinWidth * 2; // Độ dài tia check mép
+        float rayLength = skinWidth * 2;
 
-        // Vị trí bắn tia: Đỉnh đầu + nhích lên một chút
-        Vector2 rayOrigin = originTop + (Vector2.up * verticalOffset);
-        Vector2 rayDirection = Vector2.right * direction;
-        Vector2 rayEnd = rayOrigin + (rayDirection * rayLength);
+        // Cấu hình tia ngang (Kiểm tra tường)
+        Vector2 rayOriginWall = originTop + (Vector2.up * verticalOffset);
+        Vector2 rayEndWall = rayOriginWall + (Vector2.right * direction * rayLength);
+        RaycastHit2D hitWall = Physics2D.Raycast(rayOriginWall, Vector2.right * direction, rayLength, collisionMask);
 
-        // 2. Kiểm tra thử va chạm (Simulation) để chọn màu Gizmos
-        // Lưu ý: Gizmos chạy trong Editor mode nên ta dùng Physics2D.Raycast để mô phỏng
-        RaycastHit2D hit = Physics2D.Raycast(rayOrigin, rayDirection, rayLength, collisionMask);
+        // Cấu hình tia dọc (Kiểm tra trần nhà) - Phải khớp số clearanceHeight với hàm trên
+        float clearanceHeight = 0.6f;
+        Vector2 rayOriginCeiling = originTop;
+        Vector2 rayEndCeiling = rayOriginCeiling + (Vector2.up * clearanceHeight);
+        RaycastHit2D hitCeiling = Physics2D.Raycast(rayOriginCeiling, Vector2.up, clearanceHeight, collisionMask);
 
-        if (hit)
+        // Đổi màu tùy theo 3 kịch bản
+        if (hitWall)
         {
-            // Trúng tường => Chưa đến mép => Màu ĐỎ
-            Gizmos.color = Color.red;
+            Gizmos.color = Color.red; // Còn tường (Leo bình thường)
+        }
+        else if (hitCeiling)
+        {
+            Gizmos.color = Color.yellow; // Cảnh báo: Hết tường nhưng kẹt đỉnh đầu
         }
         else
         {
-            // Không trúng tường => Đã đến mép (Thoáng) => Màu XANH (Sẵn sàng Hop)
-            Gizmos.color = Color.green;
+            Gizmos.color = Color.green; // Đủ điều kiện Climb Hop
         }
 
-        // 3. Vẽ tia
-        Gizmos.DrawLine(rayOrigin, rayEnd);
-
-        // 4. Vẽ điểm gốc để dễ căn chỉnh Offset
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawSphere(rayOrigin, 0.015f);
+        // Vẽ 2 tia
+        Gizmos.DrawLine(rayOriginWall, rayEndWall);
+        Gizmos.DrawLine(rayOriginCeiling, rayEndCeiling);
+        Gizmos.DrawSphere(rayOriginWall, 0.015f);
     }
 
     void DrawCeilingCorrectionRays(Vector2 topLeft, Vector2 topRight)
