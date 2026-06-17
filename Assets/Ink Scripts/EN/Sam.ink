@@ -1,4 +1,4 @@
-﻿== AfterBeingSaved ==
+== AfterBeingSaved ==
 # speaker: Boy
 Thank you for saving me!
 # speaker: Hope

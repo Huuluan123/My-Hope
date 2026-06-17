@@ -1,4 +1,4 @@
-﻿-> Start
+-> Start
 
 === Start ===
 # speaker: Hope

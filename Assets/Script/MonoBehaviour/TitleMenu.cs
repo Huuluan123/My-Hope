@@ -10,6 +10,7 @@ public class TitleMenu : MonoBehaviour
     [Header("Settings")]
     [Tooltip("Scene to load after choosing Play")]
     public string gameSceneName = "0";
+    public GameObject firstSelectedButton;
 
     public Button btnPlay;
 
@@ -29,6 +30,16 @@ public class TitleMenu : MonoBehaviour
                 btnPlay.Select();
                 Debug.Log("Focus on Play button at start because player is using controller/keyboard");
             }
+        }
+
+        // Xóa trí nhớ cũ của Event System
+        EventSystem.current.SetSelectedGameObject(null);
+
+        // Chỉ tự động chọn nút nếu người chơi đang KHÔNG dùng chuột
+        if (GameManager.Instance != null && !GameManager.Instance.IsUsingPointer)
+        {
+            EventSystem.current.SetSelectedGameObject(firstSelectedButton);
+            Debug.Log("[MainMenu] Đã tự động Focus vào nút Play!");
         }
     }
 

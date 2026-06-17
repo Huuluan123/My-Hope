@@ -8,6 +8,7 @@ using TMPro;
 
 public enum GameState
 {
+    MainMenu,
     Running,
     Pause
 }
@@ -113,6 +114,11 @@ public class GameManager : MonoBehaviour
 
         if (isInMainMenu)
         {
+            State = GameState.MainMenu;
+
+            playerMap?.Disable();
+            uiMap?.Enable();
+
             // Ở Title Screen: Ẩn chuột, nhưng KHÔNG khóa cứng (None) để nó không bị giật về giữa màn hình
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
@@ -120,10 +126,23 @@ public class GameManager : MonoBehaviour
         }
         else
         {
+            State = GameState.Running;
+
             // Ở trong Game: Khóa cứng và giấu chuột đi
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
             IsUsingPointer = false; // Mặc định tắt chuột trong gameplay, chỉ bật khi phát hiện thiết bị Pointer
+        }
+
+        if (State == GameState.Running)
+        {
+            uiMap?.Disable();
+            playerMap?.Enable();
+        }
+        else if (State == GameState.Pause)
+        {
+            playerMap?.Disable();
+            uiMap?.Enable();
         }
     }
 
@@ -132,6 +151,7 @@ public class GameManager : MonoBehaviour
         // Thêm lớp phòng thủ: Chỉ nhận tín hiệu khi phím bắt đầu được ấn XUỐNG, 
         // bỏ qua tín hiệu khi phím được thả LÊN hoặc bị nhiễu do map switch.
         if (context.ReadValueAsButton() == false) return;
+        if (State == GameState.MainMenu) return; // Đang ở Menu chính thì cấm Pause!
         TogglePause();
         Debug.Log("Toogle Pause");
     }

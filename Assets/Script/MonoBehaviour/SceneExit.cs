@@ -77,6 +77,7 @@ public class SceneExit : MonoBehaviour
 
             // Kích hoạt hiệu ứng đi bộ thoát khỏi cửa!
             PlayerController.Instance.ForceWalkIntoScene(targetDoor.pushVelocity, targetDoor.autoWalkDuration);
+            //PlayerController.Instance.SetState(PlayerState.Idle); // Cho phép người chơi tự do điều khiển sau khi dịch chuyển xong
         }
         else
         {
