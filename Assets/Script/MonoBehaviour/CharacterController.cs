@@ -1718,6 +1718,13 @@ public class PlayerController : MonoBehaviour
         velocity.x = 0; // Dừng mọi chuyển động ngang khi chuẩn bị cutscene
     }
 
+    // Chuẩn bị cho Timeline
+    public void PrepareTimeline()
+    {
+        SetState(PlayerState.WaitingForCutscene);
+        velocity.x = 0; // Dừng mọi chuyển động ngang khi chuẩn bị cutscene
+    }
+
     private void UpdatePhysicsState()
     {
         // Kiểm tra nếu đang chờ rớt xuống đất để chạy Cutscene

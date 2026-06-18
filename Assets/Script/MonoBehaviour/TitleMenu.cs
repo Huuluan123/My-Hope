@@ -36,11 +36,11 @@ public class TitleMenu : MonoBehaviour
         EventSystem.current.SetSelectedGameObject(null);
 
         // Chỉ tự động chọn nút nếu người chơi đang KHÔNG dùng chuột
-        if (GameManager.Instance != null && !GameManager.Instance.IsUsingPointer)
-        {
-            EventSystem.current.SetSelectedGameObject(firstSelectedButton);
-            Debug.Log("[MainMenu] Đã tự động Focus vào nút Play!");
-        }
+        //if (GameManager.Instance != null && !GameManager.Instance.IsUsingPointer)
+        //{
+        //    EventSystem.current.SetSelectedGameObject(firstSelectedButton);
+        //    Debug.Log("[MainMenu] Đã tự động Focus vào nút Play!");
+        //}
     }
 
     private void Update()

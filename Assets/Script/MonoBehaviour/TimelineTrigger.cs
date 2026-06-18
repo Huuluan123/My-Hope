@@ -48,7 +48,7 @@ public class TimelineTrigger : MonoBehaviour
         // 1. KHÓA INPUT NGƯỜI CHƠI
         // Đưa vào ScriptedMove sẽ kích hoạt cờ IsInputDisabled.
         // Quán tính ngang sẽ giảm dần về 0, nhưng trọng lực vẫn kéo nhân vật xuống.
-        player.SetState(PlayerState.ScriptedMove);
+        player.PrepareTimeline();
 
         // 2. CHỜ TIẾP ĐẤT
         // Vòng lặp này sẽ tạm dừng code và kiểm tra mỗi frame cho đến khi IsGrounded = true
