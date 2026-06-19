@@ -1,6 +1,7 @@
 using UnityEngine;
 
-// TUYỆT ĐỐI KHÔNG DÙNG [ExecuteInEditMode] Ở ĐÂY NỮA
+// Ép Script này chạy SAU CÙNG trong LateUpdate, sau khi Cinemachine đã làm xong mọi việc.
+[DefaultExecutionOrder(1000)]
 public class ParallaxCamera : MonoBehaviour
 {
     public delegate void ParallaxCameraDelegate(Vector3 deltaMovement);
@@ -28,8 +29,8 @@ public class ParallaxCamera : MonoBehaviour
     }
 
     // HÀM NÀY DÙNG ĐỂ CHỐNG LỖI VĂNG HÌNH KHI CHUYỂN PHÒNG (TELEPORT)
-    public void ResetOldPosition()
-    {
-        oldPosition = transform.position;
-    }
+    //public void ResetOldPosition()
+    //{
+    //    oldPosition = transform.position;
+    //}
 }

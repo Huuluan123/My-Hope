@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: -1587121967506083700}
   - component: {fileID: 935135807104316972}
   - component: {fileID: 738472671369015802}
+  - component: {fileID: 7928405038995281726}
   m_Layer: 0
   m_Name: '[GAME_MANAGERS]'
   m_TagString: Untagged
@@ -52,7 +53,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c218f8127d9f3d40b2ca9778aa229f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  gameSpeed: 1
   isUsingPointer: 0
 --- !u!114 &4734011297502678574
 MonoBehaviour:
@@ -61,7 +61,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1308000809469694418}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7527d5f884eab3f4a8afea58bad33a4f, type: 3}
   m_Name: 
@@ -193,6 +193,21 @@ PlayableDirector:
   m_SceneBindings: []
   m_ExposedReferences:
     m_References: []
+--- !u!114 &7928405038995281726
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1308000809469694418}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8bd27d00f9265c45bfe77a7506938c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldStateManager
+  visibleStates:
+  - stateName: Anna_RescueScene
+    stateValue: 1
 --- !u!1 &4240337550318262755
 GameObject:
   m_ObjectHideFlags: 0

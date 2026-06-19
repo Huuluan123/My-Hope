@@ -71,6 +71,8 @@ public class SceneExit : MonoBehaviour
             // Dịch chuyển TỨC THỜI nhân vật đến điểm neo
             PlayerController.Instance.transform.position = targetDoor.transform.position;
 
+            RoomTransition.InitializeRoomAtPlayerPosition();
+
             // Kéo màn đen lên
             if (TransitionManager.Instance != null)
                 TransitionManager.Instance.PlayEndTransition();

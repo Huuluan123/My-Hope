@@ -18,7 +18,9 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
     public GameState State { get; private set; }
 
-    public float gameSpeed = 1f;
+    private int previousSceneIndex = -1;
+
+    //public float gameSpeed = 1f;
 
     private float lastToggleTime = 0f;
 
@@ -112,6 +114,11 @@ public class GameManager : MonoBehaviour
         // Giả định Title Screen của bạn luôn nằm ở vị trí số 0 trong File -> Build Settings
         isInMainMenu = (scene.buildIndex == 0);
 
+        bool wasInMainMenu = (previousSceneIndex == 0 || previousSceneIndex == -1); // Kiểm tra Scene trước đó có phải là MainMenu hay không
+
+        // Cập nhật lại trí nhớ cho lần chuyển Scene tiếp theo
+        previousSceneIndex = scene.buildIndex;
+
         if (isInMainMenu)
         {
             State = GameState.MainMenu;
@@ -127,6 +134,8 @@ public class GameManager : MonoBehaviour
         else
         {
             State = GameState.Running;
+            uiMap?.Disable();
+            playerMap?.Enable();
 
             // Ở trong Game: Khóa cứng và giấu chuột đi
             Cursor.visible = false;
@@ -134,16 +143,32 @@ public class GameManager : MonoBehaviour
             IsUsingPointer = false; // Mặc định tắt chuột trong gameplay, chỉ bật khi phát hiện thiết bị Pointer
         }
 
-        if (State == GameState.Running)
+        // Kích hoạt snap camera sau khi load xong Scene, nhưng chỉ thực hiện khi không phải MainMenu
+        if (!isInMainMenu && wasInMainMenu)
         {
-            uiMap?.Disable();
-            playerMap?.Enable();
+            StartCoroutine(DelayedCameraSnap());
         }
-        else if (State == GameState.Pause)
-        {
-            playerMap?.Disable();
-            uiMap?.Enable();
-        }
+
+        //if (State == GameState.Running)
+        //{
+        //    uiMap?.Disable();
+        //    playerMap?.Enable();
+        //}
+        //else if (State == GameState.Pause)
+        //{
+        //    playerMap?.Disable();
+        //    uiMap?.Enable();
+        //}
+    }
+
+    private System.Collections.IEnumerator DelayedCameraSnap()
+    {
+        // Hoãn lại 1 frame cực kỳ quan trọng!
+        // Chờ Player dịch chuyển xong và các Camera mới kịp Register() vào danh sách.
+        yield return null;
+
+        RoomTransition.InitializeRoomAtPlayerPosition();
+        Debug.Log("[GameManager] Đã thực hiện cú Hard Cut (Snap) Camera tại Scene mới thành công!");
     }
 
     private void OnPausePerformed(InputAction.CallbackContext context)
@@ -158,7 +183,7 @@ public class GameManager : MonoBehaviour
 
     public void TogglePause()
     {
-        // 🌟 TẤM KHIÊN BẤT TỬ: Chặn mọi sự kiện Pause/Resume bị gọi liên tiếp nhau
+        // TẤM KHIÊN BẤT TỬ: Chặn mọi sự kiện Pause/Resume bị gọi liên tiếp nhau
         // Sử dụng unscaledTime vì Time.time sẽ bị kẹt lại khi timeScale = 0
         if (Time.unscaledTime - lastToggleTime < 0.2f)
         {

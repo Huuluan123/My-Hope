@@ -30,7 +30,7 @@ public class WorldStateManager : MonoBehaviour
     // Bộ nhớ RAM (Từ điển): Chạy rất nhanh, dùng trong lúc chơi game
     private Dictionary<string, bool> globalStates = new Dictionary<string, bool>();
 
-    [Header("Quản lý Dữ Liệu (Editor)")]
+    [Header("Data Manager (Editor)")]
     [Tooltip("Danh sách này hiển thị các trạng thái để bạn dễ theo dõi và chỉnh sửa")]
     public List<StateEntry> visibleStates = new List<StateEntry>();
 
@@ -44,9 +44,6 @@ public class WorldStateManager : MonoBehaviour
             Instance = this;
             DontDestroyOnLoad(gameObject);
 
-            // Thiết lập đường dẫn an toàn (Hoạt động trên cả PC, Mac, Android, iOS)
-            saveFilePath = Path.Combine(Application.persistentDataPath, "WorldState.json");
-
             // Tự động tải dữ liệu khi mở game
             LoadGame();
         }
@@ -54,6 +51,13 @@ public class WorldStateManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+    }
+
+    private void OnValidate()
+    {
+        // Đồng bộ liên tục từ Inspector vào RAM bất kể game đang chạy hay tắt
+        // để đảm bảo dữ liệu gõ tay luôn được ghi nhận vào bộ nhớ ngầm
+        SyncListToDictionary();
     }
 
     // ==========================================
@@ -87,6 +91,16 @@ public class WorldStateManager : MonoBehaviour
         return false; // Mặc định là chưa xảy ra
     }
 
+    public int GetStateCount()
+    {
+        return globalStates.Count;
+    }
+
+    private string GetSaveFilePath()
+    {
+        return Path.Combine(Application.dataPath, "WorldState.json");
+    }
+
     // ==========================================
     // HỆ THỐNG LƯU / ĐỌC FILE JSON
     // ==========================================
@@ -94,8 +108,16 @@ public class WorldStateManager : MonoBehaviour
     [ContextMenu("Lưu Game (Save to JSON)")]
     public void SaveGame()
     {
-        // Đồng bộ trước khi lưu cho chắc chắn
-        SyncDictionaryToList();
+        if (Application.isPlaying)
+        {
+            // Nếu GAME ĐANG CHẠY: RAM (Dictionary) là gốc -> Đè dữ liệu vào List để lưu
+            SyncDictionaryToList();
+        }
+        else
+        {
+            // Nếu GAME ĐANG TẮT (Edit Mode): Inspector (List) là gốc -> Nạp vào RAM trước khi lưu
+            SyncListToDictionary();
+        }
 
         // Gói dữ liệu lại
         WorldStateData dataToSave = new WorldStateData();
@@ -105,17 +127,18 @@ public class WorldStateManager : MonoBehaviour
         string json = JsonUtility.ToJson(dataToSave, true);
 
         // Ghi ra file
-        File.WriteAllText(saveFilePath, json);
-        Debug.Log($"[WorldState] Đã LƯU thành công tại: {saveFilePath}");
+        File.WriteAllText(GetSaveFilePath(), json);
+        Debug.Log($"[WorldState] Đã LƯU thành công tại: {GetSaveFilePath()}");
     }
 
     [ContextMenu("Đọc Game (Load from JSON)")]
     public void LoadGame()
     {
-        if (File.Exists(saveFilePath))
+        string path = GetSaveFilePath(); // Lấy đường dẫn
+        if (File.Exists(path))
         {
             // Đọc văn bản từ file
-            string json = File.ReadAllText(saveFilePath);
+            string json = File.ReadAllText(path);
 
             // Chuyển từ JSON ngược lại thành dữ liệu
             WorldStateData loadedData = JsonUtility.FromJson<WorldStateData>(json);
@@ -140,6 +163,7 @@ public class WorldStateManager : MonoBehaviour
         globalStates.Clear();
         visibleStates.Clear();
 
+        string path = GetSaveFilePath(); // Lấy đường dẫn
         if (File.Exists(saveFilePath))
         {
             File.Delete(saveFilePath);

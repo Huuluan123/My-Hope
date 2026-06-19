@@ -31,6 +31,8 @@ public class CameraManager : MonoBehaviour
 
     public static void SwitchCamera()
     {
+        if (cameras.Count == 0) return;
+
         CinemachineCamera newCamera = cameras[cameraIndex];
         newCamera.Priority = 10;
         ActiveCamera = newCamera;
@@ -52,5 +54,13 @@ public class CameraManager : MonoBehaviour
     public static void Unregister(CinemachineCamera camera)
     {
         cameras.Remove(camera);
+    }
+
+    public static void SnapActiveCamera()
+    {
+        if (ActiveCamera != null)
+        {
+            ActiveCamera.PreviousStateIsValid = false;
+        }
     }
 }
