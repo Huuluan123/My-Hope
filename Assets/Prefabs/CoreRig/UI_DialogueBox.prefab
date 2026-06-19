@@ -1,0 +1,88 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &6446885748773739730
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1205460160426640279}
+  - component: {fileID: 7750684901607439925}
+  - component: {fileID: 2524649062669055039}
+  m_Layer: 0
+  m_Name: UI_DialogueBox
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1205460160426640279
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6446885748773739730}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -7.57319, y: -4.71814, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7750684901607439925
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6446885748773739730}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
+  m_PanelSettings: {fileID: 11400000, guid: e78e90343bfd4524587a2ddce798d1a1, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 9197481963319205126, guid: 4424efd42e5427d4e8bf2b2f8c888987, type: 3}
+  m_SortingOrder: 0
+  m_Position: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+  m_PivotReferenceSize: 0
+  m_Pivot: 0
+  m_WorldSpaceCollider: {fileID: 0}
+--- !u!114 &2524649062669055039
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6446885748773739730}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b609a0f9ed80aa7428f947973d8fa116, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueManager
+  uiDocument: {fileID: 7750684901607439925}
+  hiddenClassName: dialogue-hidden
+  typingSpeed: 0.02
+  characterProfiles:
+  - characterId: Hope
+    displayName: Robot
+    icon: {fileID: 21300000, guid: f7a312466e347e94dbbbf3f1b439390d, type: 3}
+  - characterId: Boy
+    displayName: Girl
+    icon: {fileID: 21300000, guid: 4f948c75da5b86b47be0e593f772bf8a, type: 3}
+  - characterId: System
+    displayName: System
+    icon: {fileID: 21300000, guid: 0fe40bfdac135d0448bf50a3e691c91d, type: 3}
+  keyboardIcon: {fileID: 4747760561572539048, guid: 6515807c72a08c6498881d1f164f8800, type: 3}
+  xboxIcon: {fileID: 6868804363720925994, guid: affae27848d429448ac585a91be08b9e, type: 3}
+  ps5Icon: {fileID: 6240314971729384520, guid: 670e94ecbd654084e84ebb2edd7d672a, type: 3}
+  switchIcon: {fileID: -6966096452234213680, guid: adf7dabeeab36ce4cbe4bf93ee48d796, type: 3}
+  holdToSkipTime: 1

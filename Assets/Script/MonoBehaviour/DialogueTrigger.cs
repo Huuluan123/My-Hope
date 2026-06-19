@@ -70,7 +70,7 @@ public class DialogueTrigger : MonoBehaviour
             RefreshUI(InputDeviceManager.Instance != null ? InputDeviceManager.Instance.CurrentDevice : DeviceType.Keyboard);
 
             if (iconTransform != null)
-                iconTransform.DOLocalMoveY(originalIconPos.y + floatingHeight, 1f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine);
+                iconTransform.DOLocalMoveY(originalIconPos.y + floatingHeight, 1f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine).SetLink(iconTransform.gameObject);
         }
     }
 

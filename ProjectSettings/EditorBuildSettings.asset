@@ -11,6 +11,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/0.unity
     guid: 2ebcc72d02879f3498b07a547a68de77
+  - enabled: 1
+    path: Assets/Scenes/1.unity
+    guid: 56e9be098427fb846bc29b7dd986b84f
   m_configObjects:
     Unity.Microsoft.GDK.Editor.Settings: {fileID: 11400000, guid: 5c25f28cc73a55440a5b5cec79878b8c, type: 2}
     com.unity.addressableassets: {fileID: 11400000, guid: 0a9e45158bc7a6f4682af0c61ac0f3bf, type: 2}

@@ -30,16 +30,22 @@ public class RoomTransition : MonoBehaviour
     {
         myRoomManager = GetComponentInParent<RoomManager>();
 
-        // KIỂM TRA LÚC SPAWN
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
+        if (PlayerController.Instance != null)
         {
-            if (roomCollider.bounds.Contains(player.transform.position))
+            // Ép Cinemachine Camera của phòng này phải bám theo Player thật!
+            if (roomCamera != null)
+            {
+                roomCamera.Follow = PlayerController.Instance.transform;
+                //roomCamera.LookAt = PlayerController.Instance.transform;
+            }
+
+            // Kiểm tra xem Player thật có đang nằm trong phòng này không
+            if (roomCollider.bounds.Contains(PlayerController.Instance.transform.position))
             {
                 ActiveRoom = this; // Đăng ký đây là phòng hiện tại
                 CameraManager.SwitchCamera(roomCamera);
-                ParallaxCamera pCam = Camera.main.GetComponent<ParallaxCamera>();
-                if (pCam != null) pCam.ResetOldPosition();
+                //ParallaxCamera pCam = Camera.main.GetComponent<ParallaxCamera>();
+                //if (pCam != null) pCam.ResetOldPosition();
             }
             else
             {
@@ -47,6 +53,40 @@ public class RoomTransition : MonoBehaviour
                 if (myRoomManager != null) myRoomManager.OnRoomExited();
             }
         }
+    }
+
+    // Hàm tự động quét và snap camera vào phòng chứa người chơi
+    public static void InitializeRoomAtPlayerPosition()
+    {
+        if (PlayerController.Instance == null) return;
+
+        // Reset lại biến ActiveRoom để xóa trí nhớ từ Scene cũ
+        ActiveRoom = null;
+
+        Vector3 playerPos = PlayerController.Instance.transform.position;
+        RoomTransition[] allRooms = FindObjectsByType<RoomTransition>(FindObjectsSortMode.None);
+
+        foreach (var room in allRooms)
+        {
+            if (room.roomCollider.bounds.Contains(playerPos))
+            {
+                ActiveRoom = room;
+                PlayerController.Instance.currentRoom = room.myRoomManager;
+
+                CameraManager.SwitchCamera(room.roomCamera);
+                CameraManager.SnapActiveCamera(); // BÚNG TAY: CẮT CẢNH TỨC THỜI KHÔNG BLEND!
+
+                if (room.myRoomManager != null) room.myRoomManager.OnRoomEntered();
+
+                //ParallaxCamera pCam = Camera.main.GetComponent<ParallaxCamera>();
+                //if (pCam != null) pCam.ResetOldPosition();
+
+                Debug.Log($"[Room Setup] Đã định vị xong và Snap Camera vào: {room.gameObject.name}");
+                return;
+            }
+        }
+
+        Debug.LogWarning("[Room Setup] Người chơi đang lơ lửng ngoài không gian, không thuộc phòng nào!");
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -63,8 +103,8 @@ public class RoomTransition : MonoBehaviour
             {
                 ActiveRoom = this;
                 CameraManager.SwitchCamera(roomCamera);
-                ParallaxCamera pCam = Camera.main.GetComponent<ParallaxCamera>();
-                if (pCam != null) pCam.ResetOldPosition();
+                //ParallaxCamera pCam = Camera.main.GetComponent<ParallaxCamera>();
+                //if (pCam != null) pCam.ResetOldPosition();
                 return;
             }
 
@@ -74,7 +114,8 @@ public class RoomTransition : MonoBehaviour
             // 2. KIỂM TRA XEM CÓ ĐẾN TỪ PHÒNG KHÁC KHÔNG
             // Nếu ActiveRoom != null, tức là người chơi vừa bước từ phòng A sang phòng B
             // Nếu ActiveRoom == null, tức là người chơi vừa rơi từ vùng không gian trống vào
-            bool cameFromAnotherRoom = (ActiveRoom != null);
+            // Chỉ coi là "Đến từ phòng khác" nếu phòng cũ đó vẫn còn tồn tại (chưa bị hủy do load scene)
+            bool cameFromAnotherRoom = (ActiveRoom != null && ActiveRoom.gameObject != null);
 
             // Cập nhật lại định vị: Phòng hiện tại giờ là phòng này
             ActiveRoom = this;
@@ -85,8 +126,8 @@ public class RoomTransition : MonoBehaviour
             if (brain != null) cameraBlendTime = brain.DefaultBlend.Time;
 
             CameraManager.SwitchCamera(roomCamera);
-            ParallaxCamera pCam2 = Camera.main.GetComponent<ParallaxCamera>();
-            if (pCam2 != null) pCam2.ResetOldPosition();
+            //ParallaxCamera pCam2 = Camera.main.GetComponent<ParallaxCamera>();
+            //if (pCam2 != null) pCam2.ResetOldPosition();
 
             if (myRoomManager != null) myRoomManager.OnRoomEntered();
 
@@ -152,8 +193,8 @@ public class RoomTransition : MonoBehaviour
 
         // 2. Ép Camera chuyển về phòng hiện tại
         CameraManager.SwitchCamera(roomCamera);
-        ParallaxCamera pCam = Camera.main.GetComponent<ParallaxCamera>();
-        if (pCam != null) pCam.ResetOldPosition();
+        //ParallaxCamera pCam = Camera.main.GetComponent<ParallaxCamera>();
+        //if (pCam != null) pCam.ResetOldPosition();
 
         // 3. Kích hoạt lại đồ đạc trong phòng
         if (myRoomManager != null) myRoomManager.OnRoomEntered();
