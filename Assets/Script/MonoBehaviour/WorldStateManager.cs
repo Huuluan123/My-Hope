@@ -105,7 +105,7 @@ public class WorldStateManager : MonoBehaviour
     // HỆ THỐNG LƯU / ĐỌC FILE JSON
     // ==========================================
 
-    [ContextMenu("Lưu Game (Save to JSON)")]
+    [ContextMenu("Save Game (Save to JSON)")]
     public void SaveGame()
     {
         if (Application.isPlaying)
@@ -131,7 +131,7 @@ public class WorldStateManager : MonoBehaviour
         Debug.Log($"[WorldState] Đã LƯU thành công tại: {GetSaveFilePath()}");
     }
 
-    [ContextMenu("Đọc Game (Load from JSON)")]
+    [ContextMenu("Load Game (Load from JSON)")]
     public void LoadGame()
     {
         string path = GetSaveFilePath(); // Lấy đường dẫn
@@ -157,7 +157,7 @@ public class WorldStateManager : MonoBehaviour
         }
     }
 
-    [ContextMenu("Xóa toàn bộ Dữ liệu (Clear Data)")]
+    [ContextMenu("Clear all data (Clear Data)")]
     public void ClearAllData()
     {
         globalStates.Clear();

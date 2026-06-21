@@ -18,7 +18,12 @@ public class RoomManager : MonoBehaviour
                 mono.gameObject.SetActive(true); // BẬT VẬT THỂ
             }
 
-            element.ResetState(); // RESET TRẠNG THÁI
+            // Nếu vật thể đó có khiên StateDependentActivator và nó vừa TỰ TẮT chính mình đi,
+            // thì ta KHÔNG GỌI lệnh ResetState() nữa để tránh lỗi
+            if (mono.gameObject.activeInHierarchy)
+            {
+                element.ResetState(); // RESET TRẠNG THÁI
+            }
         }
     }
 

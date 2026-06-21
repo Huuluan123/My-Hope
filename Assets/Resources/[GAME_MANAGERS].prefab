@@ -208,6 +208,10 @@ MonoBehaviour:
   visibleStates:
   - stateName: Anna_RescueScene
     stateValue: 1
+  - stateName: Forest_BlockingWall
+    stateValue: 1
+  - stateName: Forest_RockSpawner
+    stateValue: 1
 --- !u!1 &4240337550318262755
 GameObject:
   m_ObjectHideFlags: 0

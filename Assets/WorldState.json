@@ -3,6 +3,14 @@
         {
             "stateName": "Anna_RescueScene",
             "stateValue": true
+        },
+        {
+            "stateName": "Forest_BlockingWall",
+            "stateValue": true
+        },
+        {
+            "stateName": "Forest_RockSpawner",
+            "stateValue": true
         }
     ]
 }
