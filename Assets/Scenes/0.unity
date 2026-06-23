@@ -4629,11 +4629,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
---- !u!4 &852521021 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 6807826442064273302, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
-  m_PrefabInstance: {fileID: 1846366751482418245}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &855903588
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11701,14 +11696,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 4090278362527798425, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
-      propertyPath: spriteTransform
-      value: 
-      objectReference: {fileID: 852521021}
-    - target: {fileID: 4090278362527798425, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
-      propertyPath: wallClimbJumpForceY
-      value: 18.4
-      objectReference: {fileID: 0}
     - target: {fileID: 4173589304260275096, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
       propertyPath: m_LocalPosition.x
       value: 664.01

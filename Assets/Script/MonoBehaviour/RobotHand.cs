@@ -42,21 +42,41 @@ public class RobotHand : MonoBehaviour
         if (GameManager.Instance.State == GameState.Pause) return;
         gameObject.SetActive(true);
 
-        // Quét trước điểm xuất phát (Pre-scan)
-        Collider2D initialOverlap = Physics2D.OverlapBox(launchPosition.position, handCollider.bounds.size, 0f, hitLayer);
-        if (initialOverlap != null && !initialOverlap.CompareTag("Player") && !initialOverlap.CompareTag("OneWay"))
-        {
-            // Nếu họng súng đang kẹt trong tường -> TẮT BÀN TAY ĐI VÀ HỦY LỆNH
-            gameObject.SetActive(false);
-            controller.CancelGrapple();
-            return;
-        }
-
-        // Nếu an toàn, tiếp tục thiết lập thông số bay
+        // Cấp dữ liệu cho các biến này ngay lập tức để bất kỳ hàm nào bên dưới cũng có thể dùng
         playerController = controller;
         targetDirection = direction.normalized;
         startPos = launchPosition.position;
         transform.position = startPos;
+
+        // Quét trước điểm xuất phát (Pre-scan)
+        Collider2D initialOverlap = Physics2D.OverlapBox(startPos, handCollider.bounds.size, 0f, hitLayer);
+
+        if (initialOverlap != null)
+        {
+            // Kiểm tra xem có bị kẹt trong tường cứng không
+            if (!initialOverlap.CompareTag("Player") && !initialOverlap.CompareTag("OneWay") && initialOverlap.GetComponent<GrappleNode>() == null)
+            {
+                // Nếu họng súng đang kẹt trong tường -> TẮT BÀN TAY ĐI VÀ HỦY LỆNH
+                gameObject.SetActive(false);
+                controller.CancelGrapple();
+                return;
+            }
+
+            // Kiểm tra xem có trúng GrappleNode ngay từ đầu không
+            GrappleNode node = initialOverlap.GetComponent<GrappleNode>();
+            if (node != null && node.isActive)
+            {
+                // 1. Báo cho Node biết nó đã bị bắn trúng
+                node.OnGrappleSuccess();
+
+                // 2. Ép Player nảy lên NGAY LẬP TỨC mà không cần bay hay kéo
+                controller.TriggerInstantGrappleNode(node);
+
+                // 3. Tắt tay móc đi (Không cần bay tay ra nữa)
+                gameObject.SetActive(false);
+                return; // Thoát hàm ngay lập tức!
+            }
+        }
 
         // Cập nhật hướng xoay của bàn tay theo hướng bắn
         float angle = Mathf.Atan2(targetDirection.y, targetDirection.x) * Mathf.Rad2Deg;

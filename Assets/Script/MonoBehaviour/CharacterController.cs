@@ -732,13 +732,7 @@ public class PlayerController : MonoBehaviour
                 if (targetGrappleNode != null)
                 {
                     // TỚI ĐÍCH LÀ NODE -> BUNG LÊN
-                    velocity.y = targetGrappleNode.boostForce;
-                    velocity.x = 0;
-                    currentGrappleCount--; // Tăng thêm 1 lần phóng tay
-                    SetState(PlayerState.OnAir);
-                    isGrounded = false;
-                    targetGrappleNode = null;
-                    OnJumpPerformed?.Invoke();
+                    OnGrappleNodeHit();
                 }
                 else
                 {
@@ -767,6 +761,24 @@ public class PlayerController : MonoBehaviour
                 if (robotHand != null) robotHand.FinishGrapple();
             }
         }
+    }
+
+    private void OnGrappleNodeHit()
+    {
+        velocity.y = targetGrappleNode.boostForce;
+        velocity.x = 0;
+        currentGrappleCount--; // Tăng thêm 1 lần phóng tay
+        SetState(PlayerState.OnAir);
+        isGrounded = false;
+        targetGrappleNode = null;
+        OnJumpPerformed?.Invoke();
+    }
+
+    public void TriggerInstantGrappleNode(GrappleNode node)
+    {
+        targetGrappleNode = node;
+        grappleTarget = Vector2.zero; // Dọn dẹp điểm đích ảo
+        OnGrappleNodeHit();           // Kích hoạt nhảy ngay lập tức!
     }
 
     private void HandleSpriteVisuals()

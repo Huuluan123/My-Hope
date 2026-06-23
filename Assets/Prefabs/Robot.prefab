@@ -352,6 +352,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3a68f747430fe7439f57d16ddcd0b2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
+  spriteTransform: {fileID: 6807826442064273302}
+  scaleLerpSpeed: 10
   moveSpeed: 10
   jumpForce: 18.4
   variableJumpHeightMultiplier: 0.5
@@ -378,7 +380,7 @@ MonoBehaviour:
   wallClimbDownSpeed: 8
   ledgeSlipSpeed: 8
   wallJumpForce: {x: 12, y: 18.4}
-  wallClimbJumpForceY: 15
+  wallClimbJumpForceY: 18.4
   neutralWallJumpForce: {x: 7, y: 18.4}
   neutralJumpStaminaCost: 10
   maxStamina: 100
