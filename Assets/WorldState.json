@@ -11,6 +11,10 @@
         {
             "stateName": "Forest_RockSpawner",
             "stateValue": true
+        },
+        {
+            "stateName": "Village_Hard_Challenge_Completed",
+            "stateValue": false
         }
     ]
 }

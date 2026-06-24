@@ -212,6 +212,8 @@ MonoBehaviour:
     stateValue: 1
   - stateName: Forest_RockSpawner
     stateValue: 1
+  - stateName: Village_Hard_Challenge_Completed
+    stateValue: 0
 --- !u!1 &4240337550318262755
 GameObject:
   m_ObjectHideFlags: 0
