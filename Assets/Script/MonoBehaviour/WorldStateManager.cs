@@ -1,8 +1,12 @@
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 
-// 1. Tạo một cấu trúc dữ liệu cơ bản để Unity và JSON có thể đọc được
+// 1. Cấu trúc Cờ Sự Kiện (Giữ nguyên)
 [System.Serializable]
 public class StateEntry
 {
@@ -16,26 +20,36 @@ public class StateEntry
     }
 }
 
-// 2. Tạo một lớp "Gói" chứa danh sách các trạng thái để lưu thành file
+// 2. Cấu trúc Dữ liệu Người chơi
 [System.Serializable]
-public class WorldStateData
+public class PlayerSaveData
 {
-    public List<StateEntry> states = new List<StateEntry>();
+    public Vector2 savedRespawnPoint;
+    public int savedMaxAirJumps;
+    public int savedMaxGrappleCount;
+}
+
+// 3. Gộp cả dữ liệu của thế giới và người chơi
+[System.Serializable]
+public class MasterSaveData
+{
+    public PlayerSaveData playerData = new PlayerSaveData();
+    public List<StateEntry> worldStates = new List<StateEntry>();
 }
 
 public class WorldStateManager : MonoBehaviour
 {
     public static WorldStateManager Instance;
 
-    // Bộ nhớ RAM (Từ điển): Chạy rất nhanh, dùng trong lúc chơi game
+    // Bộ nhớ RAM
     private Dictionary<string, bool> globalStates = new Dictionary<string, bool>();
 
-    [Header("Data Manager (Editor)")]
-    [Tooltip("Danh sách này hiển thị các trạng thái để bạn dễ theo dõi và chỉnh sửa")]
+    [Header("World data manager (Editor)")]
     public List<StateEntry> visibleStates = new List<StateEntry>();
 
-    // Đường dẫn lưu file trên ổ cứng
-    private string saveFilePath;
+    [Header("Player data manager (Editor)")]
+    [Tooltip("Bạn có thể chỉnh sửa các chỉ số này lúc tắt game để Test")]
+    public PlayerSaveData currentPlayerSave = new PlayerSaveData();
 
     private void Awake()
     {
@@ -43,8 +57,6 @@ public class WorldStateManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-
-            // Tự động tải dữ liệu khi mở game
             LoadGame();
         }
         else
@@ -55,18 +67,23 @@ public class WorldStateManager : MonoBehaviour
 
     private void OnValidate()
     {
-        // Đồng bộ liên tục từ Inspector vào RAM bất kể game đang chạy hay tắt
-        // để đảm bảo dữ liệu gõ tay luôn được ghi nhận vào bộ nhớ ngầm
         SyncListToDictionary();
     }
 
-    // ==========================================
-    // CÁC HÀM TƯƠNG TÁC CHÍNH TRONG GAME
-    // ==========================================
+    private string GetSaveFilePath()
+    {
+#if UNITY_EDITOR
+        return Path.Combine(Application.dataPath, "MasterSave.json");
+#else
+        return Path.Combine(Application.persistentDataPath, "MasterSave.json");
+#endif
+    }
 
+    // ==========================================
+    // CÁC HÀM TƯƠNG TÁC THẾ GIỚI
+    // ==========================================
     public void SetState(string stateName, bool stateValue)
     {
-        // 1. Cập nhật vào Từ điển (Bộ nhớ nhanh)
         if (globalStates.ContainsKey(stateName))
         {
             globalStates[stateName] = stateValue;
@@ -75,11 +92,8 @@ public class WorldStateManager : MonoBehaviour
         {
             globalStates.Add(stateName, stateValue);
         }
-
-        // 2. Cập nhật vào Danh sách (Để xem trên Editor và lưu File)
         SyncDictionaryToList();
-
-        Debug.Log($"[WorldState] Đã cập nhật sự kiện: {stateName} = {stateValue}");
+        Debug.Log($"[SaveManager] Cập nhật sự kiện: {stateName} = {stateValue}");
     }
 
     public bool CheckState(string stateName)
@@ -88,111 +102,120 @@ public class WorldStateManager : MonoBehaviour
         {
             return globalStates[stateName];
         }
-        return false; // Mặc định là chưa xảy ra
-    }
-
-    public int GetStateCount()
-    {
-        return globalStates.Count;
-    }
-
-    private string GetSaveFilePath()
-    {
-        return Path.Combine(Application.dataPath, "WorldState.json");
+        return false;
     }
 
     // ==========================================
-    // HỆ THỐNG LƯU / ĐỌC FILE JSON
+    // HỆ THỐNG LƯU / ĐỌC TỔNG HỢP (MASTER SAVE)
     // ==========================================
 
-    [ContextMenu("Save Game (Save to JSON)")]
+    [ContextMenu("Lưu Toàn Bộ Game (Save Master)")]
     public void SaveGame()
     {
         if (Application.isPlaying)
         {
-            // Nếu GAME ĐANG CHẠY: RAM (Dictionary) là gốc -> Đè dữ liệu vào List để lưu
+            // 1. Đồng bộ Thế giới từ RAM ra danh sách
             SyncDictionaryToList();
+
+            // 2. Cập nhật Dữ liệu Người chơi MỚI NHẤT từ nhân vật đang chơi
+            if (PlayerController.Instance != null)
+            {
+                currentPlayerSave.savedRespawnPoint = PlayerController.Instance.CurrentRespawnPoint;
+                currentPlayerSave.savedMaxAirJumps = PlayerController.Instance.maxAirJumps;
+                currentPlayerSave.savedMaxGrappleCount = PlayerController.Instance.maxGrappleCount;
+            }
         }
         else
         {
-            // Nếu GAME ĐANG TẮT (Edit Mode): Inspector (List) là gốc -> Nạp vào RAM trước khi lưu
+            // Nếu tắt game thì lưu những gì gõ tay trên Inspector
             SyncListToDictionary();
         }
 
-        // Gói dữ liệu lại
-        WorldStateData dataToSave = new WorldStateData();
-        dataToSave.states = visibleStates;
+        // Đóng gói vào "Vali Lớn"
+        MasterSaveData dataToSave = new MasterSaveData
+        {
+            playerData = currentPlayerSave,
+            worldStates = visibleStates
+        };
 
-        // Chuyển thành chuỗi văn bản JSON và format đẹp mắt (true)
         string json = JsonUtility.ToJson(dataToSave, true);
-
-        // Ghi ra file
         File.WriteAllText(GetSaveFilePath(), json);
-        Debug.Log($"[WorldState] Đã LƯU thành công tại: {GetSaveFilePath()}");
+        Debug.Log($"[SaveManager] Đã LƯU Toàn Bộ Game tại: {GetSaveFilePath()}");
+
+#if UNITY_EDITOR
+        AssetDatabase.Refresh();
+#endif
     }
 
-    [ContextMenu("Load Game (Load from JSON)")]
+    [ContextMenu("Đọc Toàn Bộ Game (Load Master)")]
     public void LoadGame()
     {
-        string path = GetSaveFilePath(); // Lấy đường dẫn
+        string path = GetSaveFilePath();
         if (File.Exists(path))
         {
-            // Đọc văn bản từ file
             string json = File.ReadAllText(path);
+            MasterSaveData loadedData = JsonUtility.FromJson<MasterSaveData>(json);
 
-            // Chuyển từ JSON ngược lại thành dữ liệu
-            WorldStateData loadedData = JsonUtility.FromJson<WorldStateData>(json);
-
-            // Cập nhật Danh sách trên Editor
-            visibleStates = loadedData.states;
-
-            // Bơm ngược dữ liệu vào Từ điển để game sử dụng
+            // 1. Tải dữ liệu Thế giới
+            visibleStates = loadedData.worldStates;
             SyncListToDictionary();
 
-            Debug.Log("[WorldState] Đã ĐỌC dữ liệu thành công!");
+            // 2. Tải dữ liệu Người chơi
+            currentPlayerSave = loadedData.playerData;
+
+            // 3. Nếu game đang chạy, BƠM dữ liệu vào nhân vật!
+            if (PlayerController.Instance != null)
+            {
+                ApplyPlayerData();
+            }
+
+            Debug.Log("[SaveManager] Đã ĐỌC dữ liệu thành công!");
         }
         else
         {
-            Debug.Log("[WorldState] Không tìm thấy file Save cũ. Bắt đầu game mới!");
+            Debug.LogWarning("[SaveManager] Không tìm thấy file Save. Bắt đầu game mới!");
         }
     }
 
-    [ContextMenu("Clear all data (Clear Data)")]
+    // Hàm bơm dữ liệu ngược lại vào PlayerController
+    public void ApplyPlayerData()
+    {
+        PlayerController.Instance.SetRespawnPoint(currentPlayerSave.savedRespawnPoint);
+        PlayerController.Instance.maxAirJumps = currentPlayerSave.savedMaxAirJumps;
+        PlayerController.Instance.maxGrappleCount = currentPlayerSave.savedMaxGrappleCount;
+
+        // Dịch chuyển người chơi về đúng cái ghế đá đã lưu
+        PlayerController.Instance.transform.position = currentPlayerSave.savedRespawnPoint;
+    }
+
+    [ContextMenu("Xóa Toàn Bộ Dữ Liệu (Clear Master)")]
     public void ClearAllData()
     {
         globalStates.Clear();
         visibleStates.Clear();
+        currentPlayerSave = new PlayerSaveData(); // Trả về thông số rỗng
 
-        string path = GetSaveFilePath(); // Lấy đường dẫn
-        if (File.Exists(saveFilePath))
-        {
-            File.Delete(saveFilePath);
-        }
-        Debug.Log("[WorldState] Đã xóa trắng mọi dữ liệu!");
+        string path = GetSaveFilePath();
+        if (File.Exists(path)) File.Delete(path);
+
+        Debug.Log("[SaveManager] Đã xóa trắng mọi dữ liệu Cốt truyện và Người chơi!");
     }
 
     // ==========================================
-    // HÀM HỖ TRỢ ĐỒNG BỘ
+    // HÀM HỖ TRỢ ĐỒNG BỘ THẾ GIỚI
     // ==========================================
-
     private void SyncDictionaryToList()
     {
         visibleStates.Clear();
         foreach (KeyValuePair<string, bool> pair in globalStates)
-        {
             visibleStates.Add(new StateEntry(pair.Key, pair.Value));
-        }
     }
 
     private void SyncListToDictionary()
     {
         globalStates.Clear();
         foreach (StateEntry entry in visibleStates)
-        {
             if (!globalStates.ContainsKey(entry.stateName))
-            {
                 globalStates.Add(entry.stateName, entry.stateValue);
-            }
-        }
     }
 }

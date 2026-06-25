@@ -1,0 +1,28 @@
+{
+    "playerData": {
+        "savedRespawnPoint": {
+            "x": 0.0,
+            "y": 0.0
+        },
+        "savedMaxAirJumps": 0,
+        "savedMaxGrappleCount": 2
+    },
+    "worldStates": [
+        {
+            "stateName": "Anna_RescueScene",
+            "stateValue": true
+        },
+        {
+            "stateName": "Forest_BlockingWall",
+            "stateValue": true
+        },
+        {
+            "stateName": "Forest_RockSpawner",
+            "stateValue": true
+        },
+        {
+            "stateName": "Village_Hard_Challenge_Completed",
+            "stateValue": false
+        }
+    ]
+}

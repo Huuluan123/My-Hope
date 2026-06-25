@@ -23,6 +23,10 @@ MonoBehaviour:
     m_Key: Dialogue
     m_Metadata:
       m_Items: []
+  - m_Id: 10140957973544960
+    m_Key: Frog
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items:
     - rid: 4016592469114225019
@@ -44,6 +48,10 @@ MonoBehaviour:
           - en
           - vi-VN
         - m_KeyId: 4410838220800
+          m_TableCodes:
+          - en
+          - vi-VN
+        - m_KeyId: 10140957973544960
           m_TableCodes:
           - en
           - vi-VN

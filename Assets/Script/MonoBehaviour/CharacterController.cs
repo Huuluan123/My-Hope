@@ -210,6 +210,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Respawn Settings")]
     [SerializeField] private Vector2 currentRespawnPoint;
+    public Vector2 CurrentRespawnPoint => currentRespawnPoint;
     [HideInInspector] public float lastSpawnTime;
     //[SerializeField] private float respawnDelay = 1f;
 
@@ -294,6 +295,11 @@ public class PlayerController : MonoBehaviour
 
         // Khởi động hệ thống Fail-safe ngay khi nhân vật xuất hiện
         StartCoroutine(RoomFailSafeRoutine());
+
+        if (WorldStateManager.Instance != null)
+        {
+            WorldStateManager.Instance.ApplyPlayerData();
+        }
     }
 
     void Update()

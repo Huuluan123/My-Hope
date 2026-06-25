@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Localization.Settings;
+using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
 public class PauseMenuManager : MonoBehaviour
@@ -240,11 +241,21 @@ public class PauseMenuManager : MonoBehaviour
 
     private void SaveAndExitGame()
     {
-        Debug.Log("Saving and quit...");
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#else
-        Application.Quit();
-#endif
+        // 1. Lưu toàn bộ (Cốt truyện + Người chơi)
+        if (WorldStateManager.Instance != null)
+        {
+            WorldStateManager.Instance.SaveGame();
+        }
+
+        // 2. Tắt trạng thái Pause (Nếu bạn đang dùng Time.timeScale = 0 thì nhớ trả về 1)
+        Time.timeScale = 1f;
+
+        // 3. Thoát ra Main Menu (Thay "MainMenu" bằng tên Scene thực tế của bạn)
+        SceneManager.LoadScene("Title Screen");
+//#if UNITY_EDITOR
+//        UnityEditor.EditorApplication.isPlaying = false;
+//#else
+//        Application.Quit();
+//#endif
     }
 }
