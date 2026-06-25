@@ -225,5 +225,10 @@ public class MusicManager : MonoBehaviour
             pausedMusicInstance.stop(FMOD.Studio.STOP_MODE.IMMEDIATE);
             pausedMusicInstance.release();
         }
+
+        if (Instance == this)
+        {
+            Instance = null;
+        }
     }
 }

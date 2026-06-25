@@ -23,6 +23,14 @@ public class HapticManager : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
+
     /// <summary>
     /// HÀM GỐC: Rung 2 motor cơ bản (Hỗ trợ 100% các loại tay cầm PS4, Switch, Xbox...)
     /// </summary>

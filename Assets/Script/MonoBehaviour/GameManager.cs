@@ -108,6 +108,14 @@ public class GameManager : MonoBehaviour
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
+
     // Phân xử logic chuột mỗi khi chuyển Scene
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {

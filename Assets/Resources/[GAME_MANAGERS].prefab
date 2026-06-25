@@ -205,6 +205,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8bd27d00f9265c45bfe77a7506938c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldStateManager
+  isEditiorDebugMode: 1
   visibleStates:
   - stateName: Anna_RescueScene
     stateValue: 1
@@ -214,8 +215,10 @@ MonoBehaviour:
     stateValue: 1
   - stateName: Village_Hard_Challenge_Completed
     stateValue: 0
+  - stateName: VirtualGuy_Met
+    stateValue: 0
   currentPlayerSave:
-    savedRespawnPoint: {x: 0, y: 0}
+    savedRespawnPoint: {x: 7, y: 7}
     savedMaxAirJumps: 0
     savedMaxGrappleCount: 2
 --- !u!1 &4240337550318262755

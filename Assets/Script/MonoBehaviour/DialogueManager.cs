@@ -163,6 +163,26 @@ public class DialogueManager : MonoBehaviour
         }
     }
 
+    private void BindInkFunction()
+    {
+        // 1. KẾT NỐI HÀM CHECK STATE
+        currentStory.BindExternalFunction("CheckState", (string key) => {
+            return WorldStateManager.Instance.CheckState(key);
+        });
+
+        // 2. KẾT NỐI HÀM SET STATE
+        currentStory.BindExternalFunction("SetState", (string key, bool value) => {
+            WorldStateManager.Instance.SetState(key, value);
+        });
+    }
+
+    private void UnbindInkFunction()
+    {
+        // Hủy kết nối các hàm Ink khi kết thúc hội thoại
+        currentStory.UnbindExternalFunction("CheckState");
+        currentStory.UnbindExternalFunction("SetState");
+    }
+
     #endregion
 
     #region Skip Logic
@@ -196,6 +216,8 @@ public class DialogueManager : MonoBehaviour
     {
         StopAllCoroutines(); // Dừng mọi Coroutine đang chạy để tránh xung đột PlayerState
         currentStory = new Story(inkJSON.text);
+
+        BindInkFunction();
 
         if (!string.IsNullOrEmpty(knotName))
         {
@@ -284,13 +306,23 @@ public class DialogueManager : MonoBehaviour
     IEnumerator EndDialogue()
     {
         isDialogueActive = false;
+        UnbindInkFunction();
 
         // Thu nhỏ hộp thoại
         if (dialogueBox != null) dialogueBox.AddToClassList(hiddenClassName);
 
         yield return new WaitForSeconds(0.3f);
-        PlayerController.Instance.SetState(PlayerState.Idle);
+        if (PlayerController.Instance.GetCurrentState() == PlayerState.Talking)
+        {
+            PlayerController.Instance.SetState(PlayerState.Idle);
+        }
         Debug.Log("Dialogue ended, back to Idle state");
+
+        // 3. LƯU GAME TỰ ĐỘNG (Tùy chọn)
+        //if (WorldStateManager.Instance != null)
+        //{
+        //    WorldStateManager.Instance.SaveGame();
+        //}
     }
 
     #endregion

@@ -1,8 +1,8 @@
 {
     "playerData": {
         "savedRespawnPoint": {
-            "x": 0.0,
-            "y": 0.0
+            "x": -7.7699995040893559,
+            "y": 4.380000114440918
         },
         "savedMaxAirJumps": 0,
         "savedMaxGrappleCount": 2
@@ -22,6 +22,10 @@
         },
         {
             "stateName": "Village_Hard_Challenge_Completed",
+            "stateValue": false
+        },
+        {
+            "stateName": "VirtualGuy_Met",
             "stateValue": false
         }
     ]

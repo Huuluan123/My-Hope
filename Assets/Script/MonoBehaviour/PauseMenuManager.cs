@@ -250,6 +250,23 @@ public class PauseMenuManager : MonoBehaviour
         // 2. Tắt trạng thái Pause (Nếu bạn đang dùng Time.timeScale = 0 thì nhớ trả về 1)
         Time.timeScale = 1f;
 
+        // THANH TRỪNG PLAYER
+        if (PlayerController.Instance != null)
+        {
+            Destroy(PlayerController.Instance.gameObject);
+        }
+
+        if (MusicManager.Instance != null)
+        {
+            Destroy(MusicManager.Instance.gameObject);
+        }
+
+        // THANH TRỪNG CẢ WORLD STATE (Để lần sau chơi nó nạp lại file JSON mới)
+        if (WorldStateManager.Instance != null)
+        {
+            Destroy(WorldStateManager.Instance.gameObject);
+        }
+
         // 3. Thoát ra Main Menu (Thay "MainMenu" bằng tên Scene thực tế của bạn)
         SceneManager.LoadScene("Title Screen");
 //#if UNITY_EDITOR

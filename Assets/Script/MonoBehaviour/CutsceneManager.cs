@@ -5,10 +5,23 @@ using UnityEngine.Playables;
 [RequireComponent(typeof(PlayableDirector))]
 public class CutsceneManager : MonoBehaviour
 {
+    public CutsceneManager Instance { get; private set; }
+
     private PlayableDirector director;
 
     private void Awake()
     {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         // Tự động tìm Timeline trên cùng GameObject, không cần kéo thả!
         director = GetComponent<PlayableDirector>();
     }
@@ -24,6 +37,14 @@ public class CutsceneManager : MonoBehaviour
     {
         director.played -= LockPlayer;
         director.stopped -= UnlockPlayer;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
     }
 
     private void LockPlayer(PlayableDirector obj)

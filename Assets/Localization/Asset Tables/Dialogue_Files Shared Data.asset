@@ -27,6 +27,10 @@ MonoBehaviour:
     m_Key: Frog
     m_Metadata:
       m_Items: []
+  - m_Id: 10504752696786944
+    m_Key: VirtualGuy
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items:
     - rid: 4016592469114225019
@@ -52,6 +56,10 @@ MonoBehaviour:
           - en
           - vi-VN
         - m_KeyId: 10140957973544960
+          m_TableCodes:
+          - en
+          - vi-VN
+        - m_KeyId: 10504752696786944
           m_TableCodes:
           - en
           - vi-VN

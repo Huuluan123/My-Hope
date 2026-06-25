@@ -41,6 +41,8 @@ public class WorldStateManager : MonoBehaviour
 {
     public static WorldStateManager Instance;
 
+    [SerializeField] private bool isEditiorDebugMode = false;
+
     // Bộ nhớ RAM
     private Dictionary<string, bool> globalStates = new Dictionary<string, bool>();
 
@@ -62,6 +64,14 @@ public class WorldStateManager : MonoBehaviour
         else
         {
             Destroy(gameObject);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
         }
     }
 
@@ -180,6 +190,13 @@ public class WorldStateManager : MonoBehaviour
     // Hàm bơm dữ liệu ngược lại vào PlayerController
     public void ApplyPlayerData()
     {
+#if UNITY_EDITOR
+        if (isEditiorDebugMode)
+        {
+            Debug.Log("<color=yellow>[SaveManager] Đang ở chế độ Debug! Đã bỏ qua việc nạp vị trí và thông số cho Player.</color>");
+            return; // Thoát hàm ngay lập tức, không gán gì cả!
+        }
+#endif
         PlayerController.Instance.SetRespawnPoint(currentPlayerSave.savedRespawnPoint);
         PlayerController.Instance.maxAirJumps = currentPlayerSave.savedMaxAirJumps;
         PlayerController.Instance.maxGrappleCount = currentPlayerSave.savedMaxGrappleCount;
