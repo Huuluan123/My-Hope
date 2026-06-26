@@ -5,6 +5,7 @@ using UnityEditor;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using UnityEngine.SceneManagement;
 
 // 1. Cấu trúc Cờ Sự Kiện (Giữ nguyên)
 [System.Serializable]
@@ -24,9 +25,11 @@ public class StateEntry
 [System.Serializable]
 public class PlayerSaveData
 {
-    public Vector2 savedRespawnPoint;
-    public int savedMaxAirJumps;
-    public int savedMaxGrappleCount;
+    public bool hasSavedPosition = false;
+    public Vector2 savedRespawnPoint = Vector2.zero;
+    public int savedMaxAirJumps = 0;
+    public int savedMaxGrappleCount = 2;
+    public int spawnScene = 1;
 }
 
 // 3. Gộp cả dữ liệu của thế giới và người chơi
@@ -45,6 +48,9 @@ public class WorldStateManager : MonoBehaviour
 
     // Bộ nhớ RAM
     private Dictionary<string, bool> globalStates = new Dictionary<string, bool>();
+
+    [Header("Default New Game States")]
+    public List<StateEntry> defaultStates = new List<StateEntry>();
 
     [Header("World data manager (Editor)")]
     public List<StateEntry> visibleStates = new List<StateEntry>();
@@ -130,10 +136,15 @@ public class WorldStateManager : MonoBehaviour
             // 2. Cập nhật Dữ liệu Người chơi MỚI NHẤT từ nhân vật đang chơi
             if (PlayerController.Instance != null)
             {
+                currentPlayerSave.hasSavedPosition = true;
+
                 currentPlayerSave.savedRespawnPoint = PlayerController.Instance.CurrentRespawnPoint;
                 currentPlayerSave.savedMaxAirJumps = PlayerController.Instance.maxAirJumps;
                 currentPlayerSave.savedMaxGrappleCount = PlayerController.Instance.maxGrappleCount;
             }
+
+            // 3. TỰ ĐỘNG GHI ĐÈ SỐ HIỆU SCENE HIỆN TẠI KHI LƯU GAME
+            currentPlayerSave.spawnScene = SceneManager.GetActiveScene().buildIndex;
         }
         else
         {
@@ -184,6 +195,20 @@ public class WorldStateManager : MonoBehaviour
         else
         {
             Debug.LogWarning("[SaveManager] Không tìm thấy file Save. Bắt đầu game mới!");
+
+            globalStates.Clear();
+
+            // Rút dữ liệu Mặc định (Default States) bơm thẳng vào RAM
+            foreach (StateEntry entry in defaultStates)
+            {
+                if (!globalStates.ContainsKey(entry.stateName))
+                {
+                    globalStates.Add(entry.stateName, entry.stateValue);
+                }
+            }
+
+            // Đồng bộ RAM ra lại Gương (visibleStates) để Inspector và SaveGame hoạt động đúng
+            SyncDictionaryToList();
         }
     }
 
@@ -197,12 +222,21 @@ public class WorldStateManager : MonoBehaviour
             return; // Thoát hàm ngay lập tức, không gán gì cả!
         }
 #endif
-        PlayerController.Instance.SetRespawnPoint(currentPlayerSave.savedRespawnPoint);
+        // CHỈ DỊCH CHUYỂN KHI ĐÃ TỪNG SAVE
+        if (currentPlayerSave.hasSavedPosition)
+        {
+            PlayerController.Instance.SetRespawnPoint(currentPlayerSave.savedRespawnPoint);
+            PlayerController.Instance.transform.position = currentPlayerSave.savedRespawnPoint;
+        }
+        else
+        {
+            // Nếu chưa từng Save, cập nhật CurrentRespawnPoint bằng chính vị trí đặt trên Editor
+            PlayerController.Instance.SetRespawnPoint(PlayerController.Instance.transform.position);
+            Debug.Log("[SaveManager] New Game: Giữ nguyên vị trí Player trên Editor.");
+        }
+
         PlayerController.Instance.maxAirJumps = currentPlayerSave.savedMaxAirJumps;
         PlayerController.Instance.maxGrappleCount = currentPlayerSave.savedMaxGrappleCount;
-
-        // Dịch chuyển người chơi về đúng cái ghế đá đã lưu
-        PlayerController.Instance.transform.position = currentPlayerSave.savedRespawnPoint;
     }
 
     [ContextMenu("Xóa Toàn Bộ Dữ Liệu (Clear Master)")]
@@ -214,6 +248,11 @@ public class WorldStateManager : MonoBehaviour
 
         string path = GetSaveFilePath();
         if (File.Exists(path)) File.Delete(path);
+
+        foreach (StateEntry entry in defaultStates)
+        {
+            SetState(entry.stateName, entry.stateValue);
+        }
 
         Debug.Log("[SaveManager] Đã xóa trắng mọi dữ liệu Cốt truyện và Người chơi!");
     }

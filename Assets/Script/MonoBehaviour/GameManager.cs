@@ -138,6 +138,7 @@ public class GameManager : MonoBehaviour
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
             IsUsingPointer = true;
+            Debug.Log("UI map enabled");
         }
         else
         {
@@ -149,6 +150,7 @@ public class GameManager : MonoBehaviour
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
             IsUsingPointer = false; // Mặc định tắt chuột trong gameplay, chỉ bật khi phát hiện thiết bị Pointer
+            Debug.Log("Player map enabled");
         }
 
         // Kích hoạt snap camera sau khi load xong Scene, nhưng chỉ thực hiện khi không phải MainMenu

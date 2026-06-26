@@ -1,9 +1,10 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
+using UnityEngine.Localization.Settings;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using UnityEngine.Localization.Settings;
 
 public class TitleMenu : MonoBehaviour
 {
@@ -19,6 +20,8 @@ public class TitleMenu : MonoBehaviour
 
     private void Start()
     {
+        StartCoroutine(ResetInputModuleRoutine());
+
         // Khi vừa mở game lên, kiểm tra xem người chơi đang dùng gì
         if (GameManager.Instance != null)
         {
@@ -41,6 +44,37 @@ public class TitleMenu : MonoBehaviour
         //    EventSystem.current.SetSelectedGameObject(firstSelectedButton);
         //    Debug.Log("[MainMenu] Đã tự động Focus vào nút Play!");
         //}
+    }
+
+    private IEnumerator ResetInputModuleRoutine()
+    {
+        // Chờ 1 frame đầu tiên để Scene và Event System load xong hoàn toàn
+        yield return null;
+
+        EventSystem es = EventSystem.current;
+        if (es == null) es = FindFirstObjectByType<EventSystem>();
+
+        if (es != null)
+        {
+            // Tìm đúng cái Component mà bạn đã tắt bật bằng tay
+            InputSystemUIInputModule uiModule = es.GetComponent<InputSystemUIInputModule>();
+
+            // Tắt đi bật lại để InputSystemUIInputModule nhận lại sự kiện từ tay cầm / bàn phím
+            if (uiModule != null)
+            {
+                // Tắt module
+                uiModule.enabled = false;
+
+                // Bắt Unity chờ 1 frame để Module thực sự "chết" lâm sàng
+                yield return null;
+
+                // Sau đó mới bật lại
+                uiModule.enabled = true;
+                es.SetSelectedGameObject(null);
+
+                Debug.Log("[TitleMenu] Đã reset InputSystemUIInputModule thành công!");
+            }
+        }
     }
 
     private void Update()
@@ -121,6 +155,14 @@ public class TitleMenu : MonoBehaviour
 #endif
     }
 
+    public void ClearData()
+    {
+        if (WorldStateManager.Instance != null)
+        {
+            WorldStateManager.Instance.ClearAllData();
+        }
+    }
+
     private IEnumerator LoadLevelRoutine()
     {
         // 1. Kéo màn đen xuống
@@ -129,8 +171,16 @@ public class TitleMenu : MonoBehaviour
         // 2. CHỜ màn đen kéo xong (Lúc này màn hình đen thui)
         yield return new WaitForSecondsRealtime(TransitionManager.Instance.transitionTime);
 
+        // 3. TIẾN HÀNH LOAD SCENE THEO SỐ HIỆU TRONG FILE SAVE
+        int sceneToLoad = 1; // Giá trị phòng hờ mặc định là Scene số 1
+
+        if (WorldStateManager.Instance != null)
+        {
+            sceneToLoad = WorldStateManager.Instance.currentPlayerSave.spawnScene;
+        }
+
         // 3. Tiến hành Load Scene mới (Người chơi sẽ không thấy sự giật lag vì màn hình đang đen)
-        SceneManager.LoadScene(gameSceneName);
+        SceneManager.LoadScene(sceneToLoad);
 
         // BẮT BUỘC: Chờ 1 frame để Unity khởi tạo xong Scene mới, tránh lỗi NullReference
         yield return null;

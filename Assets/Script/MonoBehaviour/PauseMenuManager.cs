@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Localization.Settings;
@@ -248,7 +249,24 @@ public class PauseMenuManager : MonoBehaviour
         }
 
         // 2. Tắt trạng thái Pause (Nếu bạn đang dùng Time.timeScale = 0 thì nhớ trả về 1)
-        Time.timeScale = 1f;
+        //Time.timeScale = 1f;
+
+        // 3. Thoát ra Main Menu
+        //TransitionManager.Instance.StartCoroutine(LoadLevelRoutine());
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+                Application.Quit();
+#endif
+    }
+
+    private IEnumerator LoadLevelRoutine()
+    {
+        // 1. Kéo màn đen xuống
+        TransitionManager.Instance.PlayStartTransition();
+
+        // 2. CHỜ màn đen kéo xong (Lúc này màn hình đen thui)
+        yield return new WaitForSecondsRealtime(TransitionManager.Instance.transitionTime);
 
         // THANH TRỪNG PLAYER
         if (PlayerController.Instance != null)
@@ -261,18 +279,18 @@ public class PauseMenuManager : MonoBehaviour
             Destroy(MusicManager.Instance.gameObject);
         }
 
-        // THANH TRỪNG CẢ WORLD STATE (Để lần sau chơi nó nạp lại file JSON mới)
         if (WorldStateManager.Instance != null)
         {
             Destroy(WorldStateManager.Instance.gameObject);
         }
 
-        // 3. Thoát ra Main Menu (Thay "MainMenu" bằng tên Scene thực tế của bạn)
+        // 3. Tiến hành Load Scene mới (Người chơi sẽ không thấy sự giật lag vì màn hình đang đen)
         SceneManager.LoadScene("Title Screen");
-//#if UNITY_EDITOR
-//        UnityEditor.EditorApplication.isPlaying = false;
-//#else
-//        Application.Quit();
-//#endif
+
+        // BẮT BUỘC: Chờ 1 frame để Unity khởi tạo xong Scene mới, tránh lỗi NullReference
+        yield return null;
+
+        // 4. Kéo màn đen lên để thấy Scene mới
+        TransitionManager.Instance.PlayEndTransition();
     }
 }

@@ -42,9 +42,36 @@ MonoBehaviour:
   Path: FMOD/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639147185896016954
+  lastModified: 639181089754666310
   FileSizes: []
   Exists: 1
+--- !u!114 &-2433742374858077170
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Village Theme
+  m_EditorClassIdentifier: FMODUnityEditor::FMODUnity.EditorEventRef
+  Path: event:/Village Theme
+  Guid:
+    Data1: 665886507
+    Data2: 1232311753
+    Data3: -1720768870
+    Data4: -1847034146
+  Banks:
+  - {fileID: -4893171304041935319}
+  IsStream: 1
+  Is3D: 0
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 72045
 --- !u!114 &-1501505905294722510
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -122,13 +149,14 @@ MonoBehaviour:
   - {fileID: 349461747655055120}
   - {fileID: -1501505905294722510}
   - {fileID: 7571805542192154618}
+  - {fileID: -2433742374858077170}
   EditorParameters: []
   MasterBanks:
   - {fileID: -4893171304041935319}
   StringsBanks:
   - {fileID: 8345543451865520628}
   cacheVersion: 131858
-  cacheTime: 639147185896016954
+  cacheTime: 639181089754676378
   SerializableEventsDict:
   - key: event:/Jump
     index: 0
@@ -144,6 +172,8 @@ MonoBehaviour:
     index: 5
   - key: event:/Ending
     index: 6
+  - key: event:/Village Theme
+    index: 7
 --- !u!114 &349461747655055120
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -267,8 +297,8 @@ MonoBehaviour:
   Path: FMOD/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639147185896016954
+  lastModified: 639181089754676378
   FileSizes:
   - Name: 
-    Value: 1022
+    Value: 1066
   Exists: 1
