@@ -6730,7 +6730,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 82990449b9da09644b198f2cc1b31218, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StateDependentActivator
-  stateKey: Forest_Rockspawner
+  stateKey: Forest_RockSpawner
   activeWhenStateIsTrue: 1
 --- !u!114 &1246776428
 MonoBehaviour:
@@ -10540,7 +10540,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 82990449b9da09644b198f2cc1b31218, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StateDependentActivator
-  stateKey: Forest_Rockspawner
+  stateKey: Forest_RockSpawner
   activeWhenStateIsTrue: 1
 --- !u!1001 &1926529119
 PrefabInstance:
