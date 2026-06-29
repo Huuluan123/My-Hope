@@ -11,7 +11,7 @@ INCLUDE ../Global/Global.ink
     -> Anna_Town
 }
 
-== AfterBeingSaved ==
+=== AfterBeingSaved ===
 # speaker: Anna
 Thank you for saving me!
 # speaker: Hope
@@ -33,8 +33,16 @@ Sure, i guess!
 New location unlocked: [town] Town.
 -> END
 
-== Anna_Town ===
+=== Anna_Town ===
 #speaker: Anna
 Welcome to my town! I hope you will like it here.
 Why don't you go and explore the town? It might be fun.
 -> END
+
+=== SceamForHelp ===
+# speaker: Anna
+HELP!
+# speaker: System
+Warning: Human in danger detected!
+Rescue mission initiated!
+->END

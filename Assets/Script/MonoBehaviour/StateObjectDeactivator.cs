@@ -5,6 +5,7 @@ public class StateObjectDeactivator : MonoBehaviour
     [Header("State save (Optional)")]
     [Tooltip("Nếu điền Key vào đây, khi bị tắt nó sẽ tự động lưu lại vào WorldStateManager để biến mất vĩnh viễn.")]
     public string saveKeyOnDeactivate;
+    public bool targetStateValueOnDeactivate = false;
 
     public void Deactivate()
     {
@@ -14,7 +15,7 @@ public class StateObjectDeactivator : MonoBehaviour
         // 2. Tự động báo cáo cho "Bộ Não" để lần sau load game nó không hiện ra nữa
         if (!string.IsNullOrEmpty(saveKeyOnDeactivate) && WorldStateManager.Instance != null)
         {
-            WorldStateManager.Instance.SetState(saveKeyOnDeactivate, false);
+            WorldStateManager.Instance.SetState(saveKeyOnDeactivate, targetStateValueOnDeactivate);
         }
     }
 

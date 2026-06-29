@@ -194,7 +194,7 @@ public class PlayerController : MonoBehaviour
     [Header("Ability Unlocks & Counters")]
     [Tooltip("Maximum number of times to shoot grappling hand while on air")]
     public int maxGrappleCount = 2;
-    private int currentGrappleCount = 0;
+    public int currentGrappleCount = 0;
 
     [Tooltip("Number of air jumps (0 = Normal jump, 1 = Double Jump, 2 = Triple Jump)")]
     public int maxAirJumps = 0;

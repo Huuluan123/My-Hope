@@ -15,6 +15,7 @@ public class WorldStateTrigger : MonoBehaviour
         if (WorldStateManager.Instance != null && !string.IsNullOrEmpty(stateKey))
         {
             WorldStateManager.Instance.SetState(stateKey, targetStateValue);
+            Debug.Log("WorldStateTrigger: State changed - " + stateKey + " set to " + targetStateValue);
         }
     }
 }

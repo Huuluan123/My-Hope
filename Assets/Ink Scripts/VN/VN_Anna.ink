@@ -38,3 +38,11 @@ Mở khoá khu vực mới: Thị trấn [town]
 Chào mừng đến với thị trấn của mình! Mình nghĩ bạn sẽ thích nó đấy!
 Tại sao không thử dạo một vòng quanh thị trấn nhỉ? Nó sẽ khá vui đấy!
 -> END
+
+=== SceamForHelp ===
+# speaker: Anna
+CỨU TÔI VỚI!
+# speaker: System
+CẢNH BÁO: Phát hiện con người đang gặp nguy hiểm!
+KÍCH HOẠT NHIỆM VỤ GIẢI CỨU!
+->END
