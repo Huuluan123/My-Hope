@@ -98,15 +98,12 @@ public class RescueTimelineReceiver : MonoBehaviour
     {
         ForceDropNPC();
 
-        // Tới đây Timeline mới thả quyền điều khiển ra
-        PlayerController.Instance.OnTimelineEnd();
-
         // Bạn có thể Load Scene ở đây
         if (npcCollider != null) npcCollider.enabled = false;
         if (nPCRescueComponent != null) nPCRescueComponent.enabled = false;
         if (npcAvailableZone != null) npcAvailableZone.SetActive(true);
         WorldStateManager.Instance.SetState("Anna_RescueScene", false);
-        
+
         endDialogAction.ActivateDialogue();
     }
 

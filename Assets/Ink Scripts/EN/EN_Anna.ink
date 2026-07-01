@@ -5,10 +5,15 @@ INCLUDE ../Global/Global.ink
 ->Start
 
 === Start ===
-{ Anna_RescueScene:
-    -> AfterBeingSaved
-- else:
-    -> Anna_Town
+{
+    - Anna_RescueScene and npc_location == "Forest":
+        -> AfterBeingSaved
+        
+    - npc_location == "Town":
+        -> Anna_Town
+        
+    - else:
+        -> END
 }
 
 === AfterBeingSaved ===

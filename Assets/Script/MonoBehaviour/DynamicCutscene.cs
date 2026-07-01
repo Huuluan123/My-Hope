@@ -124,6 +124,14 @@ public class DynamicCutscene : MonoBehaviour
     private void OnTimelineEnded(PlayableDirector obj)
     {
         if (PlayerController.Instance == null) return;
-        PlayerController.Instance.OnTimelineEnd();
+
+        // KIỂM TRA BẢO VỆ: Chỉ nhả quyền điều khiển nếu Timeline thực sự đang giữ quyền
+        // Nếu Player đã chuyển sang Talking (do Action_Dialog giành quyền trước), tuyệt đối không đụng vào!
+        if (PlayerController.Instance.GetCurrentState() == PlayerState.ScriptedMove)
+        {
+            PlayerController.Instance.OnTimelineEnd();
+        }
+
+        Debug.Log("Timeline ended");
     }
 }

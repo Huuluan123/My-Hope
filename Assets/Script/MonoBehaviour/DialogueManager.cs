@@ -1,6 +1,7 @@
 ﻿using Ink.Runtime;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
@@ -212,12 +213,19 @@ public class DialogueManager : MonoBehaviour
 
     #region Dialogue Flow & Ink System
 
-    public void StartDialogue(TextAsset inkJSON, string knotName = "")
+    public void StartDialogue(TextAsset inkJSON, string knotName = "", string locationName = "")
     {
         StopAllCoroutines(); // Dừng mọi Coroutine đang chạy để tránh xung đột PlayerState
         currentStory = new Story(inkJSON.text);
 
         BindInkFunction();
+
+        // Kiểm tra xem vị trí có được truyền vào không VÀ file INK có chứa biến 'npc_location' không
+        if (!string.IsNullOrEmpty(locationName) && currentStory.variablesState.Contains("npc_location"))
+        {
+            currentStory.variablesState["npc_location"] = locationName;
+            Debug.Log("Set npc_location to: " + locationName);
+        }
 
         if (!string.IsNullOrEmpty(knotName))
         {

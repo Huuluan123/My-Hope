@@ -237,11 +237,11 @@ MonoBehaviour:
   - stateName: VirtualGuy_Met
     stateValue: 0
   currentPlayerSave:
-    hasSavedPosition: 1
-    savedRespawnPoint: {x: 261.73, y: 37.53}
+    hasSavedPosition: 0
+    savedRespawnPoint: {x: 0, y: 0}
     savedMaxAirJumps: 0
     savedMaxGrappleCount: 2
-    spawnScene: 2
+    spawnScene: 1
 --- !u!1001 &8593842173576746017
 PrefabInstance:
   m_ObjectHideFlags: 0

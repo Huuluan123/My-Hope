@@ -1,6 +1,8 @@
 ﻿EXTERNAL CheckState(stateKey)
 EXTERNAL SetState(stateKey, stateValue)
 
+VAR npc_location = "default"
+
 // ==========================================
 // HÀM DỰ PHÒNG (FALLBACK) CHO INKY EDITOR
 // Nếu chạy trong Unity, C# sẽ thay thế các hàm này.
