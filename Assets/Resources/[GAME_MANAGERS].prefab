@@ -217,11 +217,13 @@ MonoBehaviour:
   defaultStates:
   - stateName: Anna_RescueScene
     stateValue: 1
+  - stateName: Anna_HardChallenge_Talked
+    stateValue: 0
   - stateName: Forest_BlockingWall
     stateValue: 1
   - stateName: Forest_RockSpawner
     stateValue: 1
-  - stateName: Village_Hard_Challenge_Completed
+  - stateName: Village_HardChallengeCompleted
     stateValue: 0
   - stateName: VirtualGuy_Met
     stateValue: 0
@@ -232,7 +234,7 @@ MonoBehaviour:
     stateValue: 1
   - stateName: Forest_RockSpawner
     stateValue: 1
-  - stateName: Village_Hard_Challenge_Completed
+  - stateName: Village_HardChallengeCompleted
     stateValue: 0
   - stateName: VirtualGuy_Met
     stateValue: 0

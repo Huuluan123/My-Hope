@@ -1972,7 +1972,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4892436201671028652, guid: 620c016501565bc48ad5b589318b33c7, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -11.863874
+      value: 23.236128
       objectReference: {fileID: 0}
     - target: {fileID: 4892436201671028652, guid: 620c016501565bc48ad5b589318b33c7, type: 3}
       propertyPath: m_LocalPosition.y
@@ -232608,7 +232608,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab1ecc97a11cff441ac823006796ce30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StateObjectDeactivator
-  saveKeyOnDeactivate: Village_Hard_Challenge_Completed
+  saveKeyOnDeactivate: Village_HardChallengeCompleted
   targetStateValueOnDeactivate: 1
 --- !u!114 &1144500598
 MonoBehaviour:
@@ -232622,7 +232622,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 82990449b9da09644b198f2cc1b31218, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StateDependentActivator
-  stateKey: Village_Hard_Challenge_Completed
+  stateKey: Village_HardChallengeCompleted
   activeWhenStateIsTrue: 0
 --- !u!4 &1146679466 stripped
 Transform:
@@ -232907,7 +232907,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2894394463508414549, guid: 205ffbc8e31dc4d4d9c5851c774f9194, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 15.0094795
+      value: 37.200005
       objectReference: {fileID: 0}
     - target: {fileID: 2894394463508414549, guid: 205ffbc8e31dc4d4d9c5851c774f9194, type: 3}
       propertyPath: m_LocalPosition.y
@@ -233279,7 +233279,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2368214733592815933, guid: 0704bf3f8c6f3934790c474d68767afd, type: 3}
       propertyPath: currentLocationName
-      value: Town
+      value: Village
       objectReference: {fileID: 0}
     - target: {fileID: 2705700559215978750, guid: 0704bf3f8c6f3934790c474d68767afd, type: 3}
       propertyPath: m_Name
@@ -233733,7 +233733,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4173589304260275096, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 2.1
+      value: 37.2
       objectReference: {fileID: 0}
     - target: {fileID: 4173589304260275096, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
       propertyPath: m_LocalPosition.y
@@ -234690,7 +234690,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ab1ecc97a11cff441ac823006796ce30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StateObjectDeactivator
-  saveKeyOnDeactivate: Village_Hard_Challenge_Completed
+  saveKeyOnDeactivate: Village_HardChallengeCompleted
   targetStateValueOnDeactivate: 1
 --- !u!114 &1638840577
 MonoBehaviour:
@@ -234704,7 +234704,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 82990449b9da09644b198f2cc1b31218, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StateDependentActivator
-  stateKey: Village_Hard_Challenge_Completed
+  stateKey: Village_HardChallengeCompleted
   activeWhenStateIsTrue: 0
 --- !u!1001 &1660960477
 PrefabInstance:

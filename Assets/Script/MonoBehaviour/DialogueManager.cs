@@ -264,7 +264,20 @@ public class DialogueManager : MonoBehaviour
     {
         if (currentStory.canContinue)
         {
-            string text = currentStory.Continue();
+            // 1. Đọc dòng mới từ INK và cắt bỏ khoảng trắng/xuống dòng thừa
+            string text = currentStory.Continue().Trim();
+
+            // 2. BỘ LỌC DÒNG TRỐNG: Nếu text rỗng sau khi Trim
+            if (string.IsNullOrEmpty(text))
+            {
+                // Bỏ qua frame hiện tại và tự động gọi lại hàm này để lấy dòng tiếp theo (hoặc kết thúc)
+                ContinueStory();
+
+                // Return để ngắt không cho chạy xuống các lệnh TypeSentence bên dưới
+                return;
+            }
+
+            // 3. Nếu có chữ đàng hoàng, xử lý tag và hiển thị như bình thường
             HandleTags(currentStory.currentTags);
 
             if (typingCoroutine != null) StopCoroutine(typingCoroutine);

@@ -125,7 +125,7 @@ public class WorldStateManager : MonoBehaviour
     // HỆ THỐNG LƯU / ĐỌC TỔNG HỢP (MASTER SAVE)
     // ==========================================
 
-    [ContextMenu("Lưu Toàn Bộ Game (Save Master)")]
+    [ContextMenu("Save game (Save Master)")]
     public void SaveGame()
     {
         if (Application.isPlaying)
@@ -168,7 +168,7 @@ public class WorldStateManager : MonoBehaviour
 #endif
     }
 
-    [ContextMenu("Đọc Toàn Bộ Game (Load Master)")]
+    [ContextMenu("Load game (Load Master)")]
     public void LoadGame()
     {
         string path = GetSaveFilePath();
@@ -239,7 +239,7 @@ public class WorldStateManager : MonoBehaviour
         PlayerController.Instance.maxGrappleCount = currentPlayerSave.savedMaxGrappleCount;
     }
 
-    [ContextMenu("Xóa Toàn Bộ Dữ Liệu (Clear Master)")]
+    [ContextMenu("Clear all data (Clear Master)")]
     public void ClearAllData()
     {
         globalStates.Clear();
