@@ -30,6 +30,7 @@ public class PlayerSaveData
     public int savedMaxAirJumps = 0;
     public int savedMaxGrappleCount = 2;
     public int spawnScene = 1;
+    public int savedCoins = 0;
 }
 
 // 3. Gộp cả dữ liệu của thế giới và người chơi
@@ -141,6 +142,13 @@ public class WorldStateManager : MonoBehaviour
                 currentPlayerSave.savedRespawnPoint = PlayerController.Instance.CurrentRespawnPoint;
                 currentPlayerSave.savedMaxAirJumps = PlayerController.Instance.maxAirJumps;
                 currentPlayerSave.savedMaxGrappleCount = PlayerController.Instance.maxGrappleCount;
+
+                // SAVE ECONOMY DATA: Get the current coins from the player's wallet
+                PlayerWallet wallet = PlayerController.Instance.GetComponent<PlayerWallet>();
+                if (wallet != null)
+                {
+                    currentPlayerSave.savedCoins = wallet.currentCoins;
+                }
             }
 
             // 3. TỰ ĐỘNG GHI ĐÈ SỐ HIỆU SCENE HIỆN TẠI KHI LƯU GAME

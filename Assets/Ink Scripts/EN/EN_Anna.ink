@@ -56,11 +56,11 @@ Why don't you go and explore the village? It might be fun.
 -> END
 
 === Anna_Village_HardChallengeCompleted ===
+~SetState("Anna_HardChallenge_Talked", true)
 #speaker: Anna
 Congrats, you have completed the hard challenge! You are a great robot!
 #speaker: Hope
 You're welcome, my friend!
-~SetState("Anna_HardChallenge_Talked", true)
 -> END
 
 === SceamForHelp ===
