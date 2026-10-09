@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="CMakeProjectFlavorService">
+    <option name="flavorId" value="CMakePlainProjectFlavor" />
+  </component>
+  <component name="CMakeSettings">
+    <configurations />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="1819ad6b-6fae-4d0a-a5e6-75aefafeec23" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/Assets/AddressableAssetsData/AddressableAssetSettings.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/AddressableAssetsData/AddressableAssetSettings.asset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/MasterSave.json" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/MasterSave.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Prefabs/CoreRig/UI.prefab" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Prefabs/CoreRig/UI.prefab" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scenes/0.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/0.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Scenes/SampleScene.unity" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Script/MonoBehaviour/UI_Grapple.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Script/MonoBehaviour/UI_Grapple.cs.meta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Shader/Color Circulation.shadergraph" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Shader/Color Circulation.shadergraph" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/Shader/PolyChrome.shadergraph" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/Shader/PolyChrome.shadergraph" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Assets/TextMesh Pro/Resources/Fonts &amp; Materials/LiberationSans SDF - Fallback.asset" beforeDir="false" afterPath="$PROJECT_DIR$/Assets/TextMesh Pro/Resources/Fonts &amp; Materials/LiberationSans SDF - Fallback.asset" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="EmbeddingIndexingInfo">
+    <option name="cachedIndexableFilesCount" value="19" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
+  <component name="NextEditCompletionFeaturesState">
+    <decayedCancelled>
+      <entry key="MS100" value="1.0000000151091737" />
+      <entry key="MS500" value="1.0275355046618075" />
+      <entry key="S2" value="1.786526485692844" />
+      <entry key="S5" value="3.6243325350424813" />
+      <entry key="S10" value="5.215757373050534" />
+      <entry key="S30" value="7.163727075864275" />
+      <entry key="S60" value="10.366260252907082" />
+      <entry key="M2" value="19.752702084258786" />
+      <entry key="M5" value="39.3314276102425" />
+      <entry key="M10" value="52.20324116871046" />
+      <entry key="M15" value="57.687648775384446" />
+      <entry key="M30" value="63.91674488756572" />
+      <entry key="H1" value="67.34412590502383" />
+      <entry key="H2" value="69.1425064931964" />
+      <entry key="H4" value="70.06373579812927" />
+      <entry key="D1" value="70.84290079325694" />
+      <entry key="W1" value="70.97753126938281" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="2.0070342459136E-13" />
+      <entry key="MS500" value="0.002887426623581722" />
+      <entry key="S2" value="0.2318076366088656" />
+      <entry key="S5" value="0.557251306991124" />
+      <entry key="S10" value="0.7465121727177273" />
+      <entry key="S30" value="0.9664801857883883" />
+      <entry key="S60" value="1.5422155415757302" />
+      <entry key="M2" value="3.6108429921118335" />
+      <entry key="M5" value="8.904690869885707" />
+      <entry key="M10" value="12.830721613385322" />
+      <entry key="M15" value="14.582815286023665" />
+      <entry key="M30" value="16.622433936819448" />
+      <entry key="H1" value="17.765480821806758" />
+      <entry key="H2" value="18.370837007611346" />
+      <entry key="H4" value="18.682381798866825" />
+      <entry key="D1" value="18.946636598540483" />
+      <entry key="W1" value="18.99236612950512" />
+    </decayedSelected>
+    <decayedShown>
+      <entry key="MS100" value="6.613913221717877E-8" />
+      <entry key="MS500" value="0.042307545994989454" />
+      <entry key="S2" value="1.1715487090764263" />
+      <entry key="S5" value="3.559509940629623" />
+      <entry key="S10" value="5.547638502104924" />
+      <entry key="S30" value="7.953771112381319" />
+      <entry key="S60" value="11.798792943305767" />
+      <entry key="M2" value="23.27523309732592" />
+      <entry key="M5" value="48.164690327844376" />
+      <entry key="M10" value="64.98422691350395" />
+      <entry key="M15" value="72.23305549898289" />
+      <entry key="M30" value="80.51797475635064" />
+      <entry key="H1" value="85.0982988933725" />
+      <entry key="H2" value="87.5075019714281" />
+      <entry key="H4" value="88.74314846213615" />
+      <entry key="D1" value="89.7890356899159" />
+      <entry key="W1" value="89.96982555783865" />
+    </decayedShown>
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 3,
+  "fromUser": false
+}]]></component>
+  <component name="ProjectId" id="3KShPCY1LNhDtEJ5sY5QJQ10ZYY" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "cidr.known.project.marker": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "feature/kinematic-controller-and-custom-physics-system",
+    "junie.onboarding.icon.badge.shown": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.sourceCode.C#",
+    "to.speed.mode.migration.done": "true",
+    "unity.profiler.toolWindow.autoShown": "true"
+  }
+}]]></component>
+  <component name="RunManager" selected="Attach to Unity Editor.Attach to Unity Editor">
+    <configuration name="Standalone Player" type="RunUnityExe" factoryName="Unity Executable">
+      <option name="EXE_PATH" value="$USER_HOME$/Downloads/13th Build\Hope.exe" />
+      <option name="PROGRAM_PARAMETERS" value="" />
+      <option name="WORKING_DIRECTORY" value="C:\Users\Admin\Downloads\13th Build" />
+      <option name="PASS_PARENT_ENVS" value="1" />
+      <option name="ENV_FILE_PATHS" value="" />
+      <option name="REDIRECT_INPUT_PATH" value="" />
+      <option name="MIXED_MODE_DEBUG" value="0" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Start Unity" type="RunUnityExe" factoryName="Unity Executable">
+      <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\6000.3.8f1\Editor\Unity.exe" />
+      <option name="PROGRAM_PARAMETERS" value="-projectPath C:\Users\Admin\Hope\My-Hope -debugCodeOptimization" />
+      <option name="WORKING_DIRECTORY" value="C:\Users\Admin\Hope\My-Hope" />
+      <option name="PASS_PARENT_ENVS" value="1" />
+      <option name="ENV_FILE_PATHS" value="" />
+      <option name="REDIRECT_INPUT_PATH" value="" />
+      <option name="MIXED_MODE_DEBUG" value="0" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Unit Tests (batch mode)" type="RunUnityExe" factoryName="Unity Executable">
+      <option name="EXE_PATH" value="C:\Program Files\Unity\Hub\Editor\6000.3.8f1\Editor\Unity.exe" />
+      <option name="PROGRAM_PARAMETERS" value="-runTests -batchmode -projectPath C:\Users\Admin\Hope\My-Hope -testResults Logs/results.xml -logFile Logs/Editor.log -testPlatform EditMode -debugCodeOptimization" />
+      <option name="WORKING_DIRECTORY" value="C:\Users\Admin\Hope\My-Hope" />
+      <option name="PASS_PARENT_ENVS" value="1" />
+      <option name="ENV_FILE_PATHS" value="" />
+      <option name="REDIRECT_INPUT_PATH" value="" />
+      <option name="MIXED_MODE_DEBUG" value="0" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Attach to Unity Editor" type="UNITY_DEBUG_RUN_CONFIGURATION" factoryName="Unity Debug" show_console_on_std_err="false" show_console_on_std_out="false" port="50000" address="localhost" useMixedMode="false">
+      <option name="allowRunningInParallel" value="false" />
+      <option name="listenPortForConnections" value="false" />
+      <option name="pid" />
+      <option name="projectPathOnTarget" />
+      <option name="runtimes">
+        <list />
+      </option>
+      <option name="selectedOptions">
+        <list />
+      </option>
+      <method v="2" />
+    </configuration>
+    <configuration name="Attach to" type="UnityDevicePlayer" factoryName="UnityAttachToDevicePlayer">
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="1819ad6b-6fae-4d0a-a5e6-75aefafeec23" name="Changes" comment="" />
+      <created>1791556852292</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1791556852292</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="UnityProjectConfiguration" hasMinimizedUI="true" />
+  <component name="UnityProjectDiscoverer">
+    <option name="hasUnityReference" value="true" />
+    <option name="unityProject" value="true" />
+    <option name="unityProjectFolder" value="true" />
+  </component>
+  <component name="UnityUnitTestConfiguration" currentTestLauncher="Both" />
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <breakpoint enabled="true" type="DotNet_Exception_Breakpoints">
+          <properties exception="System.OperationCanceledException" breakIfHandledByOtherCode="false" displayValue="System.OperationCanceledException" />
+          <option name="timeStamp" value="1" />
+        </breakpoint>
+        <breakpoint enabled="true" type="DotNet_Exception_Breakpoints">
+          <properties exception="System.Threading.Tasks.TaskCanceledException" breakIfHandledByOtherCode="false" displayValue="System.Threading.Tasks.TaskCanceledException" />
+          <option name="timeStamp" value="2" />
+        </breakpoint>
+        <breakpoint enabled="true" type="DotNet_Exception_Breakpoints">
+          <properties exception="System.Threading.ThreadAbortException" breakIfHandledByOtherCode="false" displayValue="System.Threading.ThreadAbortException" />
+          <option name="timeStamp" value="3" />
+        </breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+</project>
