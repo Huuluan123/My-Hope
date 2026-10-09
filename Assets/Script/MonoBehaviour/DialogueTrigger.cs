@@ -13,6 +13,7 @@ public class DialogueTrigger : MonoBehaviour
 
     [Header("Ink Settings")]
     public string knotName;
+    public string currentLocationName;
 
     [Header("Cutscene Alignment")]
     public Transform standPosition;
@@ -117,14 +118,15 @@ public class DialogueTrigger : MonoBehaviour
         {
             TextAsset loadedInkFile = handle.Result;
 
-            // Truyền file đã load thành công sang cho DialogueManager như bình thường
+            // Truyền file đã load thành công, tên knot, VÀ tên vị trí sang cho DialogueManager
             if (standPosition != null && PlayerController.Instance != null)
             {
-                PlayerController.Instance.MoveToAndFace(standPosition, this.transform, () => DialogueManager.Instance.StartDialogue(loadedInkFile, knotName));
+                PlayerController.Instance.MoveToAndFace(standPosition, this.transform, () =>
+                    DialogueManager.Instance.StartDialogue(loadedInkFile, knotName, currentLocationName));
             }
             else
             {
-                DialogueManager.Instance.StartDialogue(loadedInkFile, knotName);
+                DialogueManager.Instance.StartDialogue(loadedInkFile, knotName, currentLocationName);
             }
         }
         else
@@ -133,7 +135,6 @@ public class DialogueTrigger : MonoBehaviour
             if (PlayerController.Instance != null) PlayerController.Instance.SetState(PlayerState.Idle);
         }
     }
-
     private void ShowIcon(bool show)
     {
         if (iconTransform == null) return;

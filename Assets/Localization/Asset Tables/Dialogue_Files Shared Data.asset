@@ -16,11 +16,19 @@ MonoBehaviour:
   m_TableCollectionNameGuidString: b84974ed2276a8b46a100a48826a390f
   m_Entries:
   - m_Id: 12850429952
-    m_Key: Sam
+    m_Key: Anna
     m_Metadata:
       m_Items: []
   - m_Id: 4410838220800
     m_Key: Dialogue
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10140957973544960
+    m_Key: Frog
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10504752696786944
+    m_Key: VirtualGuy
     m_Metadata:
       m_Items: []
   m_Metadata:
@@ -44,6 +52,14 @@ MonoBehaviour:
           - en
           - vi-VN
         - m_KeyId: 4410838220800
+          m_TableCodes:
+          - en
+          - vi-VN
+        - m_KeyId: 10140957973544960
+          m_TableCodes:
+          - en
+          - vi-VN
+        - m_KeyId: 10504752696786944
           m_TableCodes:
           - en
           - vi-VN

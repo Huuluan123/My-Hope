@@ -1,6 +1,8 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Localization.Settings;
+using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
 public class PauseMenuManager : MonoBehaviour
@@ -240,11 +242,55 @@ public class PauseMenuManager : MonoBehaviour
 
     private void SaveAndExitGame()
     {
-        Debug.Log("Saving and quit...");
+        // 1. Lưu toàn bộ (Cốt truyện + Người chơi)
+        if (WorldStateManager.Instance != null)
+        {
+            WorldStateManager.Instance.SaveGame();
+        }
+
+        // 2. Tắt trạng thái Pause (Nếu bạn đang dùng Time.timeScale = 0 thì nhớ trả về 1)
+        //Time.timeScale = 1f;
+
+        // 3. Thoát ra Main Menu
+        //TransitionManager.Instance.StartCoroutine(LoadLevelRoutine());
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else
-        Application.Quit();
+                Application.Quit();
 #endif
+    }
+
+    private IEnumerator LoadLevelRoutine()
+    {
+        // 1. Kéo màn đen xuống
+        TransitionManager.Instance.PlayStartTransition();
+
+        // 2. CHỜ màn đen kéo xong (Lúc này màn hình đen thui)
+        yield return new WaitForSecondsRealtime(TransitionManager.Instance.transitionTime);
+
+        // THANH TRỪNG PLAYER
+        if (PlayerController.Instance != null)
+        {
+            Destroy(PlayerController.Instance.gameObject);
+        }
+
+        if (MusicManager.Instance != null)
+        {
+            Destroy(MusicManager.Instance.gameObject);
+        }
+
+        if (WorldStateManager.Instance != null)
+        {
+            Destroy(WorldStateManager.Instance.gameObject);
+        }
+
+        // 3. Tiến hành Load Scene mới (Người chơi sẽ không thấy sự giật lag vì màn hình đang đen)
+        SceneManager.LoadScene("Title Screen");
+
+        // BẮT BUỘC: Chờ 1 frame để Unity khởi tạo xong Scene mới, tránh lỗi NullReference
+        yield return null;
+
+        // 4. Kéo màn đen lên để thấy Scene mới
+        TransitionManager.Instance.PlayEndTransition();
     }
 }

@@ -33,6 +33,14 @@ public class SoundManager : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
+
     private EventReference GetEventReference(string soundName)
     {
         foreach (var track in sfxTracks)

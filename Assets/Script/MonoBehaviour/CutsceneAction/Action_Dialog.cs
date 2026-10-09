@@ -16,6 +16,12 @@ public class Action_Dialog : CutsceneAction
     // Hàm này sẽ được gọi từ Timeline thông qua Signal
     public void ActivateDialogue()
     {
+        // BẢO VỆ STATE NGAY LẬP TỨC: Chặn đứng DynamicCutscene nhả quyền về Idle[cite: 7]
+        if (PlayerController.Instance != null)
+        {
+            PlayerController.Instance.SetState(PlayerState.Talking);
+        }
+
         StartCoroutine(Execute());
     }
 

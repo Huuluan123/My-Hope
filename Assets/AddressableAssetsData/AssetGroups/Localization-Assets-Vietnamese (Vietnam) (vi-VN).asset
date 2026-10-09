@@ -15,14 +15,26 @@ MonoBehaviour:
   m_GroupName: Localization-Assets-Vietnamese (Vietnam) (vi-VN)
   m_GUID: bd245f52d3ec2c94da43d17b7a4eca38
   m_SerializeEntries:
-  - m_GUID: 1c3824f5f274e524c93e67a9b07a1681
-    m_Address: VN_Sam
+  - m_GUID: 39a57f98071528f43b323a98ca91bee6
+    m_Address: VN_Dialogue
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale-vi-VN
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 39a57f98071528f43b323a98ca91bee6
-    m_Address: VN_Dialogue
+  - m_GUID: a7a2613abdd78af48ba3b653fd190102
+    m_Address: VN_Frog
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-vi-VN
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: af41e67046ee82e40a47427e7d461582
+    m_Address: VN_Anna
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-vi-VN
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b6b1839c8a2e9eb408996d33cfe7a091
+    m_Address: VN_VirtualGuy
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale-vi-VN

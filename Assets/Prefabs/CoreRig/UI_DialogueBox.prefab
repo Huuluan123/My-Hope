@@ -75,8 +75,8 @@ MonoBehaviour:
   - characterId: Hope
     displayName: Robot
     icon: {fileID: 21300000, guid: f7a312466e347e94dbbbf3f1b439390d, type: 3}
-  - characterId: Boy
-    displayName: Girl
+  - characterId: Anna
+    displayName: Anna
     icon: {fileID: 21300000, guid: 4f948c75da5b86b47be0e593f772bf8a, type: 3}
   - characterId: System
     displayName: System

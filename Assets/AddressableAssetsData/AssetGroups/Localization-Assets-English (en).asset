@@ -15,14 +15,26 @@ MonoBehaviour:
   m_GroupName: Localization-Assets-English (en)
   m_GUID: a6be61771be83f447be85130c01a8c15
   m_SerializeEntries:
+  - m_GUID: 06c7180bdf82ba443adae5c6fdf9aee0
+    m_Address: EN_Frog
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 41197b553daddd2418ddec0082ea0b1b
     m_Address: Dialogue
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale-en
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: cf8955f2db429b24393ff02c0ec7623d
-    m_Address: Sam
+  - m_GUID: 75375c97d37f6e84286a06de6a709a9c
+    m_Address: EN_VirtualGuy
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d0aa6c10e7bde4141a223f2a79431ce9
+    m_Address: EN_Anna
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale-en

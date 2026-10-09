@@ -3,6 +3,18 @@
         {
             "stateName": "Anna_RescueScene",
             "stateValue": true
+        },
+        {
+            "stateName": "Forest_BlockingWall",
+            "stateValue": true
+        },
+        {
+            "stateName": "Forest_RockSpawner",
+            "stateValue": true
+        },
+        {
+            "stateName": "Village_Hard_Challenge_Completed",
+            "stateValue": false
         }
     ]
 }

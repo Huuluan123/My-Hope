@@ -9,20 +9,22 @@ public class StateDependentActivator : MonoBehaviour
     [Tooltip("Tích (True): Object BẬT khi Key True. Bỏ tích (False): Object BẬT khi Key False.")]
     public bool activeWhenStateIsTrue = true;
 
-    private void Start()
+    private void OnEnable()
     {
-        // 1. Kiểm tra an toàn xem có tồn tại bộ não trung tâm không
+        // 1. Kiểm tra xem bộ não trung tâm có tồn tại không
         if (WorldStateManager.Instance == null) return;
 
-        // 2. Đọc trạng thái từ file WorldStateManager của bạn
+        // 2. Đọc trạng thái từ file JSON/RAM
         bool currentState = WorldStateManager.Instance.CheckState(stateKey);
-        //Debug.Log(gameObject.name + " đọc được trạng thái: " + stateKey + " = " + currentState);
-        //Debug.Log("Global State count: " + WorldStateManager.Instance.GetStateCount());
 
-        // 3. Quyết định số phận của Object
-        // Nếu Trạng thái hiện tại khớp với kỳ vọng -> Bật. Nếu nghịch nhau -> Tắt.
+        // 3. Quyết định: Có nên bật không?
         bool shouldBeActive = (currentState == activeWhenStateIsTrue);
 
-        gameObject.SetActive(shouldBeActive);
+        // 4. LỚP PHÒNG THỦ: Nếu RoomManager vừa ép nó bật, nhưng Key bảo nó phải tắt
+        // -> Lập tức tự tắt chính mình đi!
+        if (!shouldBeActive)
+        {
+            gameObject.SetActive(false);
+        }
     }
 }

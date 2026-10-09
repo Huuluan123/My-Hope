@@ -30,6 +30,10 @@ MonoBehaviour:
     m_Localized: "Tho\xE1t"
     m_Metadata:
       m_Items: []
+  - m_Id: 10786963265339392
+    m_Localized: "Xo\xE1 d\u1EEF li\u1EC7u"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

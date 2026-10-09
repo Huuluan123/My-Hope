@@ -1,6 +1,7 @@
 ﻿using Ink.Runtime;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
@@ -163,6 +164,26 @@ public class DialogueManager : MonoBehaviour
         }
     }
 
+    private void BindInkFunction()
+    {
+        // 1. KẾT NỐI HÀM CHECK STATE
+        currentStory.BindExternalFunction("CheckState", (string key) => {
+            return WorldStateManager.Instance.CheckState(key);
+        });
+
+        // 2. KẾT NỐI HÀM SET STATE
+        currentStory.BindExternalFunction("SetState", (string key, bool value) => {
+            WorldStateManager.Instance.SetState(key, value);
+        });
+    }
+
+    private void UnbindInkFunction()
+    {
+        // Hủy kết nối các hàm Ink khi kết thúc hội thoại
+        currentStory.UnbindExternalFunction("CheckState");
+        currentStory.UnbindExternalFunction("SetState");
+    }
+
     #endregion
 
     #region Skip Logic
@@ -192,10 +213,19 @@ public class DialogueManager : MonoBehaviour
 
     #region Dialogue Flow & Ink System
 
-    public void StartDialogue(TextAsset inkJSON, string knotName = "")
+    public void StartDialogue(TextAsset inkJSON, string knotName = "", string locationName = "")
     {
         StopAllCoroutines(); // Dừng mọi Coroutine đang chạy để tránh xung đột PlayerState
         currentStory = new Story(inkJSON.text);
+
+        BindInkFunction();
+
+        // Kiểm tra xem vị trí có được truyền vào không VÀ file INK có chứa biến 'npc_location' không
+        if (!string.IsNullOrEmpty(locationName) && currentStory.variablesState.Contains("npc_location"))
+        {
+            currentStory.variablesState["npc_location"] = locationName;
+            Debug.Log("Set npc_location to: " + locationName);
+        }
 
         if (!string.IsNullOrEmpty(knotName))
         {
@@ -234,7 +264,20 @@ public class DialogueManager : MonoBehaviour
     {
         if (currentStory.canContinue)
         {
-            string text = currentStory.Continue();
+            // 1. Đọc dòng mới từ INK và cắt bỏ khoảng trắng/xuống dòng thừa
+            string text = currentStory.Continue().Trim();
+
+            // 2. BỘ LỌC DÒNG TRỐNG: Nếu text rỗng sau khi Trim
+            if (string.IsNullOrEmpty(text))
+            {
+                // Bỏ qua frame hiện tại và tự động gọi lại hàm này để lấy dòng tiếp theo (hoặc kết thúc)
+                ContinueStory();
+
+                // Return để ngắt không cho chạy xuống các lệnh TypeSentence bên dưới
+                return;
+            }
+
+            // 3. Nếu có chữ đàng hoàng, xử lý tag và hiển thị như bình thường
             HandleTags(currentStory.currentTags);
 
             if (typingCoroutine != null) StopCoroutine(typingCoroutine);
@@ -284,13 +327,23 @@ public class DialogueManager : MonoBehaviour
     IEnumerator EndDialogue()
     {
         isDialogueActive = false;
+        UnbindInkFunction();
 
         // Thu nhỏ hộp thoại
         if (dialogueBox != null) dialogueBox.AddToClassList(hiddenClassName);
 
         yield return new WaitForSeconds(0.3f);
-        PlayerController.Instance.SetState(PlayerState.Idle);
+        if (PlayerController.Instance.GetCurrentState() == PlayerState.Talking)
+        {
+            PlayerController.Instance.SetState(PlayerState.Idle);
+        }
         Debug.Log("Dialogue ended, back to Idle state");
+
+        // 3. LƯU GAME TỰ ĐỘNG (Tùy chọn)
+        //if (WorldStateManager.Instance != null)
+        //{
+        //    WorldStateManager.Instance.SaveGame();
+        //}
     }
 
     #endregion

@@ -27,6 +27,10 @@ MonoBehaviour:
     m_Key: Btn_Exit
     m_Metadata:
       m_Items: []
+  - m_Id: 10786963265339392
+    m_Key: Btn_ClearData
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

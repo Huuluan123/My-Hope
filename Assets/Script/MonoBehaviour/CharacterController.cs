@@ -194,7 +194,7 @@ public class PlayerController : MonoBehaviour
     [Header("Ability Unlocks & Counters")]
     [Tooltip("Maximum number of times to shoot grappling hand while on air")]
     public int maxGrappleCount = 2;
-    private int currentGrappleCount = 0;
+    public int currentGrappleCount = 0;
 
     [Tooltip("Number of air jumps (0 = Normal jump, 1 = Double Jump, 2 = Triple Jump)")]
     public int maxAirJumps = 0;
@@ -210,6 +210,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Respawn Settings")]
     [SerializeField] private Vector2 currentRespawnPoint;
+    public Vector2 CurrentRespawnPoint => currentRespawnPoint;
     [HideInInspector] public float lastSpawnTime;
     //[SerializeField] private float respawnDelay = 1f;
 
@@ -294,6 +295,11 @@ public class PlayerController : MonoBehaviour
 
         // Khởi động hệ thống Fail-safe ngay khi nhân vật xuất hiện
         StartCoroutine(RoomFailSafeRoutine());
+
+        if (WorldStateManager.Instance != null)
+        {
+            WorldStateManager.Instance.ApplyPlayerData();
+        }
     }
 
     void Update()
@@ -732,13 +738,7 @@ public class PlayerController : MonoBehaviour
                 if (targetGrappleNode != null)
                 {
                     // TỚI ĐÍCH LÀ NODE -> BUNG LÊN
-                    velocity.y = targetGrappleNode.boostForce;
-                    velocity.x = 0;
-                    currentGrappleCount--; // Tăng thêm 1 lần phóng tay
-                    SetState(PlayerState.OnAir);
-                    isGrounded = false;
-                    targetGrappleNode = null;
-                    OnJumpPerformed?.Invoke();
+                    OnGrappleNodeHit();
                 }
                 else
                 {
@@ -767,6 +767,24 @@ public class PlayerController : MonoBehaviour
                 if (robotHand != null) robotHand.FinishGrapple();
             }
         }
+    }
+
+    private void OnGrappleNodeHit()
+    {
+        velocity.y = targetGrappleNode.boostForce;
+        velocity.x = 0;
+        currentGrappleCount--; // Tăng thêm 1 lần phóng tay
+        SetState(PlayerState.OnAir);
+        isGrounded = false;
+        targetGrappleNode = null;
+        OnJumpPerformed?.Invoke();
+    }
+
+    public void TriggerInstantGrappleNode(GrappleNode node)
+    {
+        targetGrappleNode = node;
+        grappleTarget = Vector2.zero; // Dọn dẹp điểm đích ảo
+        OnGrappleNodeHit();           // Kích hoạt nhảy ngay lập tức!
     }
 
     private void HandleSpriteVisuals()

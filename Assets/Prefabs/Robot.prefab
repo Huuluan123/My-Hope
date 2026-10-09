@@ -309,6 +309,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4173589304260275096}
   - component: {fileID: 4090278362527798425}
+  - component: {fileID: 2249169410496034838}
   - component: {fileID: 4281691145552618231}
   - component: {fileID: 8956947129648316345}
   - component: {fileID: 4130702267417256148}
@@ -352,6 +353,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3a68f747430fe7439f57d16ddcd0b2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
+  spriteTransform: {fileID: 6807826442064273302}
+  scaleLerpSpeed: 10
   moveSpeed: 10
   jumpForce: 18.4
   variableJumpHeightMultiplier: 0.5
@@ -378,7 +381,7 @@ MonoBehaviour:
   wallClimbDownSpeed: 8
   ledgeSlipSpeed: 8
   wallJumpForce: {x: 12, y: 18.4}
-  wallClimbJumpForceY: 15
+  wallClimbJumpForceY: 18.4
   neutralWallJumpForce: {x: 7, y: 18.4}
   neutralJumpStaminaCost: 10
   maxStamina: 100
@@ -414,6 +417,7 @@ MonoBehaviour:
   jumpTime: 0
   downInputBufferTime: 0.05
   maxGrappleCount: 2
+  currentGrappleCount: 0
   maxAirJumps: 0
   oneWayDropGhostTime: 0.2
   currentRespawnPoint: {x: 0, y: 0}
@@ -425,6 +429,19 @@ MonoBehaviour:
   currentRoom: {fileID: 0}
   stuckTimeout: 3
   mapBottom: -50
+--- !u!114 &2249169410496034838
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6637554587361826721}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d12a7637d374d442a1c337ae4251a75, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerWallet
+  currentCoins: 0
 --- !u!114 &4281691145552618231
 MonoBehaviour:
   m_ObjectHideFlags: 0
