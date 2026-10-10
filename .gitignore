@@ -28,3 +28,4 @@ Thumbs.db
 *.log
 fmod_editor.log
 Assets/Plugins/FMOD/Cache/
+.aider*

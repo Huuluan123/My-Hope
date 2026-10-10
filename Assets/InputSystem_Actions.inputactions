@@ -505,6 +505,17 @@
                 },
                 {
                     "name": "",
+                    "id": "9b8a9605-248d-47c3-95d2-6c7c140f04fd",
+                    "path": "<DualShockGamepad>/touchpadButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Pause",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "1085e753-c287-4bcb-8117-7131cd6f514e",
                     "path": "<Keyboard>/z",
                     "interactions": "",
@@ -1065,6 +1076,17 @@
                     "name": "",
                     "id": "cefd6786-f399-499a-8241-7f656459c625",
                     "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Pause",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d87e3351-3309-4225-ad35-fc0cb7901498",
+                    "path": "<DualShockGamepad>/touchpadButton",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
