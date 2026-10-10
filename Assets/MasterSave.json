@@ -2,13 +2,13 @@
     "playerData": {
         "hasSavedPosition": true,
         "savedRespawnPoint": {
-            "x": 182.0283203125,
-            "y": 27.52466583251953
+            "x": 594.110107421875,
+            "y": 22.459999084472658
         },
         "savedMaxAirJumps": 0,
         "savedMaxGrappleCount": 2,
         "spawnScene": 1,
-        "savedCoins": 95
+        "savedCoins": 100
     },
     "worldStates": [
         {

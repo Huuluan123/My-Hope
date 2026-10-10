@@ -7,10 +7,10 @@ public class Coin : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.CompareTag("Player"))
+        if (other.TryGetComponent<PlayerWallet>(out PlayerWallet playerWallet))
         {
-            PlayerController.Instance.gameObject.GetComponent<PlayerWallet>().AddMoney(moneyAmountToAdd);
-            Destroy(gameObject);
+            playerWallet.AddMoney(moneyAmountToAdd);
+            Destroy(gameObject); // Destroy the coin after collection
         }
     }
 }
