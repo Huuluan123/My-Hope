@@ -46,7 +46,7 @@ public class RescueTimelineReceiver : MonoBehaviour
         if (playerAnimator != null) playerAnimator.speed = 0f;
         if (npcAnimator != null) npcAnimator.speed = 0f;
 
-        CharacterInput input = PlayerController.Instance.GetComponent<CharacterInput>();
+        PlayerInput input = PlayerController.Instance.GetComponent<PlayerInput>();
 
         QTEManager.Instance.StartQTE(
             inputCondition: () => input.GrappleWasPressedThisFrame,

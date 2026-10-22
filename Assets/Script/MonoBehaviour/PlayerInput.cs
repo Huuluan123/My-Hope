@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class CharacterInput : MonoBehaviour
+public class PlayerInput : MonoBehaviour
 {
     public InputAction moveAction;
     public InputAction jumpAction;

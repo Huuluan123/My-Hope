@@ -6,7 +6,6 @@ using Unity.VisualScripting;
 using UnityEditor.Experimental.GraphView;
 #endif
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 
 public enum PlayerState
@@ -222,11 +221,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private LayerMask collisionMask;
     private RayCastOrigin rayCastOrigins;
     private RaycastHit2D[] hits = new RaycastHit2D[4]; // Mảng để lưu trữ kết quả quét va chạm
+    private Collider2D[] overlapResults = new Collider2D[5];
 
     private DialogueTrigger currentDialogueTrigger; // Biến tham chiếu đến NPC hiện tại
     private Rigidbody2D rb;
 
-    private CharacterInput input;
+    private PlayerInput input;
     [HideInInspector] public RoomManager currentRoom;
     private CutsceneSequence pendingSequence;
 
@@ -263,9 +263,9 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // Lấy hoặc thêm component CharacterInput
-        input = GetComponent<CharacterInput>();
-        if (input == null) input = gameObject.AddComponent<CharacterInput>();
+        // Lấy hoặc thêm component PlayerInput
+        input = GetComponent<PlayerInput>();
+        if (input == null) input = gameObject.AddComponent<PlayerInput>();
 
         rb = GetComponent<Rigidbody2D>();
         col = GetComponent<BoxCollider2D>();
@@ -396,10 +396,6 @@ public class PlayerController : MonoBehaviour
                 lastDownInputTime = Time.time;
             }
 
-            if (CanMove)
-                CalculateHorizontalMovement();
-            else
-                velocity.x = 0;
         }
 
         // --- 1. POLLING: NHẢY (JUMP) ---
@@ -473,7 +469,15 @@ public class PlayerController : MonoBehaviour
 
         if (ignoreOneWayTimer > 0)
         {
-            ignoreOneWayTimer -= Time.deltaTime;
+            ignoreOneWayTimer -= Time.fixedDeltaTime;
+        }
+
+        if (!IsInputDisabled)
+        {
+            if (CanMove)
+                CalculateHorizontalMovement();
+            else
+                velocity.x = 0;
         }
 
         // Process jump buffer & coyote here (FixedUpdate) so ground checks are up-to-date
@@ -924,8 +928,8 @@ public class PlayerController : MonoBehaviour
         }
 
         // 3. Áp dụng công thức MoveTowards
-        // Nó sẽ thay đổi velocity.x tiến về targetSpeed một lượng bằng (currentAccel * Time.deltaTime)
-        velocity.x = Mathf.MoveTowards(velocity.x, targetSpeed, currentAccel * Time.deltaTime);
+        // Nó sẽ thay đổi velocity.x tiến về targetSpeed một lượng bằng (currentAccel * Time.fixedDeltaTime)
+        velocity.x = Mathf.MoveTowards(velocity.x, targetSpeed, currentAccel * Time.fixedDeltaTime);
     }
 
     // Hàm gọi Player tự động đi đến vị trí và quay mặt
@@ -1104,30 +1108,6 @@ public class PlayerController : MonoBehaviour
 
     #region Jump Handling
     // Phương thức xử lý nhảy input: chỉ lưu thời điểm ấn để dùng jump buffer
-    private void OnJump(InputAction.CallbackContext context)
-    {
-        if (GameManager.Instance.State == GameState.Pause) return;
-
-        if (!CanMove && currentState != PlayerState.Talking) return;
-
-        if (context.performed)
-        {
-            lastJumpInputTime = Time.time;
-        }
-    }
-
-    private void OnJumpCanceled(InputAction.CallbackContext context)
-    {
-        if (GameManager.Instance.State == GameState.Pause) return;
-
-        // Chỉ thực hiện khi đang bay lên (velocity.y > 0)
-        // Không áp dụng khi đang rơi hoặc đang đứng yên
-        if (velocity.y > 0)
-        {
-            velocity.y = velocity.y * variableJumpHeightMultiplier;
-        }
-    }
-
     private void ProcessJumpBuffer()
     {
         // 1. Kiểm tra xem có lệnh nhảy hợp lệ đang chờ không
@@ -1232,8 +1212,8 @@ public class PlayerController : MonoBehaviour
             {
                 // NEUTRAL WALL JUMP
                 // Đẩy ngược hướng tường với lực Jump bình thường
-                velocity.x = -wallDir * wallJumpForce.x;
-                velocity.y = wallJumpForce.y;
+                velocity.x = -wallDir * neutralWallJumpForce.x;
+                velocity.y = neutralWallJumpForce.y;
 
                 // Áp dụng hình phạt thể lực
                 currentStamina -= neutralJumpStaminaCost;
@@ -1473,36 +1453,6 @@ public class PlayerController : MonoBehaviour
     #endregion
 
     #region Grabbling Handling
-    private void OnGrappleInput(InputAction.CallbackContext context)
-    {
-        if (GameManager.Instance.State == GameState.Pause) return;
-
-        // Chặn nếu đang bận, đang dừng hình, hoặc đang bị kéo
-        if (!CanMove || currentState == PlayerState.GrappleFreeze || currentState == PlayerState.Grappling) return;
-
-        if (context.performed)
-        {
-            // Check if can talk to NPC
-            if (currentState == PlayerState.Idle && currentDialogueTrigger != null)
-            {
-                currentDialogueTrigger.TriggerDialogue();
-
-                // Dừng lại ở đây, KHÔNG thực hiện code nhảy bên dưới
-                return;
-            }
-
-            if (!isGrounded && currentGrappleCount >= maxGrappleCount)
-            {
-                Debug.Log("All attempts to shoot grappling hand on air have been used up!");
-                return;
-            }
-
-            if (!isGrounded) currentGrappleCount++;
-
-            StartCoroutine(PerformGrappleWithLeniency());
-        }
-    }
-
     private IEnumerator PerformGrappleWithLeniency()
     {
         OnShootHand?.Invoke();
@@ -1671,11 +1621,19 @@ public class PlayerController : MonoBehaviour
     //Set trạng thái của người chơi
     public void SetState(PlayerState newState)
     {
+        if (currentState == newState) return;
+
         // NẾU state cũ đang là Grappling/Freeze MÀ state mới bị ép đổi sang cái khác (vd: OnAir do dẫm lò xo)
         bool wasGrappling = (currentState == PlayerState.Grappling || currentState == PlayerState.GrappleFreeze);
         bool isChangingAway = (newState != PlayerState.Grappling && newState != PlayerState.GrappleFreeze);
+        bool wasWallClimbing = currentState == PlayerState.Climbing;
 
         currentState = newState;
+
+        if (wasWallClimbing && newState != PlayerState.Climbing)
+        {
+            isWallClimbing = false;
+        }
 
         if (wasGrappling && isChangingAway)
         {
@@ -1866,7 +1824,7 @@ public class PlayerController : MonoBehaviour
     private void EmergencyReset()
     {
         // 1. Dừng mọi luồng Coroutine đang chạy ngầm (AutoWalk, v.v.)
-        StopAllCoroutines();
+        StopCoroutinesAndRestartRoomFailSafe();
 
         // 2. Thu hồi Grappling Hook (nếu tay xích đang kẹt trong tường)
         if (robotHand != null) robotHand.FinishGrapple();
@@ -1893,7 +1851,7 @@ public class PlayerController : MonoBehaviour
     // Xử lý Unity Timeline
     public void OnTimelineStart()
     {
-        StopAllCoroutines(); // Dừng hết mọi Coroutine đang chạy (tránh xung đột với AutoWalk hoặc các hiệu ứng thời gian khác có thể ghi đè PlayerState)
+        StopCoroutinesAndRestartRoomFailSafe(); // Dừng các Coroutine đang chạy nhưng giữ lại RoomFailSafeRoutine
         // Đưa vào nhóm State bị cấm Input và cấm Vật lý
         SetState(PlayerState.ScriptedMove);
         velocity = Vector3.zero;
@@ -1910,6 +1868,12 @@ public class PlayerController : MonoBehaviour
         isGrounded = false;
     }
     #endregion
+
+    private void StopCoroutinesAndRestartRoomFailSafe()
+    {
+        StopAllCoroutines();
+        StartCoroutine(RoomFailSafeRoutine());
+    }
 
     #region Room Transition Fail-safe
     private IEnumerator RoomFailSafeRoutine()
@@ -2314,25 +2278,24 @@ public class PlayerController : MonoBehaviour
     // Hàm để giải quyết việc nhân vật bị lồng vào vật thể
     void ResolveOverlap()
     {
-        Collider2D[] results = new Collider2D[5];
         ContactFilter2D filter = new ContactFilter2D();
         filter.SetLayerMask(collisionMask);
         filter.useTriggers = false;
 
-        int count = col.Overlap(filter, results);
+        int count = col.Overlap(filter, overlapResults);
 
         for (int i = 0; i < count; i++)
         {
             // Không đẩy nhân vật ra nếu đang xuyên qua nền One-way
-            if (results[i].CompareTag("OneWay")) continue;
+            if (overlapResults[i].CompareTag("OneWay")) continue;
 
             // Bỏ qua va chạm với Pushable đang cầm để chống giật khi kéo!
             if (currentState == PlayerState.Pushing && currentPushable != null)
             {
-                if (results[i].transform == ((Component)currentPushable).transform) continue;
+                if (overlapResults[i].transform == ((Component)currentPushable).transform) continue;
             }
 
-            ColliderDistance2D diff = col.Distance(results[i]);
+            ColliderDistance2D diff = col.Distance(overlapResults[i]);
             if (diff.isOverlapped)
             {
                 float overlapThreshold = skinWidth + 0.01f;
@@ -2357,6 +2320,8 @@ public class PlayerController : MonoBehaviour
                 }
             }
         }
+
+        Array.Clear(overlapResults, 0, overlapResults.Length);
     }
 #endregion
 
@@ -2473,15 +2438,14 @@ public class PlayerController : MonoBehaviour
     private IEnumerator RespawnRoutine()
     {
         // Kích hoạt ANIMATION START
-        if (TransitionManager.Instance != null)
+        TransitionManager transitionManager = TransitionManager.Instance;
+        if (transitionManager != null)
         {
-            TransitionManager.Instance.PlayStartTransition();
+            transitionManager.PlayStartTransition();
+            yield return new WaitForSeconds(transitionManager.transitionTime);
         }
 
         // --- BẮT ĐẦU HỒI SINH ---
-
-        // Đợi cho Animation Start chạy xong
-        yield return new WaitForSeconds(TransitionManager.Instance.transitionTime);
 
         // ANIMATION START đã xong, giờ mới cho nhân vật hiện lại và hồi sinh thực sự
 
@@ -2496,7 +2460,8 @@ public class PlayerController : MonoBehaviour
         lastSpawnTime = Time.unscaledTime;
 
         // 3. ÉP CINEMACHINE DỊCH CHUYỂN TỨC THỜI (SNAP)
-        CinemachineBrain brain = Camera.main.GetComponent<CinemachineBrain>();
+        Camera mainCamera = Camera.main;
+        CinemachineBrain brain = mainCamera != null ? mainCamera.GetComponent<CinemachineBrain>() : null;
         if (brain != null && brain.ActiveVirtualCamera is CinemachineCamera activeCam)
         {
             // Báo cho camera biết mục tiêu vừa bị "dịch chuyển tức thời" một khoảng delta

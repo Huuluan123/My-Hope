@@ -57,6 +57,7 @@ public class PlayerAnimation : MonoBehaviour
         // Cú pháp: Tên_Event -= Tên_Hàm_Xử_Lý (Ngược lại với OnEnable)
         controller.OnJumpPerformed -= PlayJump;
         controller.OnLanded -= PlayLand;
+        controller.OnShootHand -= PlayHand;
         controller.OnRunChanged -= SetRunState;
         controller.OnWallGrabChanged -= SetWallGrab;
         controller.OnClimbChanged -= SetClimb;
