@@ -2,24 +2,56 @@ using UnityEngine;
 
 public class StateObjectDeactivator : MonoBehaviour
 {
-    [Header("State save (Optional)")]
-    [Tooltip("Nếu điền Key vào đây, khi bị tắt nó sẽ tự động lưu lại vào WorldStateManager để biến mất vĩnh viễn.")]
-    public string saveKeyOnDeactivate;
+    [Header("State condition")]
+    public string watchStateKey;
     public bool targetStateValueOnDeactivate = false;
 
-    public void Deactivate()
-    {
-        // 1. Tắt vật thể (Hình ảnh, Va chạm)
-        gameObject.SetActive(false);
+    [Header("State save (Optional)")]
+    [Tooltip("Nếu điền Key vào đây, khi bị tắt nó sẽ tự động lưu lại vào WorldStateManager.")]
+    public string saveKeyOnDeactivate;
 
-        // 2. Tự động báo cáo cho "Bộ Não" để lần sau load game nó không hiện ra nữa
-        if (!string.IsNullOrEmpty(saveKeyOnDeactivate) && WorldStateManager.Instance != null)
+    private void OnEnable()
+    {
+        EventBus.Subscribe("OnWorldStateChanged", CheckForDeactivate);
+    }
+
+    private void OnDisable()
+    {
+        EventBus.Unsubscribe("OnWorldStateChanged", CheckForDeactivate);
+    }
+
+    public void CheckForDeactivate(object obj)
+    {
+        if (obj is not WorldStateChangedEvent stateEvent)
         {
-            WorldStateManager.Instance.SetState(saveKeyOnDeactivate, targetStateValueOnDeactivate);
+            return;
+        }
+
+        if (stateEvent.Key != watchStateKey)
+        {
+            return;
+        }
+
+        if (stateEvent.Value == targetStateValueOnDeactivate)
+        {
+            Deactivate();
         }
     }
 
-    // BONUS: Thêm một hàm tắt từ từ bằng Coroutine nếu bạn không muốn xài Animation
+    public void Deactivate()
+    {
+        gameObject.SetActive(false);
+
+        if (!string.IsNullOrEmpty(saveKeyOnDeactivate)
+            && WorldStateManager.Instance != null)
+        {
+            WorldStateManager.Instance.SetState(
+                saveKeyOnDeactivate,
+                targetStateValueOnDeactivate
+            );
+        }
+    }
+
     public void DeactivateWithDelay(float delayTime)
     {
         StartCoroutine(DeactivateRoutine(delayTime));

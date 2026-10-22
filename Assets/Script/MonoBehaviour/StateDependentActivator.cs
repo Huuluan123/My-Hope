@@ -2,11 +2,11 @@ using UnityEngine;
 
 public class StateDependentActivator : MonoBehaviour
 {
-    [Header("Cấu hình Trạng thái")]
-    [Tooltip("Gõ chính xác Key trong WorldStateManager. VD: NPC_Guide_01")]
+    [Header("State Configuration")]
+    [Tooltip("Type the state key (e.g., NPC_Guide_01)")]
     public string stateKey;
 
-    [Tooltip("Tích (True): Object BẬT khi Key True. Bỏ tích (False): Object BẬT khi Key False.")]
+    [Tooltip("Tick (True): Object ENABLED when Key is True. Untick (False): Object ENABLED when Key is False.")]
     public bool activeWhenStateIsTrue = true;
 
     private void OnEnable()

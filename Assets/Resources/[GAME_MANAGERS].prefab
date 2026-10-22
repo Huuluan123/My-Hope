@@ -227,9 +227,13 @@ MonoBehaviour:
     stateValue: 0
   - stateName: VirtualGuy_Met
     stateValue: 0
+  - stateName: Tutorial_Show
+    stateValue: 1
   visibleStates:
   - stateName: Anna_RescueScene
     stateValue: 1
+  - stateName: Anna_HardChallenge_Talked
+    stateValue: 0
   - stateName: Forest_BlockingWall
     stateValue: 1
   - stateName: Forest_RockSpawner
@@ -238,12 +242,15 @@ MonoBehaviour:
     stateValue: 0
   - stateName: VirtualGuy_Met
     stateValue: 0
+  - stateName: Tutorial_Show
+    stateValue: 1
   currentPlayerSave:
     hasSavedPosition: 0
     savedRespawnPoint: {x: 0, y: 0}
     savedMaxAirJumps: 0
     savedMaxGrappleCount: 2
     spawnScene: 1
+    savedCoins: 0
 --- !u!1001 &8593842173576746017
 PrefabInstance:
   m_ObjectHideFlags: 0

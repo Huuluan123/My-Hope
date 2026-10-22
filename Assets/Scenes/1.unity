@@ -1972,11 +1972,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4892436201671028652, guid: 620c016501565bc48ad5b589318b33c7, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -12.793875
+      value: 246.13614
       objectReference: {fileID: 0}
     - target: {fileID: 4892436201671028652, guid: 620c016501565bc48ad5b589318b33c7, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -3.7917662
+      value: 32.03823
       objectReference: {fileID: 0}
     - target: {fileID: 7419765808580983041, guid: 620c016501565bc48ad5b589318b33c7, type: 3}
       propertyPath: m_Name
@@ -3003,6 +3003,8 @@ GameObject:
   - component: {fileID: 538775129}
   - component: {fileID: 538775131}
   - component: {fileID: 538775130}
+  - component: {fileID: 538775134}
+  - component: {fileID: 538775133}
   - component: {fileID: 538775132}
   m_Layer: 0
   m_Name: Village_Hard_Challenge_Completed
@@ -3038,7 +3040,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72ab49ac217e7bf4988f8df95ab3df20, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldStateTrigger
-  stateKey: Village_Hard_Challenge_Completed
+  stateKey: Village_HardChallengeCompleted
   targetStateValue: 1
 --- !u!61 &538775131
 BoxCollider2D:
@@ -3102,7 +3104,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 538775130}
-        m_TargetAssemblyTypeName: WorldStateTrigger, Assembly-CSharp
+        m_TargetAssemblyTypeName: Trigger_WorldStateChange, Assembly-CSharp
         m_MethodName: TriggerStateChange
         m_Mode: 1
         m_Arguments:
@@ -3113,30 +3115,35 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 1144500597}
-        m_TargetAssemblyTypeName: StateObjectDeactivator, Assembly-CSharp
-        m_MethodName: Deactivate
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 1638840576}
-        m_TargetAssemblyTypeName: StateObjectDeactivator, Assembly-CSharp
-        m_MethodName: Deactivate
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+--- !u!114 &538775133
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 538775128}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab1ecc97a11cff441ac823006796ce30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StateObjectDeactivator
+  watchStateKey: Village_HardChallengeCompleted
+  targetStateValueOnDeactivate: 1
+  saveKeyOnDeactivate: 
+--- !u!114 &538775134
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 538775128}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82990449b9da09644b198f2cc1b31218, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StateDependentActivator
+  stateKey: Village_HardChallengeCompleted
+  activeWhenStateIsTrue: 0
 --- !u!1001 &546769409
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -232117,7 +232124,7 @@ GameObject:
   - component: {fileID: 1144500593}
   - component: {fileID: 1144500592}
   - component: {fileID: 1144500598}
-  - component: {fileID: 1144500597}
+  - component: {fileID: 1144500599}
   m_Layer: 6
   m_Name: Hidden_Ground
   m_TagString: Ground
@@ -232596,20 +232603,6 @@ Tilemap:
     e31: 0
     e32: 0
     e33: 1
---- !u!114 &1144500597
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1144500590}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ab1ecc97a11cff441ac823006796ce30, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::StateObjectDeactivator
-  saveKeyOnDeactivate: Village_HardChallengeCompleted
-  targetStateValueOnDeactivate: 1
 --- !u!114 &1144500598
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -232624,6 +232617,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StateDependentActivator
   stateKey: Village_HardChallengeCompleted
   activeWhenStateIsTrue: 0
+--- !u!114 &1144500599
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1144500590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab1ecc97a11cff441ac823006796ce30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StateObjectDeactivator
+  watchStateKey: Village_HardChallengeCompleted
+  targetStateValueOnDeactivate: 1
+  saveKeyOnDeactivate: 
 --- !u!4 &1146679466 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2028002686936563236, guid: e2e594ba7c921c3439c8fb3a157a0c70, type: 3}
@@ -232907,11 +232915,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2894394463508414549, guid: 205ffbc8e31dc4d4d9c5851c774f9194, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 15.0094795
+      value: 76.56399
       objectReference: {fileID: 0}
     - target: {fileID: 2894394463508414549, guid: 205ffbc8e31dc4d4d9c5851c774f9194, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 8.922387
+      value: 8.971447
       objectReference: {fileID: 0}
     - target: {fileID: 2894394463508414549, guid: 205ffbc8e31dc4d4d9c5851c774f9194, type: 3}
       propertyPath: m_LocalPosition.z
@@ -233733,11 +233741,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 4173589304260275096, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.17
+      value: 260.1
       objectReference: {fileID: 0}
     - target: {fileID: 4173589304260275096, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2.77
+      value: 38.6
       objectReference: {fileID: 0}
     - target: {fileID: 4173589304260275096, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -234662,7 +234670,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: -1772190007489299190, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
@@ -234671,27 +234680,13 @@ PrefabInstance:
       addedObject: {fileID: 1638840577}
     - targetCorrespondingSourceObject: {fileID: 6238309195579578766, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1638840576}
+      addedObject: {fileID: 1638840582}
   m_SourcePrefab: {fileID: 100100000, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
 --- !u!1 &1638840575 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6238309195579578766, guid: 13dd19c7f5943f04890df96cde87877c, type: 3}
   m_PrefabInstance: {fileID: 1631720644}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1638840576
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1638840575}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ab1ecc97a11cff441ac823006796ce30, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::StateObjectDeactivator
-  saveKeyOnDeactivate: Village_HardChallengeCompleted
-  targetStateValueOnDeactivate: 1
 --- !u!114 &1638840577
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -234706,6 +234701,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StateDependentActivator
   stateKey: Village_HardChallengeCompleted
   activeWhenStateIsTrue: 0
+--- !u!114 &1638840582
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1638840575}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab1ecc97a11cff441ac823006796ce30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StateObjectDeactivator
+  watchStateKey: Village_HardChallengeCompleted
+  targetStateValueOnDeactivate: 1
+  saveKeyOnDeactivate: 
 --- !u!1001 &1660960477
 PrefabInstance:
   m_ObjectHideFlags: 0

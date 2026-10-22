@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-public class EventInvoker : MonoBehaviour
+public class Trigger_EventInvoker : MonoBehaviour
 {
     public UnityEvent eventToInvoke;
 

@@ -2,13 +2,13 @@
     "playerData": {
         "hasSavedPosition": true,
         "savedRespawnPoint": {
-            "x": 594.110107421875,
-            "y": 22.459999084472658
+            "x": 182.0283203125,
+            "y": 27.52466583251953
         },
         "savedMaxAirJumps": 0,
         "savedMaxGrappleCount": 2,
         "spawnScene": 1,
-        "savedCoins": 100
+        "savedCoins": 10
     },
     "worldStates": [
         {
@@ -36,8 +36,8 @@
             "stateValue": true
         },
         {
-            "stateName": "Village_Hard_Challenge_Completed",
-            "stateValue": true
+            "stateName": "Tutorial_Show",
+            "stateValue": false
         }
     ]
 }

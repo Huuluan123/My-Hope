@@ -406,6 +406,7 @@ GameObject:
   - component: {fileID: 8036628457427311872}
   - component: {fileID: 5582864934114671772}
   - component: {fileID: 6597022590050069371}
+  - component: {fileID: -1772190007489299190}
   m_Layer: 0
   m_Name: UI_Sign
   m_TagString: Untagged
@@ -490,3 +491,17 @@ MonoBehaviour:
   signContainer: {fileID: 726369445533974733}
   promptText: {fileID: 2228437378687686633}
   duration: 0.3
+--- !u!114 &-1772190007489299190
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6238309195579578766}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 82990449b9da09644b198f2cc1b31218, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StateDependentActivator
+  stateKey: Tutorial_Show
+  activeWhenStateIsTrue: 1
