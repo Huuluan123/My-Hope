@@ -11977,6 +11977,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 4090278362527798425, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
+      propertyPath: maxDashes
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4173589304260275096, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
       propertyPath: m_LocalPosition.x
       value: 452.1
@@ -12016,6 +12020,10 @@ PrefabInstance:
     - target: {fileID: 4173589304260275096, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4281691145552618231, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
+      propertyPath: dashAction.m_Name
+      value: Dash
       objectReference: {fileID: 0}
     - target: {fileID: 6637554587361826721, guid: 37e56895595e04b46b027486e1e7a27a, type: 3}
       propertyPath: m_Name

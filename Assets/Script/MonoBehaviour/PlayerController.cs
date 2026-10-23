@@ -16,6 +16,7 @@ public enum PlayerState
     Sliding,
     Climbing,
     Pushing,
+    Dashing,
 
     /* Nhóm khoá input */
     GrappleFreeze,
@@ -199,6 +200,21 @@ public class PlayerController : MonoBehaviour
     public int maxAirJumps = 0;
     private int currentAirJumps = 0;
 
+    [Header("Horizontal Dash & Super Jump")]
+    public int maxDashes = 0;
+    private int currentDashes = 0;
+    [SerializeField] private float dashSpeed = 24f;
+    [SerializeField] private float dashTime = 0.15f;
+    [SerializeField] private float dashCooldown = 0.2f;
+    [SerializeField] private float dashRechargeTime = 5f;
+    [SerializeField] private float superJumpBoostX = 1.2f;
+    [SerializeField] private float dashAttackTime = 0.3f; // Cửa sổ thời gian cho phép Super Jump
+    private float dashAttackTimer;
+    private float dashCooldownTimer;
+    private float dashRechargeTimer;
+    private int dashDirX;
+    private Coroutine dashCoroutine;
+
     [Header("Moving Platform Handle")]
     private Transform currentMovingPlatform;
     private Vector3 lastPlatformPosition;
@@ -299,12 +315,46 @@ public class PlayerController : MonoBehaviour
         if (WorldStateManager.Instance != null)
         {
             WorldStateManager.Instance.ApplyPlayerData();
+            currentDashes = maxDashes;
         }
     }
 
     void Update()
     {
         if (GameManager.Instance.State == GameState.Pause) return;
+
+        // Giảm timer cooldown Dash
+        if (dashCooldownTimer > 0f)
+        {
+            dashCooldownTimer -= Time.deltaTime;
+        }
+
+        if (dashAttackTimer > 0f) dashAttackTimer -= Time.deltaTime;
+
+        // Logic hồi Dash độc lập 5 giây
+        if (currentDashes < maxDashes)
+        {
+            if (dashRechargeTimer <= 0f)
+            {
+                dashRechargeTimer = dashRechargeTime;
+            }
+
+            dashRechargeTimer -= Time.deltaTime;
+            if (dashRechargeTimer <= 0f)
+            {
+                currentDashes++;
+                if (currentDashes > maxDashes) currentDashes = maxDashes;
+
+                if (currentDashes < maxDashes)
+                {
+                    dashRechargeTimer = dashRechargeTime;
+                }
+                else
+                {
+                    dashRechargeTimer = 0f;
+                }
+            }
+        }
 
         // Chống rơi ra ngoài bản đồ (Failsafe)
         if (transform.position.y < mapBottom)
@@ -398,10 +448,22 @@ public class PlayerController : MonoBehaviour
 
         }
 
+        // --- 0. POLLING: LƯỚT (DASH) ---
+        if (input != null && input.DashWasPressedThisFrame)
+        {
+            if (maxDashes > 0 && currentDashes > 0 && dashCooldownTimer <= 0f)
+            {
+                if (CanMove || currentState == PlayerState.OnAir)
+                {
+                    StartDash();
+                }
+            }
+        }
+
         // --- 1. POLLING: NHẢY (JUMP) ---
         if (input.JumpWasPressedThisFrame)
         {
-            if (CanMove || currentState == PlayerState.Talking)
+            if (CanMove || currentState == PlayerState.Talking || currentState == PlayerState.Dashing)
             {
                 lastJumpInputTime = Time.time;
             }
@@ -474,7 +536,11 @@ public class PlayerController : MonoBehaviour
 
         if (!IsInputDisabled)
         {
-            if (CanMove)
+            if (currentState == PlayerState.Dashing)
+            {
+                // Vận tốc do DashRoutine quản lý
+            }
+            else if (CanMove)
                 CalculateHorizontalMovement();
             else
                 velocity.x = 0;
@@ -523,7 +589,7 @@ public class PlayerController : MonoBehaviour
             return; // Đứng yên tuyệt đối trên không
         }
 
-        if (!CanMove && currentState != PlayerState.Grappling) return;
+        if (!CanMove && currentState != PlayerState.Grappling && currentState != PlayerState.Dashing) return;
 
         UpdateRayCastOrigin();
 
@@ -550,6 +616,11 @@ public class PlayerController : MonoBehaviour
         else if (currentState == PlayerState.Climbing)
         {
             HandleWallClimbingPhysics();
+        }
+        else if (currentState == PlayerState.Dashing)
+        {
+            // Bypass gravity completely during Dashing
+            velocity.y = 0f;
         }
         else
         {
@@ -627,7 +698,7 @@ public class PlayerController : MonoBehaviour
 
         HorizonalCollisionCheck();
 
-        if (isWallSliding && !isWallClimbing)
+        if (isWallSliding && !isWallClimbing && currentState != PlayerState.Dashing)
         {
             velocity.y = -wallSlideSpeed;
         }
@@ -857,6 +928,11 @@ public class PlayerController : MonoBehaviour
             return; // Thoát hàm ngay, không chạy logic bên dưới
         }
 
+        if (currentState == PlayerState.Dashing)
+        {
+            return;
+        }
+
         if (isWaitingForHopX)
         {
             // Người chơi cố tình bấm phím di chuyển ngược hướng với vách tường
@@ -916,9 +992,16 @@ public class PlayerController : MonoBehaviour
             // Nếu có Input, kiểm tra xem đang Tăng tốc hay Đang quay đầu
             // Nếu Input cùng hướng với vận tốc hiện tại -> Tăng tốc
             // Nếu Input ngược hướng (đang chạy trái mà bấm phải) -> Dùng Deceleration để phanh gấp rồi mới chạy tiếp
-            if (Mathf.Sign(targetSpeed) == Mathf.Sign(velocity.x) && Mathf.Abs(targetSpeed) > Mathf.Abs(velocity.x))
+            if (Mathf.Sign(targetSpeed) == Mathf.Sign(velocity.x))
             {
-                currentAccel = acceleration;
+                if (Mathf.Abs(velocity.x) > Mathf.Abs(targetSpeed) && targetSpeed != 0)
+                {
+                    currentAccel = isGrounded ? deceleration * 0.5f : airDeceleration * 0.25f;
+                }
+                else
+                {
+                    currentAccel = acceleration;
+                }
             }
             else
             {
@@ -1106,6 +1189,68 @@ public class PlayerController : MonoBehaviour
     }
     #endregion
 
+    #region Dash Handling
+    private void StartDash()
+    {
+        currentDashes--;
+        dashCooldownTimer = dashCooldown;
+        dashAttackTimer = dashAttackTime; // Kéo dài cửa sổ nhận Super Jump lên 0.3s
+
+        if (currentDashes == maxDashes - 1)
+        {
+            dashRechargeTimer = dashRechargeTime;
+        }
+
+        if (robotHand != null) robotHand.FinishGrapple();
+        grappleTarget = Vector2.zero;
+
+        if (Mathf.Abs(moveInput.x) > 0.01f)
+        {
+            dashDirX = (int)Mathf.Sign(moveInput.x);
+        }
+        else
+        {
+            dashDirX = (int)Mathf.Sign(transform.localScale.x);
+        }
+
+        Vector3 scale = transform.localScale;
+        scale.x = Mathf.Abs(scale.x) * dashDirX;
+        transform.localScale = scale;
+
+        if (dashCoroutine != null)
+        {
+            StopCoroutine(dashCoroutine);
+        }
+
+        SetState(PlayerState.Dashing);
+
+        // Kích hoạt khựng hình 0.05s
+        StartCoroutine(HitStopRoutine(0.05f));
+
+        dashCoroutine = StartCoroutine(DashRoutine());
+    }
+
+    private IEnumerator DashRoutine()
+    {
+        float startTime = Time.time;
+
+        while (Time.time < startTime + dashTime)
+        {
+            velocity.y = 0f;
+            velocity.x = dashDirX * dashSpeed;
+            yield return null;
+        }
+
+        if (currentState == PlayerState.Dashing)
+        {
+            SetState(PlayerState.OnAir);
+            velocity.x = dashDirX * moveSpeed;
+        }
+
+        dashCoroutine = null;
+    }
+    #endregion
+
     #region Jump Handling
     // Phương thức xử lý nhảy input: chỉ lưu thời điểm ấn để dùng jump buffer
     private void ProcessJumpBuffer()
@@ -1115,6 +1260,30 @@ public class PlayerController : MonoBehaviour
 
         // NẾU KHÔNG CÓ LỆNH NHẢY HOẶC KHÔNG ĐƯỢC PHÉP NHẢY -> Dừng ngay
         if (!hasBufferedJump || !CanJump) return;
+
+        // ƯU TIÊN 0: SUPER JUMP (Nhảy khi đang Dash trên mặt đất)
+        if (dashAttackTimer > 0f && (Time.time - lastGroundedTime <= coyoteTime))
+        {
+            if (dashCoroutine != null)
+            {
+                StopCoroutine(dashCoroutine);
+                dashCoroutine = null;
+            }
+
+            SetState(PlayerState.OnAir);
+            isGrounded = false;
+            velocity.y = jumpForce;
+            velocity.x = dashSpeed * dashDirX * superJumpBoostX;
+
+            lastGroundedTime = -999f;
+            lastJumpInputTime = -999f;
+            dashAttackTimer = 0f; // Reset để tránh nhảy đúp
+
+            OnJumpPerformed?.Invoke();
+            SoundManager.Instance.PlaySound("Jump");
+
+            return;
+        }
 
         // ƯU TIÊN 1: RỚT XUỐNG SÀN (Có Input Forgiveness 0.05s)
         // Chuẩn hóa tuyệt đối: Hướng phải BẰNG 0 (không ấn trái/phải) và Y BẰNG -1 (Kéo gạt hướng xuống dưới)
@@ -1670,7 +1839,8 @@ public class PlayerController : MonoBehaviour
                    currentState == PlayerState.Sliding ||
                    currentState == PlayerState.Climbing ||
                    currentState == PlayerState.Running ||
-                   currentState == PlayerState.OnAir;
+                   currentState == PlayerState.OnAir ||
+                   currentState == PlayerState.Dashing;
         }
     }
 
@@ -1722,7 +1892,7 @@ public class PlayerController : MonoBehaviour
         // Nếu đang bận việc riêng (Talking/Dead) thì không can thiệp
         if (currentState == PlayerState.Talking || currentState == PlayerState.Dead
             || currentState == PlayerState.Grappling || currentState == PlayerState.GrappleFreeze
-            || currentState == PlayerState.ScriptedMove) return;
+            || currentState == PlayerState.ScriptedMove || currentState == PlayerState.Dashing) return;
 
         if (isGrounded)
         {
@@ -1873,6 +2043,13 @@ public class PlayerController : MonoBehaviour
     {
         StopAllCoroutines();
         StartCoroutine(RoomFailSafeRoutine());
+    }
+
+    private IEnumerator HitStopRoutine(float duration)
+    {
+        Time.timeScale = 0f; // Dừng mọi hệ thống vật lý và Time.deltaTime
+        yield return new WaitForSecondsRealtime(duration); // Chờ theo thời gian thực
+        Time.timeScale = 1f;
     }
 
     #region Room Transition Fail-safe
@@ -2475,6 +2652,8 @@ public class PlayerController : MonoBehaviour
         velocity = Vector3.zero;
         currentStamina = maxStamina; // Hồi đầy thể lực
         isGrounded = false; // Bắt buộc false để tính toán lại chạm đất an toàn
+        currentDashes = maxDashes;
+        dashRechargeTimer = 0f;
 
         // Nếu tay móc đang bắn ra, thu hồi lại
         if (robotHand != null) robotHand.FinishGrapple();

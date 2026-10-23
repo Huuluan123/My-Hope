@@ -8,6 +8,7 @@ public class PlayerInput : MonoBehaviour
     public InputAction grappleAction;
     public InputAction attackAction;
     public InputAction grabAction;
+    public InputAction dashAction;
 
     void Awake()
     {
@@ -16,6 +17,7 @@ public class PlayerInput : MonoBehaviour
         grappleAction = InputSystem.actions.FindAction("Grapple");
         attackAction = InputSystem.actions.FindAction("Attack");
         grabAction = InputSystem.actions.FindAction("Grab");
+        dashAction = InputSystem.actions.FindAction("Dash");
     }
 
     // --- CÁC BIẾN TRẠNG THÁI (Giữ đè) ---
@@ -29,6 +31,7 @@ public class PlayerInput : MonoBehaviour
     public bool GrappleWasPressedThisFrame => grappleAction != null && grappleAction.WasPressedThisFrame();
     public bool GrabWasPressedThisFrame => grabAction != null && grabAction.WasPressedThisFrame();
     public bool AttackWasPressedThisFrame => attackAction != null && attackAction.WasPressedThisFrame();
+    public bool DashWasPressedThisFrame => dashAction != null && dashAction.WasPressedThisFrame();
 
     void OnEnable()
     {
@@ -37,6 +40,7 @@ public class PlayerInput : MonoBehaviour
         grappleAction?.Enable();
         attackAction?.Enable();
         grabAction?.Enable();
+        dashAction?.Enable();
     }
 
     void OnDisable()
@@ -46,5 +50,6 @@ public class PlayerInput : MonoBehaviour
         grappleAction?.Disable();
         attackAction?.Disable();
         grabAction?.Disable();
+        dashAction?.Disable();
     }
 }

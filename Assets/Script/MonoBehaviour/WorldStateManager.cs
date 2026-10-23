@@ -29,6 +29,7 @@ public class PlayerSaveData
     public Vector2 savedRespawnPoint = Vector2.zero;
     public int savedMaxAirJumps = 0;
     public int savedMaxGrappleCount = 2;
+    public int savedMaxDashes = 0;
     public int spawnScene = 1;
     public int savedCoins = 0;
 }
@@ -142,6 +143,7 @@ public class WorldStateManager : MonoBehaviour
                 currentPlayerSave.savedRespawnPoint = PlayerController.Instance.CurrentRespawnPoint;
                 currentPlayerSave.savedMaxAirJumps = PlayerController.Instance.maxAirJumps;
                 currentPlayerSave.savedMaxGrappleCount = PlayerController.Instance.maxGrappleCount;
+                currentPlayerSave.savedMaxDashes = PlayerController.Instance.maxDashes;
 
                 // SAVE ECONOMY DATA: Get the current coins from the player's wallet
                 PlayerWallet wallet = PlayerController.Instance.GetComponent<PlayerWallet>();
@@ -245,6 +247,7 @@ public class WorldStateManager : MonoBehaviour
 
         PlayerController.Instance.maxAirJumps = currentPlayerSave.savedMaxAirJumps;
         PlayerController.Instance.maxGrappleCount = currentPlayerSave.savedMaxGrappleCount;
+        PlayerController.Instance.maxDashes = currentPlayerSave.savedMaxDashes;
     }
 
     [ContextMenu("Clear all data (Clear Master)")]
