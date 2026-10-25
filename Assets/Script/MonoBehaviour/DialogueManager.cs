@@ -1,4 +1,4 @@
-﻿using Ink.Runtime;
+using Ink.Runtime;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,16 +14,18 @@ public struct CharacterProfile
     public Sprite icon;
 }
 
-public class DialogueManager : MonoBehaviour
+public class DialogueManager : MonoBehaviour, IActivatableUI
 {
     public static DialogueManager Instance;
 
     [Header("UI Toolkit References")]
     public UIDocument uiDocument;
+    public UILayer GetUILayer() => UILayer.GameMenu;
     private VisualElement dialogueBox;
     private VisualElement characterIcon;
     private Label characterName;
     private Label dialogueArea;
+    private VisualElement choicesContainer;
 
     [Header("Animation Settings")]
     [Tooltip("Tên class USS dùng để ẩn/hiện hộp thoại (vd: dialogue-hidden, hidden-drop)")]
@@ -39,6 +41,8 @@ public class DialogueManager : MonoBehaviour
     private bool isTyping = false;
     private Coroutine typingCoroutine;
     private InputAction nextLineAction;
+    private float lastChoiceSelectTime = -999f;
+    private Button firstChoiceButton;
 
     [Header("Skip UI Settings")]
     public Sprite keyboardIcon; // Icon nút C
@@ -54,15 +58,100 @@ public class DialogueManager : MonoBehaviour
     private bool isHoldingSkip = false;
     private float currentHoldTimer = 0f;
 
+    #region IActivatableUI Implementation
+
+    public UIInputConfig GetInputConfig()
+    {
+        return new UIInputConfig
+        {
+            inputMode = UIInputMode.UIOnly,
+            pauseTime = false,
+            allowPauseToggle = true
+        };
+    }
+
+    public void OnActivate()
+    {
+        if (dialogueBox != null)
+        {
+            dialogueBox.SetEnabled(true);
+        }
+    }
+
+    public void OnPassivate()
+    {
+        if (dialogueBox != null)
+        {
+            dialogueBox.SetEnabled(false);
+        }
+    }
+
+    public void OnDeactivate()
+    {
+        if (choicesContainer != null)
+        {
+            choicesContainer.style.display = DisplayStyle.None;
+            choicesContainer.Clear();
+        }
+        firstChoiceButton = null;
+
+        if (dialogueBox != null)
+        {
+            dialogueBox.AddToClassList(hiddenClassName);
+        }
+    }
+
+    public void FocusDefaultElement()
+    {
+        if (choicesContainer != null && choicesContainer.style.display == DisplayStyle.Flex && firstChoiceButton != null)
+        {
+            choicesContainer.schedule.Execute(() =>
+            {
+                firstChoiceButton.Focus();
+            });
+        }
+    }
+
+    public void ClearFocus()
+    {
+        if (uiDocument != null && uiDocument.rootVisualElement != null)
+        {
+            var focusController = uiDocument.rootVisualElement.focusController;
+            if (focusController != null && focusController.focusedElement != null)
+            {
+                focusController.focusedElement.Blur();
+            }
+        }
+    }
+
+    public void SetSortOrder(int order)
+    {
+        if (uiDocument != null)
+        {
+            uiDocument.sortingOrder = order; // Hoặc uiDocument.panelSettings.sortingOrder
+        }
+    }
+
+    public bool OnBackAction()
+    {
+        // Chặn phím Cancel (B / Esc) không tự ý đóng Dialogue khi đang nói chuyện
+        return true;
+    }
+
+    #endregion
+
     private void Awake()
     {
         if (Instance == null) Instance = this;
 
-        // Tìm action Jump từ hệ thống Input mới
-        nextLineAction = InputSystem.actions.FindAction("Jump");
+        nextLineAction = InputSystem.actions.FindAction("UI/Submit");
         if (nextLineAction == null)
         {
-            Debug.LogError("Can't find Jump Action!");
+            nextLineAction = InputSystem.actions.FindAction("Jump");
+        }
+        if (nextLineAction == null)
+        {
+            Debug.LogError("Can't find UI/Submit or Jump Action!");
         }
     }
 
@@ -75,11 +164,26 @@ public class DialogueManager : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        if (UIStackManager.Instance != null)
+        {
+            UIStackManager.Instance.RemoveUI(this);
+        }
+    }
+
     private void Update()
     {
         // Đồng hồ đếm giờ cho tính năng Hold-to-Skip
         if (isHoldingSkip && isDialogueActive)
         {
+            if (UIStackManager.Instance != null && UIStackManager.Instance.TopUI != (IActivatableUI)this)
+            {
+                isHoldingSkip = false;
+                currentHoldTimer = 0f;
+                return;
+            }
+
             currentHoldTimer += Time.deltaTime;
 
             if (currentHoldTimer >= holdToSkipTime)
@@ -109,12 +213,14 @@ public class DialogueManager : MonoBehaviour
 
         // --- TRUY VẤN UI TOOLKIT ---
         var root = uiDocument.rootVisualElement;
+        root.RegisterCallback<PointerMoveEvent>(OnPointerMove);
         dialogueBox = root.Q<VisualElement>("dialogue-container");
         skipContainer = root.Q<VisualElement>("skip-container");
         skipIcon = root.Q<VisualElement>("skip-icon");
         characterIcon = root.Q<VisualElement>("character-icon");
         characterName = root.Q<Label>("character-name");
         dialogueArea = root.Q<Label>("dialogue-text");
+        choicesContainer = root.Q<VisualElement>("choices-container");
 
         if (skipIcon == null) Debug.LogWarning("Can't find '#skip-icon' in UI Document");
         if (dialogueBox == null) Debug.LogWarning("Can't find '#dialogue-container' in UI Document.");
@@ -137,6 +243,11 @@ public class DialogueManager : MonoBehaviour
         if (InputDeviceManager.Instance != null)
         {
             InputDeviceManager.Instance.OnDeviceChanged -= UpdateSkipIcon;
+        }
+
+        if (uiDocument != null && uiDocument.rootVisualElement != null)
+        {
+            uiDocument.rootVisualElement.UnregisterCallback<PointerMoveEvent>(OnPointerMove);
         }
     }
 
@@ -162,6 +273,12 @@ public class DialogueManager : MonoBehaviour
                 skipIcon.style.backgroundImage = new StyleBackground(keyboardIcon);
                 break;
         }
+    }
+
+    private void OnPointerMove(PointerMoveEvent evt)
+    {
+        if (GameManager.Instance != null && !GameManager.Instance.IsUsingPointer) return;
+        ClearFocus();
     }
 
     private void BindInkFunction()
@@ -191,6 +308,7 @@ public class DialogueManager : MonoBehaviour
     private void OnSkipStarted(InputAction.CallbackContext context)
     {
         if (!isDialogueActive) return;
+        if (UIStackManager.Instance != null && UIStackManager.Instance.TopUI != (IActivatableUI)this) return;
         isHoldingSkip = true; // Bắt đầu đếm giờ
     }
 
@@ -218,6 +336,11 @@ public class DialogueManager : MonoBehaviour
         StopAllCoroutines(); // Dừng mọi Coroutine đang chạy để tránh xung đột PlayerState
         currentStory = new Story(inkJSON.text);
 
+        currentStory.onError += (message, type) =>
+        {
+            Debug.LogWarning($"[Ink {type}] {message}");
+        };
+
         BindInkFunction();
 
         // Kiểm tra xem vị trí có được truyền vào không VÀ file INK có chứa biến 'npc_location' không
@@ -233,19 +356,42 @@ public class DialogueManager : MonoBehaviour
             currentStory.ChoosePathString(knotName);
         }
 
+        if (choicesContainer != null)
+        {
+            choicesContainer.style.display = DisplayStyle.None;
+            choicesContainer.Clear();
+        }
+        firstChoiceButton = null;
+
         isDialogueActive = true;
 
         // Bung hộp thoại ra
         if (dialogueBox != null) dialogueBox.RemoveFromClassList(hiddenClassName);
 
-        PlayerController.Instance.SetState(PlayerState.Talking);
-        Debug.Log("Talking state set");
+        if (PlayerController.Instance != null)
+        {
+            PlayerController.Instance.SetState(PlayerState.Talking);
+            Debug.Log("Talking state set");
+        }
+
+        if (UIStackManager.Instance != null)
+        {
+            UIStackManager.Instance.PushUI(this);
+        }
+        else if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SetDialogueUIMode(true);
+        }
+
         ContinueStory();
     }
 
     private void OnNextLineInput(InputAction.CallbackContext context)
     {
         if (!isDialogueActive) return;
+        if (UIStackManager.Instance != null && UIStackManager.Instance.TopUI != (IActivatableUI)this) return;
+        if (Time.unscaledTime - lastChoiceSelectTime < 0.15f) return;
+        if (choicesContainer != null && choicesContainer.style.display == DisplayStyle.Flex) return;
 
         // Nếu đang gõ chữ mà bấm phím -> Hiện Full chữ ngay lập tức (Tap to Skip Typewriter)
         if (isTyping)
@@ -253,6 +399,10 @@ public class DialogueManager : MonoBehaviour
             StopAllCoroutines();
             dialogueArea.text = currentStory.currentText;
             isTyping = false;
+            if (!currentStory.canContinue && currentStory.currentChoices.Count > 0)
+            {
+                DisplayChoices();
+            }
         }
         else
         {
@@ -264,29 +414,61 @@ public class DialogueManager : MonoBehaviour
     {
         if (currentStory.canContinue)
         {
-            // 1. Đọc dòng mới từ INK và cắt bỏ khoảng trắng/xuống dòng thừa
             string text = currentStory.Continue().Trim();
-
-            // 2. BỘ LỌC DÒNG TRỐNG: Nếu text rỗng sau khi Trim
-            if (string.IsNullOrEmpty(text))
-            {
-                // Bỏ qua frame hiện tại và tự động gọi lại hàm này để lấy dòng tiếp theo (hoặc kết thúc)
-                ContinueStory();
-
-                // Return để ngắt không cho chạy xuống các lệnh TypeSentence bên dưới
-                return;
-            }
-
-            // 3. Nếu có chữ đàng hoàng, xử lý tag và hiển thị như bình thường
+            if (string.IsNullOrEmpty(text)) { ContinueStory(); return; }
             HandleTags(currentStory.currentTags);
-
             if (typingCoroutine != null) StopCoroutine(typingCoroutine);
             typingCoroutine = StartCoroutine(TypeSentence(text));
+        }
+        else if (currentStory.currentChoices.Count > 0)
+        {
+            DisplayChoices();
         }
         else
         {
             StartCoroutine(EndDialogue());
         }
+    }
+
+    private void DisplayChoices()
+    {
+        choicesContainer.style.display = DisplayStyle.Flex;
+        choicesContainer.Clear();
+        firstChoiceButton = null;
+        List<Choice> choices = currentStory.currentChoices;
+
+        for (int i = 0; i < choices.Count; i++)
+        {
+            Choice choice = choices[i];
+            Button choiceBtn = new Button();
+            choiceBtn.text = ">> " + choice.text;
+            choiceBtn.AddToClassList("choice-button");
+            choiceBtn.focusable = true;
+            
+            int choiceIndex = i;
+            choiceBtn.clicked += () => OnChoiceSelected(choiceIndex);
+            choicesContainer.Add(choiceBtn);
+
+            if (i == 0) firstChoiceButton = choiceBtn;
+        }
+
+        if (GameManager.Instance == null || !GameManager.Instance.IsUsingPointer)
+        {
+            FocusDefaultElement();
+        }
+    }
+
+    private void OnChoiceSelected(int index)
+    {
+        lastChoiceSelectTime = Time.unscaledTime;
+        firstChoiceButton = null;
+        if (choicesContainer != null)
+        {
+            choicesContainer.style.display = DisplayStyle.None;
+            choicesContainer.Clear();
+        }
+        currentStory.ChooseChoiceIndex(index);
+        ContinueStory();
     }
 
     private void HandleTags(List<string> currentTags)
@@ -327,13 +509,28 @@ public class DialogueManager : MonoBehaviour
     IEnumerator EndDialogue()
     {
         isDialogueActive = false;
+        firstChoiceButton = null;
+        if (choicesContainer != null)
+        {
+            choicesContainer.style.display = DisplayStyle.None;
+            choicesContainer.Clear();
+        }
         UnbindInkFunction();
 
         // Thu nhỏ hộp thoại
         if (dialogueBox != null) dialogueBox.AddToClassList(hiddenClassName);
 
+        if (UIStackManager.Instance != null)
+        {
+            UIStackManager.Instance.RemoveUI(this);
+        }
+        else if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SetDialogueUIMode(false);
+        }
+
         yield return new WaitForSeconds(0.3f);
-        if (PlayerController.Instance.GetCurrentState() == PlayerState.Talking)
+        if (PlayerController.Instance != null && PlayerController.Instance.GetCurrentState() == PlayerState.Talking)
         {
             PlayerController.Instance.SetState(PlayerState.Idle);
         }

@@ -68,6 +68,11 @@ public class GameManager : MonoBehaviour
         // Đảm bảo trạng thái mặc định khi mới vào game: Bật Player, Tắt UI
         playerMap?.Enable();
         uiMap?.Disable();
+
+        if (UIStackManager.Instance == null)
+        {
+            gameObject.AddComponent<UIStackManager>();
+        }
     }
 
     //private void Start()
@@ -153,6 +158,8 @@ public class GameManager : MonoBehaviour
             Debug.Log("Player map enabled");
         }
 
+        UIStackManager.Instance?.ClearStack();
+
         // Kích hoạt snap camera sau khi load xong Scene, nhưng chỉ thực hiện khi không phải MainMenu
         if (!isInMainMenu && wasInMainMenu)
         {
@@ -187,8 +194,9 @@ public class GameManager : MonoBehaviour
         // bỏ qua tín hiệu khi phím được thả LÊN hoặc bị nhiễu do map switch.
         if (context.ReadValueAsButton() == false) return;
         if (State == GameState.MainMenu) return; // Đang ở Menu chính thì cấm Pause!
+        if (UIStackManager.Instance != null && UIStackManager.Instance.TopUI != null && !UIStackManager.Instance.TopUI.GetInputConfig().allowPauseToggle) return;
         TogglePause();
-        Debug.Log("Toogle Pause");
+        Debug.Log("Toggle Pause");
     }
 
     public void TogglePause()
@@ -254,6 +262,54 @@ public class GameManager : MonoBehaviour
         OnGameStateChanged?.Invoke(State);
     }
 
+    public void ApplyUIConfig(UIInputConfig config)
+    {
+        Time.timeScale = config.pauseTime ? 0f : 1f;
+        State = config.pauseTime ? GameState.Pause : (isInMainMenu ? GameState.MainMenu : GameState.Running);
+
+        if (config.inputMode == UIInputMode.UIOnly || isInMainMenu)
+        {
+            playerMap?.Disable();
+            uiMap?.Enable();
+
+            if (IsUsingPointer)
+            {
+                Cursor.visible = true;
+                Cursor.lockState = CursorLockMode.None;
+            }
+            else
+            {
+                Cursor.visible = false;
+                Cursor.lockState = CursorLockMode.None;
+
+                if (Mouse.current != null)
+                {
+                    lastMouseWarpTime = Time.unscaledTime;
+                    Mouse.current.WarpCursorPosition(new Vector2(Screen.width, 0));
+                }
+            }
+        }
+        else if (config.inputMode == UIInputMode.GameOnly && !isInMainMenu)
+        {
+            uiMap?.Disable();
+            playerMap?.Enable();
+
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+            IsUsingPointer = false;
+        }
+    }
+
+    public void SetDialogueUIMode(bool isActive)
+    {
+        ApplyUIConfig(new UIInputConfig
+        {
+            inputMode = isActive ? UIInputMode.UIOnly : UIInputMode.GameOnly,
+            pauseTime = false,
+            allowPauseToggle = true
+        });
+    }
+
     private void OnInputDeviceChanged(object obj, InputActionChange change)
     {
         if (change == InputActionChange.ActionPerformed)
@@ -261,9 +317,9 @@ public class GameManager : MonoBehaviour
             InputAction action = (InputAction)obj;
             InputDevice device = action.activeControl.device;
 
-            // 1. KHI ĐANG MỞ MENU (Pause Menu HOẶC Title Menu)
+            // 1. KHI ĐANG MỞ MENU (Pause Menu HOẶC Title Menu HOẶC Active UI Stack)
             // Lúc này chúng ta cần xử lý cả việc Ẩn/Hiện con trỏ chuột
-            if (State == GameState.Pause || isInMainMenu)
+            if (State == GameState.Pause || isInMainMenu || (UIStackManager.Instance != null && UIStackManager.Instance.HasActiveUI))
             {
                 if (device is Gamepad || device is Keyboard)
                 {
@@ -278,6 +334,11 @@ public class GameManager : MonoBehaviour
                             // Đánh dấu mốc thời gian vừa ném chuột đi
                             lastMouseWarpTime = Time.unscaledTime;
                             Mouse.current.WarpCursorPosition(new Vector2(Screen.width, 0));
+                        }
+
+                        if (UIStackManager.Instance != null && UIStackManager.Instance.TopUI != null)
+                        {
+                            UIStackManager.Instance.TopUI.FocusDefaultElement();
                         }
                     }
                 }
@@ -297,6 +358,11 @@ public class GameManager : MonoBehaviour
 
                         IsUsingPointer = true;
                         Cursor.visible = true; // Hiện chuột lại
+
+                        if (UIStackManager.Instance != null && UIStackManager.Instance.TopUI != null)
+                        {
+                            UIStackManager.Instance.TopUI.ClearFocus();
+                        }
                     }
                 }
             }

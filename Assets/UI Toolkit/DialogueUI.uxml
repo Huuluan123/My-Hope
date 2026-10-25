@@ -5,6 +5,7 @@
         <ui:VisualElement name="text-container" style="flex-grow: 1; height: auto;">
             <ui:Label text="Name" name="character-name" style="-unity-font-style: bold; font-size: 25px; color: rgb(255, 255, 255);"/>
             <ui:Label text="Hello World" name="dialogue-text" enabled="true" style="color: rgb(255, 255, 255); -unity-font-style: bold; font-size: 20px; flex-wrap: nowrap; white-space: normal; height: auto;"/>
+            <ui:VisualElement name="choices-container" style="display: none; flex-direction: column; margin-top: 15px; margin-bottom: 20px;" />
         </ui:VisualElement>
         <ui:VisualElement name="skip-container" class="skip-container" style="flex-grow: 1;">
             <ui:Label text="&gt;&gt; Hold " style="-unity-font-style: bold;">

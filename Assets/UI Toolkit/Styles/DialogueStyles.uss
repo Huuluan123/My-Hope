@@ -26,6 +26,27 @@
     transition-timing-function: ease-in; 
 }
 
+.choice-button {
+    background-color: rgba(0, 0, 0, 0.6);
+    color: rgb(242, 188, 140);
+    border-left-color: rgb(242, 188, 140);
+    border-left-width: 4px;
+    border-top-width: 0; border-right-width: 0; border-bottom-width: 0;
+    font-size: 18px;
+    -unity-font-style: bold;
+    padding: 10px 15px;
+    margin-bottom: 5px;
+    transition: scale 0.15s ease-out-bounce, background-color 0.15s;
+    align-self: flex-start;
+    border-radius: 4px;
+}
+
+.choice-button:hover, .choice-button:focus {
+    background-color: rgba(242, 188, 140, 0.9);
+    color: rgb(0, 0, 0);
+    scale: 1.05;
+}
+
 .skip-container {
     position: absolute;
 

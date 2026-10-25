@@ -208,8 +208,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float dashCooldown = 0.2f;
     [SerializeField] private float dashRechargeTime = 5f;
     [SerializeField] private float superJumpBoostX = 1.2f;
-    [SerializeField] private float dashAttackTime = 0.3f; // Cửa sổ thời gian cho phép Super Jump
-    private float dashAttackTimer;
     private float dashCooldownTimer;
     private float dashRechargeTimer;
     private int dashDirX;
@@ -328,8 +326,6 @@ public class PlayerController : MonoBehaviour
         {
             dashCooldownTimer -= Time.deltaTime;
         }
-
-        if (dashAttackTimer > 0f) dashAttackTimer -= Time.deltaTime;
 
         // Logic hồi Dash độc lập 5 giây
         if (currentDashes < maxDashes)
@@ -1194,7 +1190,6 @@ public class PlayerController : MonoBehaviour
     {
         currentDashes--;
         dashCooldownTimer = dashCooldown;
-        dashAttackTimer = dashAttackTime; // Kéo dài cửa sổ nhận Super Jump lên 0.3s
 
         if (currentDashes == maxDashes - 1)
         {
@@ -1223,10 +1218,6 @@ public class PlayerController : MonoBehaviour
         }
 
         SetState(PlayerState.Dashing);
-
-        // Kích hoạt khựng hình 0.05s
-        StartCoroutine(HitStopRoutine(0.05f));
-
         dashCoroutine = StartCoroutine(DashRoutine());
     }
 
@@ -1262,7 +1253,7 @@ public class PlayerController : MonoBehaviour
         if (!hasBufferedJump || !CanJump) return;
 
         // ƯU TIÊN 0: SUPER JUMP (Nhảy khi đang Dash trên mặt đất)
-        if (dashAttackTimer > 0f && (Time.time - lastGroundedTime <= coyoteTime))
+        if (currentState == PlayerState.Dashing && isGrounded)
         {
             if (dashCoroutine != null)
             {
@@ -1277,7 +1268,6 @@ public class PlayerController : MonoBehaviour
 
             lastGroundedTime = -999f;
             lastJumpInputTime = -999f;
-            dashAttackTimer = 0f; // Reset để tránh nhảy đúp
 
             OnJumpPerformed?.Invoke();
             SoundManager.Instance.PlaySound("Jump");
@@ -2043,13 +2033,6 @@ public class PlayerController : MonoBehaviour
     {
         StopAllCoroutines();
         StartCoroutine(RoomFailSafeRoutine());
-    }
-
-    private IEnumerator HitStopRoutine(float duration)
-    {
-        Time.timeScale = 0f; // Dừng mọi hệ thống vật lý và Time.deltaTime
-        yield return new WaitForSecondsRealtime(duration); // Chờ theo thời gian thực
-        Time.timeScale = 1f;
     }
 
     #region Room Transition Fail-safe

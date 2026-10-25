@@ -213,7 +213,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8bd27d00f9265c45bfe77a7506938c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldStateManager
-  isEditiorDebugMode: 0
+  isEditiorDebugMode: 1
   defaultStates:
   - stateName: Anna_RescueScene
     stateValue: 1
@@ -249,6 +249,7 @@ MonoBehaviour:
     savedRespawnPoint: {x: 0, y: 0}
     savedMaxAirJumps: 0
     savedMaxGrappleCount: 2
+    savedMaxDashes: 0
     spawnScene: 1
     savedCoins: 0
 --- !u!1001 &8593842173576746017

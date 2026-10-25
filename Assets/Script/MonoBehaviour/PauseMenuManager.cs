@@ -5,10 +5,11 @@ using UnityEngine.Localization.Settings;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
-public class PauseMenuManager : MonoBehaviour
+public class PauseMenuManager : MonoBehaviour, IActivatableUI
 {
     [Header("UI Toolkit Reference")]
     public UIDocument uiDocument;
+    public UILayer GetUILayer() => UILayer.Menu; // Tự động nhận khoảng 200+
 
     private VisualElement pauseOverlay;
     private Button btnResume;
@@ -16,10 +17,99 @@ public class PauseMenuManager : MonoBehaviour
     private Button btnLanguage;
     private Button btnExit;
 
-    private InputAction cancelAction;
     private InputAction uiPauseAction;
 
     private bool isOptionsMenuOpen = false;
+
+    #region IActivatableUI Implementation
+
+    public UIInputConfig GetInputConfig()
+    {
+        return new UIInputConfig
+        {
+            inputMode = UIInputMode.UIOnly,
+            pauseTime = true,
+            allowPauseToggle = true
+        };
+    }
+
+    public void OnActivate()
+    {
+        if (pauseOverlay != null)
+        {
+            pauseOverlay.style.display = DisplayStyle.Flex;
+            pauseOverlay.SetEnabled(true);
+        }
+    }
+
+    public void OnPassivate()
+    {
+        if (pauseOverlay != null)
+        {
+            pauseOverlay.SetEnabled(false);
+        }
+    }
+
+    public void OnDeactivate()
+    {
+        if (pauseOverlay != null)
+        {
+            pauseOverlay.style.display = DisplayStyle.None;
+        }
+        isOptionsMenuOpen = false;
+    }
+
+    public void FocusDefaultElement()
+    {
+        if (pauseOverlay != null)
+        {
+            pauseOverlay.schedule.Execute(() =>
+            {
+                var target = isOptionsMenuOpen ? btnOptions : btnResume;
+                target?.Focus();
+            });
+        }
+    }
+
+    public void ClearFocus()
+    {
+        if (uiDocument != null && uiDocument.rootVisualElement != null)
+        {
+            var focusController = uiDocument.rootVisualElement.focusController;
+            if (focusController != null && focusController.focusedElement != null)
+            {
+                focusController.focusedElement.Blur();
+            }
+        }
+    }
+
+    public void SetSortOrder(int order)
+    {
+        if (uiDocument != null)
+        {
+            uiDocument.sortingOrder = order;
+        }
+    }
+
+    public bool OnBackAction()
+    {
+        if (isOptionsMenuOpen)
+        {
+            CloseOptions();
+            return true;
+        }
+        else
+        {
+            if (GameManager.Instance != null && GameManager.Instance.State == GameState.Pause)
+            {
+                GameManager.Instance.TogglePause();
+                return true;
+            }
+            return false;
+        }
+    }
+
+    #endregion
 
     // Dùng Start thay vì OnEnable để chắc chắn GameManager đã khởi tạo xong
     private void Start()
@@ -47,12 +137,6 @@ public class PauseMenuManager : MonoBehaviour
         // 1. LẮP CẢM BIẾN NHẬN DIỆN DI CHUYỂN CHUỘT
         root.RegisterCallback<PointerMoveEvent>(OnPointerMove);
 
-        cancelAction = InputSystem.actions.FindAction("UI/Cancel");
-        if (cancelAction != null)
-        {
-            cancelAction.performed += OnCancelPerformed;
-        }
-
         uiPauseAction = InputSystem.actions.FindAction("UI/Pause");
         if (uiPauseAction != null)
         {
@@ -66,6 +150,11 @@ public class PauseMenuManager : MonoBehaviour
     // BẮT BUỘC PHẢI CÓ: Hủy đăng ký khi chuyển Scene hoặc xóa UI để tránh tràn RAM
     private void OnDestroy()
     {
+        if (UIStackManager.Instance != null)
+        {
+            UIStackManager.Instance.RemoveUI(this);
+        }
+
         if (GameManager.Instance != null)
         {
             GameManager.Instance.OnGameStateChanged -= HandleGameStateChanged;
@@ -75,7 +164,6 @@ public class PauseMenuManager : MonoBehaviour
         if (btnOptions != null) btnOptions.clicked -= OpenOptions;
         if (btnLanguage != null) btnLanguage.clicked -= OnLanguageButtonClicked;
         if (btnExit != null) btnExit.clicked -= SaveAndExitGame;
-        if (cancelAction != null) cancelAction.performed -= OnCancelPerformed;
         if (uiPauseAction != null) uiPauseAction.performed -= OnPauseResumePerformed;
 
         // 2. GỠ CẢM BIẾN CHUỘT
@@ -91,36 +179,7 @@ public class PauseMenuManager : MonoBehaviour
         // Nếu KHÔNG xài con trỏ chuột thì phớt lờ mọi sự kiện nhúc nhích chuột giả (do lệnh Warp gây ra)
         if (GameManager.Instance != null && !GameManager.Instance.IsUsingPointer) return;
 
-        // Nếu người chơi THỰC SỰ đang cầm chuột, tiến hành "tẩy não" Focus
-        var focusController = uiDocument.rootVisualElement.focusController;
-
-        if (focusController.focusedElement != null)
-        {
-            focusController.focusedElement.Blur();
-        }
-    }
-
-    private void OnCancelPerformed(InputAction.CallbackContext context)
-    {
-        // LỚP PHÒNG THỦ: Phớt lờ tín hiệu "thả phím" (Release)
-        // Chỉ nhận lệnh khi phím ĐANG ĐƯỢC ẤN XUỐNG
-        if (context.ReadValueAsButton() == false) return;
-
-        // Chỉ xử lý khi Game ĐANG PAUSE (nghĩa là Menu đang được mở)
-        if (GameManager.Instance != null && GameManager.Instance.State == GameState.Pause)
-        {
-            // KIỂM TRA LỚP 1: Có đang mở Menu Con (Options) không?
-            if (isOptionsMenuOpen)
-            {
-                CloseOptions(); // Đóng Options, hiển thị lại Menu chính
-            }
-            // KIỂM TRA LỚP 2: Nếu đang ở Menu Chính -> Đóng Menu, quay lại Game!
-            else
-            {
-                GameManager.Instance.TogglePause();
-                Debug.Log("Cancel performed: Closing Pause Menu");
-            }
-        }
+        ClearFocus();
     }
 
     private void OnPauseResumePerformed(InputAction.CallbackContext context)
@@ -147,11 +206,25 @@ public class PauseMenuManager : MonoBehaviour
     {
         if (newState == GameState.Pause)
         {
-            ShowMenu();
+            if (UIStackManager.Instance != null)
+            {
+                UIStackManager.Instance.PushUI(this);
+            }
+            else
+            {
+                ShowMenu();
+            }
         }
         else
         {
-            HideMenu();
+            if (UIStackManager.Instance != null)
+            {
+                UIStackManager.Instance.RemoveUI(this);
+            }
+            else
+            {
+                HideMenu();
+            }
         }
     }
 
@@ -167,31 +240,16 @@ public class PauseMenuManager : MonoBehaviour
 
     private void ShowMenu()
     {
-        if (pauseOverlay != null)
+        OnActivate();
+        if (GameManager.Instance == null || !GameManager.Instance.IsUsingPointer)
         {
-            pauseOverlay.style.display = DisplayStyle.Flex; // Bung UI ra
-
-            // 4. NÂNG CẤP FOCUS: Trì hoãn 1 frame để đảm bảo UI Toolkit đã vẽ xong nút
-            if (btnResume != null)
-            {
-                pauseOverlay.schedule.Execute(() =>
-                {
-                    // Chỉ tự động Focus vào nút Resume nếu người chơi ĐANG XÀI tay cầm hoặc bàn phím
-                    if (GameManager.Instance != null && !GameManager.Instance.IsUsingPointer)
-                    {
-                        btnResume.Focus();
-                    }
-                });
-            }
+            FocusDefaultElement();
         }
     }
 
     private void HideMenu()
     {
-        if (pauseOverlay != null)
-        {
-            pauseOverlay.style.display = DisplayStyle.None; // Xóa UI đi
-        }
+        OnDeactivate();
     }
 
     private void OpenOptions()
@@ -210,7 +268,7 @@ public class PauseMenuManager : MonoBehaviour
         // pauseOverlay.style.display = DisplayStyle.Flex;
 
         // Nhớ Focus lại vào nút Options để người chơi biết họ vừa từ đâu chui ra
-        if (btnOptions != null && !GameManager.Instance.IsUsingPointer)
+        if (btnOptions != null && GameManager.Instance != null && !GameManager.Instance.IsUsingPointer)
         {
             btnOptions.Focus();
         }
@@ -256,7 +314,7 @@ public class PauseMenuManager : MonoBehaviour
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else
-                Application.Quit();
+        Application.Quit();
 #endif
     }
 
