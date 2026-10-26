@@ -18,23 +18,26 @@ public class InputDatabase : ScriptableObject
 {
     public List<ActionIconMapping> mappings = new List<ActionIconMapping>();
 
+    public string GetGlyphName(string actionID, DeviceType device)
+    {
+        ActionIconMapping mapping = mappings.Find(x => x.actionID.Equals(actionID, System.StringComparison.OrdinalIgnoreCase));
+        if (mapping == null) return string.Empty;
+
+        return device switch
+        {
+            DeviceType.Xbox => mapping.xboxIcon.ToString(),
+            DeviceType.PlayStation => mapping.psIcon.ToString(),
+            DeviceType.Nintendo => mapping.nintendoIcon.ToString(),
+            _ => mapping.keyboardIcon.ToString()
+        };
+    }
+
     // Hàm toàn cục để các script khác "hỏi xin" tên thẻ Sprite
     public string GetSpriteTag(string actionID, DeviceType device)
     {
-        ActionIconMapping mapping = mappings.Find(x => x.actionID.ToLower() == actionID.ToLower());
+        string glyphName = GetGlyphName(actionID, device);
+        if (string.IsNullOrEmpty(glyphName)) return $"[{actionID}_MISSING]";
 
-        if (mapping == null) return $"[{actionID}_MISSING]"; // Cảnh báo nếu gõ sai tên hành động
-
-        string spriteName = "";
-        switch (device)
-        {
-            case DeviceType.Keyboard: spriteName = mapping.keyboardIcon.ToString(); break;
-            case DeviceType.Xbox: spriteName = mapping.xboxIcon.ToString(); break;
-            case DeviceType.PlayStation: spriteName = mapping.psIcon.ToString(); break;
-            case DeviceType.Nintendo: spriteName = mapping.nintendoIcon.ToString(); break;
-            default: spriteName = mapping.keyboardIcon.ToString(); break;
-        }
-
-        return $"<sprite name=\"{spriteName}\">";
+        return $"<sprite name=\"{glyphName}\">";
     }
 }

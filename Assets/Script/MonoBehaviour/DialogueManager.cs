@@ -14,13 +14,14 @@ public struct CharacterProfile
     public Sprite icon;
 }
 
-public class DialogueManager : MonoBehaviour, IActivatableUI
+[RequireComponent(typeof(UIActivatableComponent))]
+public class DialogueManager : MonoBehaviour
 {
     public static DialogueManager Instance;
 
     [Header("UI Toolkit References")]
     public UIDocument uiDocument;
-    public UILayer GetUILayer() => UILayer.GameMenu;
+    private UIActivatableComponent activatable;
     private VisualElement dialogueBox;
     private VisualElement characterIcon;
     private Label characterName;
@@ -44,105 +45,45 @@ public class DialogueManager : MonoBehaviour, IActivatableUI
     private float lastChoiceSelectTime = -999f;
     private Button firstChoiceButton;
 
-    [Header("Skip UI Settings")]
-    public Sprite keyboardIcon; // Icon nút C
-    public Sprite xboxIcon;     // Icon nút A
-    public Sprite ps5Icon;      // Icon nút X
-    public Sprite switchIcon;   // Icon nút B (Nintendo Switch)
-
     private VisualElement skipContainer;
-    private VisualElement skipIcon;
 
     [Header("Skip Mechanic")]
     public float holdToSkipTime = 1.0f;
     private bool isHoldingSkip = false;
     private float currentHoldTimer = 0f;
 
-    #region IActivatableUI Implementation
-
-    public UIInputConfig GetInputConfig()
-    {
-        return new UIInputConfig
-        {
-            inputMode = UIInputMode.UIOnly,
-            pauseTime = false,
-            allowPauseToggle = true
-        };
-    }
-
-    public void OnActivate()
-    {
-        if (dialogueBox != null)
-        {
-            dialogueBox.SetEnabled(true);
-        }
-    }
-
-    public void OnPassivate()
-    {
-        if (dialogueBox != null)
-        {
-            dialogueBox.SetEnabled(false);
-        }
-    }
-
-    public void OnDeactivate()
-    {
-        if (choicesContainer != null)
-        {
-            choicesContainer.style.display = DisplayStyle.None;
-            choicesContainer.Clear();
-        }
-        firstChoiceButton = null;
-
-        if (dialogueBox != null)
-        {
-            dialogueBox.AddToClassList(hiddenClassName);
-        }
-    }
-
-    public void FocusDefaultElement()
-    {
-        if (choicesContainer != null && choicesContainer.style.display == DisplayStyle.Flex && firstChoiceButton != null)
-        {
-            choicesContainer.schedule.Execute(() =>
-            {
-                firstChoiceButton.Focus();
-            });
-        }
-    }
-
-    public void ClearFocus()
-    {
-        if (uiDocument != null && uiDocument.rootVisualElement != null)
-        {
-            var focusController = uiDocument.rootVisualElement.focusController;
-            if (focusController != null && focusController.focusedElement != null)
-            {
-                focusController.focusedElement.Blur();
-            }
-        }
-    }
-
-    public void SetSortOrder(int order)
-    {
-        if (uiDocument != null)
-        {
-            uiDocument.sortingOrder = order; // Hoặc uiDocument.panelSettings.sortingOrder
-        }
-    }
-
-    public bool OnBackAction()
-    {
-        // Chặn phím Cancel (B / Esc) không tự ý đóng Dialogue khi đang nói chuyện
-        return true;
-    }
-
-    #endregion
-
     private void Awake()
     {
         if (Instance == null) Instance = this;
+
+        activatable = GetComponent<UIActivatableComponent>();
+        if (activatable != null)
+        {
+            activatable.UILayer = UILayer.GameMenu;
+            activatable.InputConfig = new UIInputConfig
+            {
+                inputMode = UIInputMode.UIOnly,
+                pauseTime = false,
+                allowPauseToggle = true
+            };
+            activatable.CustomBackAction = () => true;
+            activatable.CustomUIToolkitFocusResolver = () => firstChoiceButton;
+            activatable.onActivate.AddListener(() => dialogueBox?.SetEnabled(true));
+            activatable.onPassivate.AddListener(() => dialogueBox?.SetEnabled(false));
+            activatable.onDeactivate.AddListener(() =>
+            {
+                if (choicesContainer != null)
+                {
+                    choicesContainer.style.display = DisplayStyle.None;
+                    choicesContainer.Clear();
+                }
+                firstChoiceButton = null;
+                if (dialogueBox != null)
+                {
+                    dialogueBox.AddToClassList(hiddenClassName);
+                }
+            });
+        }
 
         nextLineAction = InputSystem.actions.FindAction("UI/Submit");
         if (nextLineAction == null)
@@ -155,21 +96,9 @@ public class DialogueManager : MonoBehaviour, IActivatableUI
         }
     }
 
-    private void Start()
-    {
-        // Cập nhật Icon ngay khi game vừa bắt đầu để tránh bị sai lệch UI
-        if (InputDeviceManager.Instance != null)
-        {
-            UpdateSkipIcon(InputDeviceManager.Instance.CurrentDevice);
-        }
-    }
-
     private void OnDestroy()
     {
-        if (UIStackManager.Instance != null)
-        {
-            UIStackManager.Instance.RemoveUI(this);
-        }
+        activatable?.RemoveFromStack();
     }
 
     private void Update()
@@ -177,7 +106,7 @@ public class DialogueManager : MonoBehaviour, IActivatableUI
         // Đồng hồ đếm giờ cho tính năng Hold-to-Skip
         if (isHoldingSkip && isDialogueActive)
         {
-            if (UIStackManager.Instance != null && UIStackManager.Instance.TopUI != (IActivatableUI)this)
+            if (UIStackManager.Instance != null && UIStackManager.Instance.TopUI != (IActivatableUI)activatable)
             {
                 isHoldingSkip = false;
                 currentHoldTimer = 0f;
@@ -205,24 +134,16 @@ public class DialogueManager : MonoBehaviour, IActivatableUI
             nextLineAction.canceled += OnSkipCanceled;
         }
 
-        // Lắng nghe sự kiện từ InputDeviceManager
-        if (InputDeviceManager.Instance != null)
-        {
-            InputDeviceManager.Instance.OnDeviceChanged += UpdateSkipIcon;
-        }
-
         // --- TRUY VẤN UI TOOLKIT ---
         var root = uiDocument.rootVisualElement;
         root.RegisterCallback<PointerMoveEvent>(OnPointerMove);
         dialogueBox = root.Q<VisualElement>("dialogue-container");
         skipContainer = root.Q<VisualElement>("skip-container");
-        skipIcon = root.Q<VisualElement>("skip-icon");
         characterIcon = root.Q<VisualElement>("character-icon");
         characterName = root.Q<Label>("character-name");
         dialogueArea = root.Q<Label>("dialogue-text");
         choicesContainer = root.Q<VisualElement>("choices-container");
 
-        if (skipIcon == null) Debug.LogWarning("Can't find '#skip-icon' in UI Document");
         if (dialogueBox == null) Debug.LogWarning("Can't find '#dialogue-container' in UI Document.");
 
         // Ẩn hộp thoại khi mới vào game
@@ -239,46 +160,16 @@ public class DialogueManager : MonoBehaviour, IActivatableUI
             nextLineAction.Disable();
         }
 
-        // Ngắt kết nối sự kiện khi bị Disable để chống rò rỉ bộ nhớ (Memory Leak)
-        if (InputDeviceManager.Instance != null)
-        {
-            InputDeviceManager.Instance.OnDeviceChanged -= UpdateSkipIcon;
-        }
-
         if (uiDocument != null && uiDocument.rootVisualElement != null)
         {
             uiDocument.rootVisualElement.UnregisterCallback<PointerMoveEvent>(OnPointerMove);
         }
     }
 
-    // HÀM ĐƯỢC GỌI TỪ EVENT CỦA INPUT DEVICE MANAGER
-    private void UpdateSkipIcon(DeviceType deviceType)
-    {
-        if (skipIcon == null) return;
-
-        switch (deviceType)
-        {
-            case DeviceType.PlayStation:
-                skipIcon.style.backgroundImage = new StyleBackground(ps5Icon);
-                break;
-            case DeviceType.Xbox:
-                skipIcon.style.backgroundImage = new StyleBackground(xboxIcon);
-                break;
-            case DeviceType.Nintendo:
-                // Nếu chưa kịp vẽ icon Switch, nó sẽ lấy tạm icon Xbox làm mặc định để không bị lỗi trống hình
-                skipIcon.style.backgroundImage = new StyleBackground(switchIcon != null ? switchIcon : xboxIcon);
-                break;
-            case DeviceType.Keyboard:
-            default:
-                skipIcon.style.backgroundImage = new StyleBackground(keyboardIcon);
-                break;
-        }
-    }
-
     private void OnPointerMove(PointerMoveEvent evt)
     {
         if (GameManager.Instance != null && !GameManager.Instance.IsUsingPointer) return;
-        ClearFocus();
+        activatable?.ClearFocus();
     }
 
     private void BindInkFunction()
@@ -308,7 +199,7 @@ public class DialogueManager : MonoBehaviour, IActivatableUI
     private void OnSkipStarted(InputAction.CallbackContext context)
     {
         if (!isDialogueActive) return;
-        if (UIStackManager.Instance != null && UIStackManager.Instance.TopUI != (IActivatableUI)this) return;
+        if (UIStackManager.Instance != null && UIStackManager.Instance.TopUI != (IActivatableUI)activatable) return;
         isHoldingSkip = true; // Bắt đầu đếm giờ
     }
 
@@ -374,9 +265,9 @@ public class DialogueManager : MonoBehaviour, IActivatableUI
             Debug.Log("Talking state set");
         }
 
-        if (UIStackManager.Instance != null)
+        if (activatable != null)
         {
-            UIStackManager.Instance.PushUI(this);
+            activatable.PushToStack();
         }
         else if (GameManager.Instance != null)
         {
@@ -389,7 +280,7 @@ public class DialogueManager : MonoBehaviour, IActivatableUI
     private void OnNextLineInput(InputAction.CallbackContext context)
     {
         if (!isDialogueActive) return;
-        if (UIStackManager.Instance != null && UIStackManager.Instance.TopUI != (IActivatableUI)this) return;
+        if (UIStackManager.Instance != null && UIStackManager.Instance.TopUI != (IActivatableUI)activatable) return;
         if (Time.unscaledTime - lastChoiceSelectTime < 0.15f) return;
         if (choicesContainer != null && choicesContainer.style.display == DisplayStyle.Flex) return;
 
@@ -454,7 +345,7 @@ public class DialogueManager : MonoBehaviour, IActivatableUI
 
         if (GameManager.Instance == null || !GameManager.Instance.IsUsingPointer)
         {
-            FocusDefaultElement();
+            activatable?.FocusDefaultElement();
         }
     }
 
@@ -520,9 +411,9 @@ public class DialogueManager : MonoBehaviour, IActivatableUI
         // Thu nhỏ hộp thoại
         if (dialogueBox != null) dialogueBox.AddToClassList(hiddenClassName);
 
-        if (UIStackManager.Instance != null)
+        if (activatable != null)
         {
-            UIStackManager.Instance.RemoveUI(this);
+            activatable.RemoveFromStack();
         }
         else if (GameManager.Instance != null)
         {

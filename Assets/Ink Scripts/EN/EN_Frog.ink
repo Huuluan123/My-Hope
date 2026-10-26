@@ -20,6 +20,7 @@ Yo, What's up. Can a loc come up in your crib?
 * [Man, fuck you! I'll see you at work.]
     Oh, Nibba don't hate me cause I'm beautiful, Nibba.
     Maybe if you get rid that yee-yee-ass haircut, you'll get some peaches on your dih.
+    Oh better yet, may Tanisha call your dawg-ass if she stops hanging with brain surgeon or lawyer she's hanging with.
     ~ SetState("Frog_GotAcceptedToHouse", false)
     -> After_invite
 * [Sure, come on in.]

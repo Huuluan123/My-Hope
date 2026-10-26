@@ -887,6 +887,7 @@ GameObject:
   - component: {fileID: 998126769}
   - component: {fileID: 998126768}
   - component: {fileID: 998126772}
+  - component: {fileID: 998126773}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -997,6 +998,36 @@ MonoBehaviour:
   gameSceneName: 0
   firstSelectedButton: {fileID: 315998036}
   btnPlay: {fileID: 315998038}
+--- !u!114 &998126773
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 998126767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 84b0b5951c810e940a29ff4fc9b0c5e9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIActivatableComponent
+  uiLayer: 200
+  inputConfig:
+    inputMode: 1
+    pauseTime: 1
+    allowPauseToggle: 1
+  uiDocument: {fileID: 0}
+  uguiCanvas: {fileID: 998126770}
+  defaultFocusElementName: 
+  uguiDefaultSelectable: {fileID: 315998038}
+  onActivate:
+    m_PersistentCalls:
+      m_Calls: []
+  onPassivate:
+    m_PersistentCalls:
+      m_Calls: []
+  onDeactivate:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1373394956
 GameObject:
   m_ObjectHideFlags: 0

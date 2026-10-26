@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: -1587121967506083700}
   - component: {fileID: 935135807104316972}
   - component: {fileID: 738472671369015802}
+  - component: {fileID: 1475056082773411498}
   - component: {fileID: 7928405038995281726}
   m_Layer: 0
   m_Name: '[GAME_MANAGERS]'
@@ -201,6 +202,18 @@ PlayableDirector:
   m_SceneBindings: []
   m_ExposedReferences:
     m_References: []
+--- !u!114 &1475056082773411498
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1308000809469694418}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd0ff8539e046c6498f086bd23930156, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIStackManager
 --- !u!114 &7928405038995281726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -213,7 +226,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8bd27d00f9265c45bfe77a7506938c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WorldStateManager
-  isEditiorDebugMode: 1
+  isEditiorDebugMode: 0
   defaultStates:
   - stateName: Anna_RescueScene
     stateValue: 1

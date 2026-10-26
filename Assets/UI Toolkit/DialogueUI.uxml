@@ -13,7 +13,7 @@
                     <UnityEngine.Localization.LocalizedString property="text" table="GUID:17d9da7d471350e4e8a5244f46e88ff6" entry="Id(345032560345088)"/>
                 </Bindings>
             </ui:Label>
-            <ui:VisualElement name="skip-icon" style="flex-grow: 1; width: 25px; height: 25px;"/>
+            <ActionGlyph action-id="Jump" icon-size="25" />
             <ui:Label text="to skip" style="-unity-font-style: bold;">
                 <Bindings>
                     <UnityEngine.Localization.LocalizedString property="text" table="GUID:17d9da7d471350e4e8a5244f46e88ff6" entry="Id(345132510609408)"/>
@@ -22,3 +22,4 @@
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
+
