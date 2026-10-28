@@ -1,0 +1,44 @@
+{
+    "playerData": {
+        "hasSavedPosition": true,
+        "savedRespawnPoint": {
+            "x": 1.1654930114746094,
+            "y": 2.440000295639038
+        },
+        "savedMaxAirJumps": 0,
+        "savedMaxGrappleCount": 2,
+        "savedMaxDashes": 0,
+        "spawnScene": 3,
+        "savedCoins": 0
+    },
+    "worldStates": [
+        {
+            "stateName": "Anna_RescueScene",
+            "stateValue": true
+        },
+        {
+            "stateName": "Anna_HardChallenge_Talked",
+            "stateValue": false
+        },
+        {
+            "stateName": "Forest_BlockingWall",
+            "stateValue": true
+        },
+        {
+            "stateName": "Forest_RockSpawner",
+            "stateValue": true
+        },
+        {
+            "stateName": "Village_HardChallengeCompleted",
+            "stateValue": false
+        },
+        {
+            "stateName": "VirtualGuy_Met",
+            "stateValue": false
+        },
+        {
+            "stateName": "Tutorial_Show",
+            "stateValue": false
+        }
+    ]
+}

@@ -419,6 +419,12 @@ MonoBehaviour:
   maxGrappleCount: 2
   currentGrappleCount: 0
   maxAirJumps: 0
+  maxDashes: 0
+  dashSpeed: 24
+  dashTime: 0.15
+  dashCooldown: 0.2
+  dashRechargeTime: 5
+  superJumpBoostX: 1.2
   oneWayDropGhostTime: 0.2
   currentRespawnPoint: {x: 0, y: 0}
   lastSpawnTime: 0
@@ -495,6 +501,15 @@ MonoBehaviour:
     m_Type: 0
     m_ExpectedControlType: 
     m_Id: 903ae963-2cc6-4f04-882a-1c46be023809
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
+  dashAction:
+    m_Name: Dash
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 3f51a50e-a3d1-4e90-9983-2383a3bc72d8
     m_Processors: 
     m_Interactions: 
     m_SingletonActionBindings: []
