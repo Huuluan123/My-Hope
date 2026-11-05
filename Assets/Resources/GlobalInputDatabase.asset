@@ -58,3 +58,13 @@ MonoBehaviour:
     xboxIcon: 3
     psIcon: 3
     nintendoIcon: 3
+  - actionID: tab-next
+    keyboardIcon: 4
+    xboxIcon: 10
+    psIcon: 10
+    nintendoIcon: 10
+  - actionID: tab-prev
+    keyboardIcon: 6
+    xboxIcon: 9
+    psIcon: 9
+    nintendoIcon: 9

@@ -1,6 +1,6 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.Users; // Thư viện để quản lý thiết bị
+using UnityEngine.InputSystem.Users;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using System;
@@ -19,9 +19,6 @@ public class GameManager : MonoBehaviour
     public GameState State { get; private set; }
 
     private int previousSceneIndex = -1;
-
-    //public float gameSpeed = 1f;
-
     private float lastToggleTime = 0f;
 
     public event Action<GameState> OnGameStateChanged;
@@ -36,7 +33,6 @@ public class GameManager : MonoBehaviour
 
     private float lastMouseWarpTime;
 
-    // 🌟 THÊM MỚI: Các biến để chứa Bản đồ hành động
     private InputActionMap playerMap;
     private InputActionMap uiMap;
 
@@ -58,14 +54,10 @@ public class GameManager : MonoBehaviour
         ApplyDeviceResolutionAndFPS();
         State = GameState.Running;
 
-        // Khởi tạo Input
         pauseAction = InputSystem.actions.FindAction("Pause");
-
-        // THÊM MỚI: Tìm và lưu lại 2 Action Map
         playerMap = InputSystem.actions.FindActionMap("Player");
         uiMap = InputSystem.actions.FindActionMap("UI");
 
-        // Đảm bảo trạng thái mặc định khi mới vào game: Bật Player, Tắt UI
         playerMap?.Enable();
         uiMap?.Disable();
 
@@ -75,17 +67,10 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    //private void Start()
-    //{
-    //    Cursor.visible = false;
-    //    Cursor.lockState = CursorLockMode.Locked;
-    //}
-
 #if UNITY_EDITOR
     private void Update()
     {
-        //if (State != GameState.Pause) Time.timeScale = gameSpeed;
-        isUsingPointer = IsUsingPointer; // Cập nhật giá trị từ Inspector mỗi frame (Chỉ dùng trong Editor)
+        isUsingPointer = IsUsingPointer;
     }
 #endif
 
@@ -121,25 +106,18 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // Phân xử logic chuột mỗi khi chuyển Scene
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Giả định Title Screen của bạn luôn nằm ở vị trí số 0 trong File -> Build Settings
         isInMainMenu = (scene.buildIndex == 0);
-
-        bool wasInMainMenu = (previousSceneIndex == 0 || previousSceneIndex == -1); // Kiểm tra Scene trước đó có phải là MainMenu hay không
-
-        // Cập nhật lại trí nhớ cho lần chuyển Scene tiếp theo
+        bool wasInMainMenu = (previousSceneIndex == 0 || previousSceneIndex == -1);
         previousSceneIndex = scene.buildIndex;
 
         if (isInMainMenu)
         {
             State = GameState.MainMenu;
-
             playerMap?.Disable();
             uiMap?.Enable();
 
-            // Ở Title Screen: Ẩn chuột, nhưng KHÔNG khóa cứng (None) để nó không bị giật về giữa màn hình
             Cursor.visible = true;
             Cursor.lockState = CursorLockMode.None;
             IsUsingPointer = true;
@@ -151,49 +129,32 @@ public class GameManager : MonoBehaviour
             uiMap?.Disable();
             playerMap?.Enable();
 
-            // Ở trong Game: Khóa cứng và giấu chuột đi
+            // Khóa chuột cứng khi vào gameplay
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
-            IsUsingPointer = false; // Mặc định tắt chuột trong gameplay, chỉ bật khi phát hiện thiết bị Pointer
+            IsUsingPointer = false;
             Debug.Log("Player map enabled");
         }
 
         UIStackManager.Instance?.ClearStack();
 
-        // Kích hoạt snap camera sau khi load xong Scene, nhưng chỉ thực hiện khi không phải MainMenu
         if (!isInMainMenu && wasInMainMenu)
         {
             StartCoroutine(DelayedCameraSnap());
         }
-
-        //if (State == GameState.Running)
-        //{
-        //    uiMap?.Disable();
-        //    playerMap?.Enable();
-        //}
-        //else if (State == GameState.Pause)
-        //{
-        //    playerMap?.Disable();
-        //    uiMap?.Enable();
-        //}
     }
 
     private System.Collections.IEnumerator DelayedCameraSnap()
     {
-        // Hoãn lại 1 frame cực kỳ quan trọng!
-        // Chờ Player dịch chuyển xong và các Camera mới kịp Register() vào danh sách.
         yield return null;
-
         RoomTransition.InitializeRoomAtPlayerPosition();
         Debug.Log("[GameManager] Đã thực hiện cú Hard Cut (Snap) Camera tại Scene mới thành công!");
     }
 
     private void OnPausePerformed(InputAction.CallbackContext context)
     {
-        // Thêm lớp phòng thủ: Chỉ nhận tín hiệu khi phím bắt đầu được ấn XUỐNG, 
-        // bỏ qua tín hiệu khi phím được thả LÊN hoặc bị nhiễu do map switch.
         if (context.ReadValueAsButton() == false) return;
-        if (State == GameState.MainMenu) return; // Đang ở Menu chính thì cấm Pause!
+        if (State == GameState.MainMenu) return;
         if (UIStackManager.Instance != null && UIStackManager.Instance.TopUI != null && !UIStackManager.Instance.TopUI.GetInputConfig().allowPauseToggle) return;
         TogglePause();
         Debug.Log("Toggle Pause");
@@ -201,50 +162,31 @@ public class GameManager : MonoBehaviour
 
     public void TogglePause()
     {
-        // TẤM KHIÊN BẤT TỬ: Chặn mọi sự kiện Pause/Resume bị gọi liên tiếp nhau
-        // Sử dụng unscaledTime vì Time.time sẽ bị kẹt lại khi timeScale = 0
-        if (Time.unscaledTime - lastToggleTime < 0.2f)
-        {
-            return; // Đuổi về ngay lập tức, không cho chạy code bên dưới
-        }
-
-        lastToggleTime = Time.unscaledTime; // Cập nhật lại mốc thời gian
+        if (Time.unscaledTime - lastToggleTime < 0.2f) return;
+        lastToggleTime = Time.unscaledTime;
 
         if (State == GameState.Running)
         {
-            // Pause game
             Debug.Log("Game Paused!");
             State = GameState.Pause;
             Time.timeScale = 0f;
 
             playerMap?.Disable();
-            uiMap?.Enable(); // Không cần dùng IEnumerator Delay nữa, cứ Enable thẳng!
+            uiMap?.Enable();
 
-            // CẬP NHẬT: Phân xử hiện thị chuột dựa vào thiết bị đang dùng
             if (IsUsingPointer)
             {
-                // Nếu đang dùng chuột: Bật chuột và mở khóa
                 Cursor.visible = true;
                 Cursor.lockState = CursorLockMode.None;
             }
             else
             {
-                // Nếu đang dùng tay cầm/bàn phím: Giấu chuột đi
                 Cursor.visible = false;
-
-                // BẮT BUỘC dùng None (Không dùng Locked vì Locked sẽ ép chuột ra giữa màn hình)
                 Cursor.lockState = CursorLockMode.None;
 
-                // Ném chuột ra góc dưới cùng bên phải màn hình (ẩn đi)
-                if (Mouse.current != null)
-                {
-                    lastMouseWarpTime = Time.unscaledTime; // Chống dội ngược tín hiệu Warp
-                    Mouse.current.WarpCursorPosition(new Vector2(Screen.width, 0));
-                }
+                WarpMouseSafely(new Vector2(0f, Screen.height));
             }
         }
-
-        // Resume game
         else if (State == GameState.Pause)
         {
             Debug.Log("Game resumed!");
@@ -252,11 +194,11 @@ public class GameManager : MonoBehaviour
             Time.timeScale = 1f;
 
             uiMap?.Disable();
-            playerMap?.Enable(); // Không cần Delay nữa
+            playerMap?.Enable();
 
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
-            IsUsingPointer = false; // Mặc định tắt Pointer khi đang trong game
+            IsUsingPointer = false;
         }
 
         OnGameStateChanged?.Invoke(State);
@@ -281,12 +223,7 @@ public class GameManager : MonoBehaviour
             {
                 Cursor.visible = false;
                 Cursor.lockState = CursorLockMode.None;
-
-                if (Mouse.current != null)
-                {
-                    lastMouseWarpTime = Time.unscaledTime;
-                    Mouse.current.WarpCursorPosition(new Vector2(Screen.width, 0));
-                }
+                WarpMouseSafely(new Vector2(0f, Screen.height));
             }
         }
         else if (config.inputMode == UIInputMode.GameOnly && !isInMainMenu)
@@ -317,24 +254,15 @@ public class GameManager : MonoBehaviour
             InputAction action = (InputAction)obj;
             InputDevice device = action.activeControl.device;
 
-            // 1. KHI ĐANG MỞ MENU (Pause Menu HOẶC Title Menu HOẶC Active UI Stack)
-            // Lúc này chúng ta cần xử lý cả việc Ẩn/Hiện con trỏ chuột
             if (State == GameState.Pause || isInMainMenu || (UIStackManager.Instance != null && UIStackManager.Instance.HasActiveUI))
             {
                 if (device is Gamepad || device is Keyboard)
                 {
-                    // CHỈ thực hiện khi đang từ Chuột chuyển sang Tay cầm (Chốt khóa Transition)
                     if (IsUsingPointer)
                     {
                         IsUsingPointer = false;
-                        Cursor.visible = false; // Giấu chuột đi
-
-                        if (Mouse.current != null)
-                        {
-                            // Đánh dấu mốc thời gian vừa ném chuột đi
-                            lastMouseWarpTime = Time.unscaledTime;
-                            Mouse.current.WarpCursorPosition(new Vector2(Screen.width, 0));
-                        }
+                        Cursor.visible = false;
+                        WarpMouseSafely(new Vector2(0f, Screen.height));
 
                         if (UIStackManager.Instance != null && UIStackManager.Instance.TopUI != null)
                         {
@@ -344,10 +272,8 @@ public class GameManager : MonoBehaviour
                 }
                 else if (device is Pointer)
                 {
-                    // BỎ QUA tín hiệu chuột nếu nó vừa bị Code dịch chuyển trong vòng 0.1 giây trước đó (Chống Warp Echo)
                     if (Time.unscaledTime - lastMouseWarpTime < 0.1f) return;
 
-                    // CHỈ thực hiện khi đang từ Tay cầm chuyển sang Chuột
                     if (!IsUsingPointer)
                     {
                         if (Mouse.current != null)
@@ -357,7 +283,7 @@ public class GameManager : MonoBehaviour
                         }
 
                         IsUsingPointer = true;
-                        Cursor.visible = true; // Hiện chuột lại
+                        Cursor.visible = true;
 
                         if (UIStackManager.Instance != null && UIStackManager.Instance.TopUI != null)
                         {
@@ -366,9 +292,6 @@ public class GameManager : MonoBehaviour
                     }
                 }
             }
-
-            // 2. KHI ĐANG TRONG GAMEPLAY (Đang chơi bình thường)
-            // Chỉ cập nhật biến IsUsingPointer ngầm để biết đang dùng thiết bị gì, KHÔNG đụng đến Cursor (vì Cursor luôn bị khóa khi chơi)
             else if (State == GameState.Running && !isInMainMenu)
             {
                 if (device is Gamepad || device is Keyboard)
@@ -383,13 +306,19 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    private void WarpMouseSafely(Vector2 targetPos)
+    {
+        if (Mouse.current != null)
+        {
+            lastMouseWarpTime = Time.unscaledTime;
+            Mouse.current.WarpCursorPosition(targetPos);
+        }
+    }
+
     private void OnDeviceChange(InputDevice device, InputDeviceChange change)
     {
-        // Kiểm tra nếu thiết bị bị gỡ bỏ (Removed) hoặc mất tín hiệu (Disconnected - thường do hết pin)
         if (change == InputDeviceChange.Removed || change == InputDeviceChange.Disconnected)
         {
-            // Chỉ Pause nếu Game đang chạy 
-            // và thiết bị bị mất là Tay cầm hoặc Bàn phím
             if (State == GameState.Running && (device is Gamepad || device is Keyboard))
             {
                 Debug.LogWarning($"Detected disconnection of: {device.name}. Automatically pause game!");
@@ -400,33 +329,18 @@ public class GameManager : MonoBehaviour
 
     private void ApplyDeviceResolutionAndFPS()
     {
-        // 1. Lấy thông tin độ phân giải và tần số quét gốc của màn hình hiện tại
         Resolution nativeRes = Screen.currentResolution;
         int width = nativeRes.width;
         int height = nativeRes.height;
 
-        // Xử lý lấy tần số quét (Hỗ trợ cả Unity bản mới và cũ)
 #if UNITY_2022_2_OR_NEWER
         int refreshRate = Mathf.RoundToInt((float)nativeRes.refreshRateRatio.value);
-#else
-        int refreshRate = nativeRes.refreshRate;
-#endif
-
-        Debug.Log($"[GameManager] Phát hiện màn hình: {width}x{height} @ {refreshRate}Hz");
-
-        // 2. Gắn độ phân giải Fullscreen (Không viền) với tần số quét tương ứng
-#if UNITY_2022_2_OR_NEWER
         Screen.SetResolution(width, height, FullScreenMode.FullScreenWindow, nativeRes.refreshRateRatio);
 #else
+        int refreshRate = nativeRes.refreshRate;
         Screen.SetResolution(width, height, FullScreenMode.FullScreenWindow, refreshRate);
 #endif
 
-        // 3. QUAN TRỌNG: Tắt VSync của Unity để targetFrameRate có thể hoạt động chính xác
-        // Nếu vSyncCount = 1, Unity sẽ bỏ qua targetFrameRate và ép dính theo màn hình. 
-        // Tuy nhiên, việc ép bằng code (vSync = 0 + targetFrameRate) sẽ mang lại độ trễ Input (Input Delay) thấp hơn cho game Platformer!
         QualitySettings.vSyncCount = 1;
-
-        // 4. Khóa FPS bằng đúng với tần số quét của màn hình
-        //Application.targetFrameRate = refreshRate;
     }
 }

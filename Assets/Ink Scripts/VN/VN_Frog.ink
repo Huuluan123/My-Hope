@@ -1,3 +1,5 @@
+INCLUDE ../Global/Global.ink
+
 -> START
 === START ===
 #speaker: Frog

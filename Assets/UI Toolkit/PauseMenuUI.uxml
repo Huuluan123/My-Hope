@@ -12,7 +12,7 @@
                     <UnityEngine.Localization.LocalizedString property="text" table="GUID:17d9da7d471350e4e8a5244f46e88ff6" entry="Id(57259720704)"/>
                 </Bindings>
             </ui:Button>
-            <ui:Button text="English" name="btn-language" class="pause-button">
+            <ui:Button text="English" name="btn-language" enabled="true" class="pause-button" style="display: none;">
                 <Bindings>
                     <UnityEngine.Localization.LocalizedString property="text" table="GUID:17d9da7d471350e4e8a5244f46e88ff6" entry="Id(327557881921536)"/>
                 </Bindings>

@@ -1,0 +1,81 @@
+/* Container bao ngoài toàn menu */
+.menu-root {
+    flex-grow: 1;
+    background-color: #1a1a1a;
+    padding: 30px;
+}
+
+/* Thanh Tab Bar dàn hàng ngang Flexbox */
+.tab-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    margin-bottom: 20px;
+}
+
+/* Style cho chính đối tượng ActionGlyph */
+.tab-glyph-container {
+    background-color: #d8d8d8; /* Khung nền xám bo góc quanh icon phím */
+    border-radius: 8px;
+    padding: 6px;
+    align-self: center;
+}
+
+/* Cụm Tabs nằm giữa */
+.tab-buttons-group {
+    flex-direction: row;
+    flex-grow: 1;
+    justify-content: center;
+    align-items: center;
+}
+
+.tab-button {
+    min-width: 160px;
+    height: 50px;
+    margin-left: 15px;
+    margin-right: 15px;
+    background-color: #d8d8d8;
+    border-radius: 8px;
+    border-width: 0;
+    font-size: 22px;
+    color: #111111;
+    -unity-text-align: middle-center;
+}
+
+.tab-button:hover {
+    background-color: #ebebeb;
+}
+
+.tab-button--active {
+    background-color: #ffffff;
+    border-bottom-width: 4px;
+    border-bottom-color: #3498db;
+    -unity-font-style: bold;
+}
+
+/* Vùng Content */
+.content-container {
+    flex-grow: 1;
+    background-color: #d0d0d0;
+    border-radius: 12px;
+    justify-content: center;
+    align-items: center;
+}
+
+.tab-content-panel {
+    flex-grow: 1;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+.tab-content-panel--hidden {
+    display: none;
+}
+
+.content-placeholder {
+    font-size: 64px;
+    color: #111111;
+}

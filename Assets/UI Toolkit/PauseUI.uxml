@@ -1,0 +1,25 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI%20Toolkit/Styles/PauseUI.uss?fileID=7433441132597879392&amp;guid=1da779abf00469b4680723793a24f594&amp;type=3#PauseUI"/>
+    <ui:VisualElement name="menu-root" class="menu-root">
+        <ui:VisualElement name="tab-bar" class="tab-bar">
+            <ActionGlyph name="glyph-prev" action-id="tab-prev" icon-size="44" class="tab-glyph-container"/>
+            <ui:VisualElement name="tab-buttons-group" class="tab-buttons-group">
+                <ui:Button name="tab-btn-items" text="Items" class="tab-button tab-button--active"/>
+                <ui:Button name="tab-btn-quests" text="Quests" class="tab-button"/>
+                <ui:Button name="tab-btn-settings" text="Settings" class="tab-button"/>
+            </ui:VisualElement>
+            <ActionGlyph name="glyph-next" action-id="tab-next" icon-size="44" class="tab-glyph-container"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="content-container" class="content-container">
+            <ui:VisualElement name="panel-items" class="tab-content-panel">
+                <ui:Label text="Content" class="content-placeholder"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="panel-quests" class="tab-content-panel tab-content-panel--hidden">
+                <ui:Label text="Quests Panel" class="content-placeholder"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="panel-settings" class="tab-content-panel tab-content-panel--hidden">
+                <ui:Label text="Settings Panel" class="content-placeholder"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

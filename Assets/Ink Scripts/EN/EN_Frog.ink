@@ -3,6 +3,11 @@ INCLUDE ../Global/Global.ink
 -> START
 
 === START ===
+#speaker: Frog
+Congratulations, you have completed the hard challenges, jump down there to go back!
+-> END
+/*
+=== START ===
 // Di chuyển khai báo vào bên trong Knot
 ~ temp Frog_InvitedToHouse = CheckState("Frog_InvitedToHouse")
 
@@ -44,3 +49,4 @@ Nibba.
     Oh, someone didn't let me in his crib. Ain't cool, bro.
 }
 -> END
+*/
